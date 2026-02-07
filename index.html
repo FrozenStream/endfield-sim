@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Grid Layout</title>
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <header class="main-header">
+        <h1>主标题</h1>
+    </header>
+    
+    <div class="container">
+        <!-- 左侧主要功能区 (6/10) -->
+        <section class="main-section" id="grid-container">
+            <div id="grid-wrapper">
+                <!-- 这里会由TypeScript渲染网格 -->
+            </div>
+        </section>
+        
+        <!-- 中间功能区 (1/10) -->
+        <aside class="sidebar" id="icon-sidebar">
+            <div class="icon-collection" id="icon-collection">
+                <!-- 动态添加的图标将出现在这里 -->
+            </div>
+        </aside>
+        
+        <!-- 右侧功能区 (3/10)，分为上下两部分 -->
+        <section class="right-panel">
+            <div class="top-section">
+                <h3>信息面板</h3>
+                <div class="info-content">
+                    <p>坐标: <span id="coordinates">(0, 0)</span></p>
+                    <p>缩放: <span id="current-scale">1.0x</span></p>
+                    <p>网格状态: <span id="grid-status">就绪</span></p>
+                </div>
+            </div>
+            
+            <div class="bottom-section">
+                <h3>工具栏</h3>
+                <div class="tools-content">
+                    <button id="add-element">添加元素</button>
+                    <button id="remove-element">删除元素</button>
+                    <button id="save-grid">保存网格</button>
+                    <button id="load-grid">加载网格</button>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+
+    
+</body>
+<script type="module" src="/src/grid.ts"></script>
+</html>
