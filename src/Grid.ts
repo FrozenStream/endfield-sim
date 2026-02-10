@@ -101,7 +101,6 @@ class GridCanvas {
 
     // 使用变换矩阵替代offsetX和offsetY
     private transformMatrix: DOMMatrix = new DOMMatrix();
-    private rotation: number = 0;
 
     private gridWidth: number = 80;
     private gridHeight: number = 80;
@@ -131,7 +130,7 @@ class GridCanvas {
         this.bindHoverEvents();
         this.bindRightClickEvents();
         this.bindWheelEvents();
-        this.bindKeyboardEvents(); // 添加键盘事件绑定
+        this.bindRotateEvents(); // 添加键盘事件绑定
         this.bindMouseEnterLeaveEvents(); // 添加鼠标进入/离开事件绑定
         this.drawGrid();
     }
@@ -408,10 +407,6 @@ class GridCanvas {
 
     public drawMachinesIcon(transform: DOMMatrix): void {
         if (!this.gridCtx) return;
-
-        this.gridCtx.fillStyle = '#9f9f9f';
-        this.gridCtx.strokeStyle = '#333333';
-        this.gridCtx!.lineWidth = 2;
         GridMap.allMachines.forEach((machineInstance) => {
             // 清空区域内容，绘制新背景色和边框
             const rect = machineInstance.shape();
@@ -424,13 +419,10 @@ class GridCanvas {
                 .multiply(this.gridSize)
                 .applyMatrix(transform);
 
-
             const min_x = Math.min(LT.x, RB.x);
             const min_y = Math.min(LT.y, RB.y);
             const max_x = Math.max(LT.x, RB.x);
             const max_y = Math.max(LT.y, RB.y);
-            this.gridCtx!.fillRect(min_x, min_y, max_x - min_x, max_y - min_y);
-            this.gridCtx!.strokeRect(min_x, min_y, max_x - min_x, max_y - min_y);
 
             // 绘制图标
             const img = machineInstance.machine.imgCache;
@@ -486,8 +478,41 @@ class GridCanvas {
                 this.gridCtx.stroke();
             }
         }
-        // 恢复默认状态
+
+        // 绘制机器
         this.gridCtx.setLineDash([]);
+        this.gridCtx.fillStyle = '#9f9f9f';
+        this.gridCtx.strokeStyle = '#333333';
+        this.gridCtx.lineWidth = 2;
+        GridMap.allMachines.forEach((machineInstance) => {
+            // 清空区域内容，绘制新背景色和边框
+            const rect = machineInstance.shape();
+            if (!rect) return;
+            const [startX, startY, width, height] = rect.toTuple();
+            const LT = new Vector2(startX, startY).multiply(this.gridSize)
+            const RB = new Vector2(startX + width, startY + height).multiply(this.gridSize)
+
+            const min_x = Math.min(LT.x, RB.x);
+            const min_y = Math.min(LT.y, RB.y);
+            const max_x = Math.max(LT.x, RB.x);
+            const max_y = Math.max(LT.y, RB.y);
+            this.gridCtx!.fillRect(min_x, min_y, max_x - min_x, max_y - min_y);
+            this.gridCtx!.strokeRect(min_x, min_y, max_x - min_x, max_y - min_y);
+
+            machineInstance.portShape().forEach(({ v1, v2, v3 }) => {
+                v1 = v1.multiply(this.gridSize);
+                v2 = v2.multiply(this.gridSize);
+                v3 = v3.multiply(this.gridSize);
+                this.gridCtx!.beginPath();
+                this.gridCtx!.moveTo(v1.x, v1.y);
+                this.gridCtx!.lineTo(v2.x, v2.y);
+                this.gridCtx!.stroke();
+                this.gridCtx!.beginPath();
+                this.gridCtx!.moveTo(v3.x, v3.y);
+                this.gridCtx!.lineTo(v2.x, v2.y);
+                this.gridCtx!.stroke();
+            });
+        });
     }
 
     // 添加公共方法来重置网格视图
@@ -521,7 +546,7 @@ class GridCanvas {
     }
 
     // 添加键盘事件绑定
-    private bindKeyboardEvents(): void {
+    private bindRotateEvents(): void {
         document.addEventListener('keydown', (e) => {
             if (e.key.toLowerCase() === 'r' && this.isMouseOverCanvas && e.ctrlKey) {
                 e.preventDefault();

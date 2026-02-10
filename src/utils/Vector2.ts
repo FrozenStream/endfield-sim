@@ -43,6 +43,10 @@ class Vector2 {
         return new Vector2(Math.round(this.x), Math.round(this.y));
     }
 
+    public floor(): Vector2 {
+        return new Vector2(Math.floor(this.x), Math.floor(this.y));
+    }
+
     public static readonly ZERO = new Vector2(0, 0);
     public static readonly ONE = new Vector2(1, 1);
     public static readonly UP = new Vector2(0, -1);
@@ -51,7 +55,7 @@ class Vector2 {
     public static readonly RIGHT = new Vector2(1, 0);
 
     rotateCCW(time: number): Vector2 {
-        time = time % 4;
+        time = (time + 4) % 4;
         switch (time) {
             case 0:
                 return new Vector2(this.x, this.y);
@@ -66,7 +70,7 @@ class Vector2 {
     }
 
     rotateCW(time: number): Vector2 {
-        time = time % 4;
+        time = (time + 4) % 4;
         switch (time) {
             case 0:
                 return new Vector2(this.x, this.y);
@@ -79,15 +83,19 @@ class Vector2 {
         }
         throw new Error("Invalid time");
     }
-    
+
     public applyMatrix(matrix: DOMMatrix): Vector2 {
         // 对于 2D 矩阵，变换公式为:
         // x' = a*x + c*y + e
         // y' = b*x + d*y + f
         const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
         const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
-        
+
         return new Vector2(newX, newY);
+    }
+
+    static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
+        return v1.multiply(s1).add(v2.multiply(s2));
     }
 }
 

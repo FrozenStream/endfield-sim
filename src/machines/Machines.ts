@@ -47,7 +47,6 @@ class MachineInstance {
     public setPosition(position: Vector2) {
         this._position = position;
         this.updateRect();
-        this._position = this._position.multiply(2).round().divide(2);
     }
 
     private updateRect() {
@@ -68,6 +67,30 @@ class MachineInstance {
 
     public shape(): Rect | null {
         return this.rect;
+    }
+
+    public portShape(): Array<{ v1: Vector2, v2: Vector2, v3: Vector2 }> {
+        let ans: Array<{ v1: Vector2, v2: Vector2, v3: Vector2 }> = [];
+        this.machine.IOs.forEach(io => {
+            const Tpos: Vector2 = this.rect!.center();
+            const center = Tpos.add(Vector2.linear(this.R, io.relPos.x, this.D, io.relPos.y));
+            let v2 = center.add(io.direction.rotateCW(this.rotation).multiply(0.1));
+            let v1 = center.add(io.direction.rotateCW(this.rotation + 1).multiply(0.1));
+            let v3 = center.add(io.direction.rotateCW(this.rotation - 1).multiply(0.1));
+
+            if (io.input) {
+                v1 = v1.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
+                v2 = v2.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
+                v3 = v3.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
+            }
+            else {
+                v1 = v1.add(io.direction.rotateCW(this.rotation).multiply(0.3));
+                v2 = v2.add(io.direction.rotateCW(this.rotation).multiply(0.3));
+                v3 = v3.add(io.direction.rotateCW(this.rotation).multiply(0.3));
+            }
+            ans.push({ v1, v2, v3 });
+        })
+        return ans;
     }
 }
 
@@ -112,8 +135,8 @@ class Machine {
 
     private static allMachines: Map<string, Machine> = new Map();
 
-    public static readonly Cannon1: Machine = new Machine('cannon1', '/icon_port/icon_port_battle_cannon_1.png');
-    public static readonly Connon2: Machine = new Machine('cannon2', '/icon_port/icon_port_battle_cannon_2.png');
+    // public static readonly Cannon1: Machine = new Machine('cannon1', '/icon_port/icon_port_battle_cannon_1.png');
+    // public static readonly Connon2: Machine = new Machine('cannon2', '/icon_port/icon_port_battle_cannon_2.png');
 
     // 存储箱
     public static readonly Storager: Machine = new Machine('storager', '/icon_port/icon_port_storager_1.png', 3, 3,

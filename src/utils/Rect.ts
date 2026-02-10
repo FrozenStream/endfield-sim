@@ -1,3 +1,5 @@
+import Vector2 from "./Vector2";
+
 class Rect {
     public min_x: number;
     public min_y: number;
@@ -13,6 +15,10 @@ class Rect {
 
     toTuple(): [number, number, number, number] {
         return [this.min_x, this.min_y, this.w, this.h];
+    }
+
+    center(): Vector2 {
+        return new Vector2(this.min_x + this.w / 2, this.min_y + this.h / 2);
     }
 }
 
