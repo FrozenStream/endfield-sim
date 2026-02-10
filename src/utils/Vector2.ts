@@ -39,6 +39,10 @@ class Vector2 {
         return Math.abs(this.x) + Math.abs(this.y);
     }
 
+    public round(): Vector2 {
+        return new Vector2(Math.round(this.x), Math.round(this.y));
+    }
+
     public static readonly ZERO = new Vector2(0, 0);
     public static readonly ONE = new Vector2(1, 1);
     public static readonly UP = new Vector2(0, -1);
@@ -74,6 +78,16 @@ class Vector2 {
                 return new Vector2(-this.y, this.x);
         }
         throw new Error("Invalid time");
+    }
+    
+    public applyMatrix(matrix: DOMMatrix): Vector2 {
+        // 对于 2D 矩阵，变换公式为:
+        // x' = a*x + c*y + e
+        // y' = b*x + d*y + f
+        const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
+        const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
+        
+        return new Vector2(newX, newY);
     }
 }
 

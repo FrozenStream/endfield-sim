@@ -4,17 +4,17 @@ class ItemStack {
     public item: Item | null = null;
     public count: number = 0;
     public isEmpty(): boolean {
-        if (this.item == null) return true;
-        if (this.count == 0) return true;
+        if (this.item === null) return true;
+        if (this.count === 0) return true;
         return false;
     }
     public isFull(): boolean {
-        return this.count == 50;
+        return this.count === 50;
     }
 
     public merge(stack_in: ItemStack): boolean {
-        if (stack_in.item == null) return false;
-        if (this.item == null) {
+        if (stack_in.item === null) return false;
+        if (this.item === null) {
             // 完全转移
             this.item = stack_in.item;
             this.count = stack_in.count;
