@@ -4,9 +4,12 @@ import Vector2 from "../utils/Vector2";
 
 class BeltInstance {
     public readonly beltType: Belt;
+    public static readonly imgCache: HTMLImageElement;
+
     public start: Vector2 | null = null;
     public directions: Array<number>;
-    public static readonly imgCache: HTMLImageElement;
+
+    public startFIXED: boolean = false;
 
     constructor(beltType: Belt) {
         this.beltType = beltType;
@@ -15,11 +18,16 @@ class BeltInstance {
     }
 
     public setStart(start: Vector2) {
-        this.start = start;
+        this.start = start.floor();
+    }
+
+    public fixStart() {
+        this.startFIXED = true;
     }
 
     public setEnd(faceDirection: number, end: Vector2) {
         if (this.start === null) throw new Error("start point is null");
+        end = end.floor();
         this.directions.push(faceDirection);
 
         const point: Vector2 = this.start.add(Belt.DIRECTION[faceDirection]);
@@ -56,13 +64,25 @@ class BeltInstance {
         }
     }
 
-    public shape(): ReadonlyArray<Vector2> {
+    public shape(): ReadonlyArray<{ pos: Vector2, dire: Vector2 }> {
         let point: Vector2 = Vector2.copy(this.start!);
-        const arr: Array<Vector2> = [point];
-        for (let i = 0; i < this.directions.length; i++) {
+        const arr: Array<{ pos: Vector2, dire: Vector2 }> = [];
+        arr.push({
+            pos: point,
+            dire: Belt.DIRECTION[this.directions[0]].add(Belt.DIRECTION[this.directions[0]])
+        })
+        const lenth = this.directions.length;
+        for (let i = 0; i < length - 1; i++) {
             point = point.add(Belt.DIRECTION[this.directions[i]]);
-            arr.push(point);
+            arr.push({
+                pos: point,
+                dire: Belt.DIRECTION[this.directions[i]].add(Belt.DIRECTION[this.directions[i + 1]])
+            });
         }
+        arr.push({
+            pos: point,
+            dire: Belt.DIRECTION[this.directions[lenth - 1]].add(Belt.DIRECTION[this.directions[lenth - 1]])
+        })
         return arr;
     }
 }

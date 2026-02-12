@@ -7,52 +7,49 @@ class Vector2 {
         this.y = y;
     }
 
-    public add(v: Vector2): Vector2 {
+    add(v: Vector2): Vector2 {
         return new Vector2(this.x + v.x, this.y + v.y);
     }
 
-    public subtract(v: Vector2): Vector2 {
+    subtract(v: Vector2): Vector2 {
         return new Vector2(this.x - v.x, this.y - v.y);
     }
 
-    public multiply(scalar: number): Vector2 {
+    multiply(scalar: number): Vector2 {
         return new Vector2(this.x * scalar, this.y * scalar);
     }
 
-    public divide(scalar: number): Vector2 {
+    divide(scalar: number): Vector2 {
         return new Vector2(this.x / scalar, this.y / scalar);
     }
 
-    public dot(v: Vector2): number {
+    dot(v: Vector2): number {
         return this.x * v.x + this.y * v.y;
     }
 
-    public equal(end: Vector2) {
+    equal(end: Vector2) {
         return this.x === end.x && this.y === end.y;
     }
 
-    public magnitude(): number {
+    magnitude(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    public manhattanDistance(): number {
+    manhattanDistance(): number {
         return Math.abs(this.x) + Math.abs(this.y);
     }
 
-    public round(): Vector2 {
+    round(): Vector2 {
         return new Vector2(Math.round(this.x), Math.round(this.y));
     }
 
-    public floor(): Vector2 {
+    floor(): Vector2 {
         return new Vector2(Math.floor(this.x), Math.floor(this.y));
     }
 
-    public static readonly ZERO = new Vector2(0, 0);
-    public static readonly ONE = new Vector2(1, 1);
-    public static readonly UP = new Vector2(0, -1);
-    public static readonly DOWN = new Vector2(0, 1);
-    public static readonly LEFT = new Vector2(-1, 0);
-    public static readonly RIGHT = new Vector2(1, 0);
+    toT(): Vector2 {
+        return new Vector2(this.x > 0 ? 1 : (this.x < 0 ? -1 : 0), this.y > 0 ? 1 : (this.y < 0 ? -1 : 0));
+    }
 
     rotateCCW(time: number): Vector2 {
         time = (time + 4) % 4;
@@ -84,7 +81,7 @@ class Vector2 {
         throw new Error("Invalid time");
     }
 
-    public applyMatrix(matrix: DOMMatrix): Vector2 {
+    applyMatrix(matrix: DOMMatrix): Vector2 {
         // 对于 2D 矩阵，变换公式为:
         // x' = a*x + c*y + e
         // y' = b*x + d*y + f
@@ -94,12 +91,65 @@ class Vector2 {
         return new Vector2(newX, newY);
     }
 
+
+
+
+    static readonly ZERO = new Vector2(0, 0);
+    static readonly ONE = new Vector2(1, 1);
+
+    static readonly UP = new Vector2(0, -1);
+    static readonly DOWN = new Vector2(0, 1);
+    static readonly LEFT = new Vector2(-1, 0);
+    static readonly RIGHT = new Vector2(1, 0);
+
+    static readonly UP_LEFT = new Vector2(-1, -1);
+    static readonly UP_RIGHT = new Vector2(-1, 1);
+    static readonly DOWN_LEFT = new Vector2(1, -1);
+    static readonly DOWN_RIGHT = new Vector2(1, 1);
+
+    static readonly DIREC: Vector2[] = [
+        this.RIGHT, this.UP_RIGHT,
+        this.UP, this.UP_LEFT,
+        this.LEFT, this.DOWN_LEFT,
+        this.DOWN, this.DOWN_RIGHT
+    ]
+
     static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
         return v1.multiply(s1).add(v2.multiply(s2));
     }
 
     static copy(v: Vector2): Vector2 {
         return new Vector2(v.x, v.y);
+    }
+
+    static isOpposite(v1: number, v2: number) {
+        return (v1 + 4) % 8 === v2;
+    }
+
+    static isPerpendicular(v1: number, v2: number) {
+        return Math.abs(v1 - v2) === 2;
+    }
+
+    static isDiagonal(v: number) {
+        return v % 2 === 1;
+    }
+
+    static toIndex(v: Vector2): number | null {
+        if (v.x === -1) {
+            if (v.y === -1) return 3;
+            else if (v.y === 0) return 4;
+            else if (v.y === 1) return 5;
+        }
+        else if (v.x === 0) {
+            if (v.y === -1) return 2;
+            else if (v.y === 1) return 6;
+        }
+        else if (v.x === 1) {
+            if (v.y === -1) return 1;
+            else if (v.y === 0) return 0;
+            else if (v.y === 1) return 7;
+        }
+        return null;
     }
 }
 

@@ -67,7 +67,7 @@ class IconsManager {
                 IconsManager.cancel();
                 return;
             }
-            IconsManager.select(machine.id);
+            IconsManager.select(machine, iconElement);
         });
     }
 
@@ -87,11 +87,11 @@ class IconsManager {
         IconsManager.icons.set(belt.id, iconElement);
 
         iconElement.addEventListener('click', () => {
-            if (GridMap.PreviewMachine?.machine === machine) {
+            if (GridMap.PreviewBelt?.beltType === belt) {
                 IconsManager.cancel();
                 return;
             }
-            IconsManager.select(machine.id);
+            IconsManager.select(belt, iconElement);
         });
     }
 
@@ -102,11 +102,12 @@ class IconsManager {
         IconsManager.selectedIcon = null;
     }
 
-    public static select(id: string) {
+    public static select(type: Machine | Belt, icon: HTMLDivElement) {
         if (IconsManager.selectedIcon) IconsManager.selectedIcon.classList.remove('active');
         // 更新选中的图标引用
-        IconsManager.selectedIcon = IconsManager.icons.get(id)!;
-        GridMap.PreviewMachine = Machine.getAllMachines().get(id)!;
+        IconsManager.selectedIcon = icon;
+        if (type instanceof Machine) GridMap.PreviewMachine = type;
+        if (type instanceof Belt) GridMap.PreviewBelt = type;
         // 添加active类到当前选中的图标
         IconsManager.selectedIcon.classList.add('active');
     }
@@ -131,7 +132,7 @@ class GridCanvas {
     private startY: number = 0;
     private isMouseDown: boolean = false;
     private mouseDownButton: number = 0;  // 记录按下的是哪个鼠标按键
-    private maxMoveThreshold: number = 5; // 最大移动阈值，超过此值认为是拖动
+    private dragThreshold: number = 5; // 最大移动阈值，超过此值认为是拖动
 
     // 使用变换矩阵替代offsetX和offsetY
     private transformMatrix: DOMMatrix = new DOMMatrix();
@@ -242,14 +243,8 @@ class GridCanvas {
         this.overlayCanvas.addEventListener('mousemove', (e) => {
             if (this.isMouseDown && this.mouseDownButton === 0) {  // 只处理左键的情况
                 // 判断是否超过拖动阈值
-                const moveDistance = Math.sqrt(
-                    Math.pow(e.clientX - this.startX, 2) +
-                    Math.pow(e.clientY - this.startY, 2)
-                );
-
-                if (moveDistance > this.maxMoveThreshold) {
-                    this.isDragging = true;
-                }
+                const distance = Math.pow(e.clientX - this.startX, 2) + Math.pow(e.clientY - this.startY, 2);
+                if (distance > this.dragThreshold * this.dragThreshold) this.isDragging = true;
             }
 
             if (this.isDragging) {
@@ -269,11 +264,25 @@ class GridCanvas {
 
         this.overlayCanvas.addEventListener('mouseup', (e) => {
             // 只在按下和释放的是同一个按键时才处理
-            if (this.mouseDownButton === 0 && this.isMouseDown && !this.isDragging) {
+            if (this.mouseDownButton === e.button && this.isMouseDown && !this.isDragging) {
                 // 如果是左键，没有拖动且鼠标曾经按下过，则认为是点击事件
-                if (GridMap.build()) {
+                if (GridMap.PreviewMachine) {
+                    if (GridMap.howOccupying().length) return;
+                    if (!GridMap.build()) return;
                     IconsManager.cancel();
                     this.drawGrid();
+
+                }
+                else if (GridMap.PreviewBelt) {
+                    if (GridMap.PreviewBelt.startFIXED) {
+                        if (GridMap.build()) {
+                            IconsManager.cancel();
+                            this.drawGrid();
+                        }
+                    }
+                    else {
+                        GridMap.PreviewBelt.fixStart();
+                    }
                 }
             }
 
@@ -323,7 +332,7 @@ class GridCanvas {
             }
 
             this.clearOverlay();
-            this.PreviewMachine();
+            this.preview();
         });
 
         this.overlayCanvas.addEventListener('mouseleave', () => {
@@ -340,34 +349,34 @@ class GridCanvas {
     }
 
     // 预览选中机器的虚影
-    private PreviewMachine(): void {
-        if (!GridMap.PreviewMachine) return;
-        const rect: Rect | null = GridMap.PreviewMachine.shape();
-        if (rect === null) return;
-        const [startX, startY, width, height] = rect.toTuple();
-
-
+    private preview(): void {
         if (!this.overlayCtx) return;
-        // 绘制矩形预览
+        if (!GridMap.onPreview()) return;
         this.overlayCtx.save();
-
-        // 应用变换矩阵
         this.applyTransform(this.overlayCtx);
-
-        // 绘制半透明填充
         this.overlayCtx.fillStyle = 'rgba(100, 100, 255, 0.2)'; // 半透明蓝色填充
-
-        // 绘制填充矩形（注意：由于已应用了变换，这里直接使用网格坐标）
-        this.overlayCtx.fillRect(startX * this.gridSize, startY * this.gridSize,
-            width * this.gridSize, height * this.gridSize);
-
-        this.overlayCtx.setLineDash([]);
         this.overlayCtx.strokeStyle = 'rgba(100, 100, 255, 0.7)'; // 半透明蓝色边框
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
+        this.overlayCtx.setLineDash([]);
+        if (GridMap.PreviewMachine) {
+            const rect: Rect | null = GridMap.PreviewMachine.shape();
+            if (rect === null) return;
+            const [startX, startY, width, height] = rect.toTuple();
 
-        // 绘制矩形边框
-        this.overlayCtx.strokeRect(startX * this.gridSize, startY * this.gridSize,
-            width * this.gridSize, height * this.gridSize);
+            // 绘制填充矩形（注意：由于已应用了变换，这里直接使用网格坐标）
+            this.overlayCtx.fillRect(
+                startX * this.gridSize, startY * this.gridSize,
+                width * this.gridSize, height * this.gridSize
+            );
+
+            // 绘制矩形边框
+            this.overlayCtx.strokeRect(
+                startX * this.gridSize, startY * this.gridSize,
+                width * this.gridSize, height * this.gridSize);
+        }
+        else {
+
+        }
 
         this.overlayCtx.restore(); // 恢复绘图状态，确保不影响其他绘制
     }
@@ -402,7 +411,7 @@ class GridCanvas {
 
             this.drawGrid();
             this.clearOverlay();
-            this.PreviewMachine();
+            this.preview();
         };
 
         this.overlayCanvas.addEventListener('wheel', handleWheel);
@@ -588,12 +597,12 @@ class GridCanvas {
                 this.rotateAroundPoint();
                 this.drawGrid();
                 this.clearOverlay();
-                this.PreviewMachine();
+                this.preview();
             } else if (e.key.toLowerCase() === 'r' && this.isMouseOverCanvas && !e.ctrlKey) {
                 // 单独按R键执行机器预览旋转功能
                 GridMap.previewRotate(1);
                 this.clearOverlay();
-                this.PreviewMachine();
+                this.preview();
             }
         });
     }

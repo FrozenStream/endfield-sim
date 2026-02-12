@@ -44,27 +44,43 @@ class GridMap {
         return (GridMap._previewing instanceof BeltInstance) ? GridMap._previewing : null;
     }
 
+    public static onPreview(): boolean {
+        return GridMap._previewing !== null;
+    }
+
     public static howOccupying(): Vector2[] {
         const list: Vector2[] = [];
 
         if (GridMap._previewing === null) return list;
         if (GridMap._previewing instanceof MachineInstance) {
-
+            const rect: Rect = GridMap._previewing.shape()!;
+            for (let i = 0; i < rect.h; i++) {
+                for (let j = 0; j < rect.w; j++) {
+                    const v: Vector2 = new Vector2(rect.min_y + i, rect.min_x + j);
+                    if (GridMap.isOccupied(v)) list.push(v);
+                }
+            }
         }
         else {
-
+            GridMap._previewing.shape().forEach(({ pos, dire }) => {
+                if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
+            });
         }
         return [];
     }
+
+    /**
+     * @param mouseX 鼠标X网格坐标(float)
+     * @param mouseY 鼠标Y网格坐标(float)
+     */
     public static previewPositon(mouseX: number, mouseY: number) {
         if (GridMap._previewing instanceof MachineInstance) {
             GridMap._previewing.setPosition(new Vector2(mouseX, mouseY));
         }
         else if (GridMap._previewing instanceof BeltInstance) {
-            if (GridMap._previewing.start === null)
+            if (!GridMap._previewing.startFIXED)
                 GridMap._previewing.setStart(new Vector2(mouseX, mouseY));
-            else
-                GridMap._previewing.setEnd(0, new Vector2(mouseX, mouseY));
+            else GridMap._previewing.setEnd(0, new Vector2(mouseX, mouseY));
         }
     }
 
@@ -79,6 +95,10 @@ class GridMap {
 
     public static isOccupied(pos: Vector2): boolean {
         return GridMap.grid[pos.y][pos.x].occupied;
+    }
+
+    public static isOccupiedBy(pos: Vector2): MachineInstance | BeltInstance | null {
+        return GridMap.grid[pos.y][pos.x].by;
     }
 
     public static build(): boolean {
@@ -97,9 +117,9 @@ class GridMap {
         }
         else if (GridMap._previewing instanceof BeltInstance) {
             GridMap._belts.push(GridMap._previewing)
-            GridMap._previewing.shape().forEach(v => {
-                GridMap.grid[v.y][v.x].occupied = true;
-                GridMap.grid[v.y][v.x].by = GridMap._previewing;
+            GridMap._previewing.shape().forEach(({ pos, dire }) => {
+                GridMap.grid[pos.y][pos.x].occupied = true;
+                GridMap.grid[pos.y][pos.x].by = GridMap._previewing;
             });
             console.log("built", GridMap._previewing, "total:", GridMap._belts.length, "belts");
             GridMap._previewing = null;
