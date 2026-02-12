@@ -1,23 +1,19 @@
 import type ItemStack from "../ItemStack";
+import ItemEnum from "../utils/ItemEnum";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
 
 
-const ItemEnum = {
-    SOLID: 0,
-    FLUID: 1
-} as const;
-
 interface IOblock {
     relPos: Vector2;
-    type: number;
+    type: ItemEnum;
     input: boolean;
     direction: Vector2;
     callback: (itemstack: ItemStack, instance: MachineInstance) => boolean;
 }
 
 interface StorageData {
-    type: number;
+    type: ItemEnum;
     NoIn: boolean;
     NoOut: boolean;
 }
@@ -198,7 +194,7 @@ class Machine {
 }
 
 
-export { Machine, MachineInstance };
+export { ItemEnum, Machine, MachineInstance };
 
 
 function Storager_In(itemstack: ItemStack, instance: MachineInstance): boolean {

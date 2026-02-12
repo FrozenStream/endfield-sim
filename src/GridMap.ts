@@ -1,4 +1,4 @@
-import type Conveyor from "./machines/Conveyor";
+import { BeltInstance, type Belt } from "./machines/Belt";
 import { Machine, MachineInstance } from "./machines/Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
@@ -6,6 +6,7 @@ import Vector2 from "./utils/Vector2";
 
 interface GridCell {
     occupied: boolean;
+    by: MachineInstance | BeltInstance | null;
 }
 
 class GridMap {
@@ -13,103 +14,106 @@ class GridMap {
     private static width: number = 80;
     private static height: number = 80;
 
-    private static _previewMachine: MachineInstance | null = null;
-    private static _previewConveyor: Conveyor | null = null;
+    private static _previewing: MachineInstance | BeltInstance | null = null;
 
-    private static Conveyors: Array<Conveyor> = [];
+    private static _belts: Array<BeltInstance> = [];
     private static _machines: Array<MachineInstance> = [];
 
     public static init(width: number, height: number) {
         GridMap.grid = Array.from(
             { length: height },
-            () => Array.from({ length: width }, () => ({ occupied: false }))
+            () => Array.from({ length: width }, () => ({ occupied: false, by: null }))
         );
         GridMap.width = width;
         GridMap.height = height;
     }
 
     public static set PreviewMachine(machine: Machine) {
-        GridMap._previewMachine = new MachineInstance(machine);
-        GridMap._previewConveyor = null;
+        GridMap._previewing = new MachineInstance(machine);
     }
 
     public static get PreviewMachine(): MachineInstance | null {
-        return GridMap._previewMachine;
+        return (GridMap._previewing instanceof MachineInstance) ? GridMap._previewing : null;
     }
 
-    public static buildMachine(): boolean {
-        if (!GridMap.checkMachine()) return false;
-        GridMap._machines.push(GridMap._previewMachine!)
-        const rect: Rect | null = GridMap._previewMachine!.shape()!;
-        for (let i = 0; i < rect.h; i++) {
-            for (let j = 0; j < rect.w; j++) {
-                GridMap.grid[rect.min_y + i][rect.min_x + j].occupied = true;
-            }
+    public static set PreviewBelt(belt: Belt) {
+        GridMap._previewing = new BeltInstance(belt);
+    }
+
+    public static get PreviewBelt(): BeltInstance | null {
+        return (GridMap._previewing instanceof BeltInstance) ? GridMap._previewing : null;
+    }
+
+    public static howOccupying(): Vector2[] {
+        const list: Vector2[] = [];
+
+        if (GridMap._previewing === null) return list;
+        if (GridMap._previewing instanceof MachineInstance) {
+
         }
-        console.log("built", GridMap._previewMachine, "total:", GridMap._machines.length, "machines");
-        GridMap._previewMachine = null;
-        return true;
-    }
+        else {
 
-    public static checkMachine(): boolean {
-        if (GridMap._previewMachine === null) return false;
-        const rect: Rect | null = GridMap._previewMachine.shape();
-        if (rect === null) return false;
-        let flag: boolean = true;
-        for (let i = 0; i < rect.h; i++) {
-            for (let j = 0; j < rect.w; j++) {
-                const pos: Vector2 = new Vector2(rect.min_x + j, rect.min_y + i);
-                if (GridMap.isOccupied(pos)) flag = false;
-            }
         }
-        return flag;
+        return [];
     }
-
-    public static SetPreviewConveyor(conveyor: Conveyor) {
-        GridMap._previewConveyor = conveyor;
-        GridMap._previewMachine = null;
-    }
-
-    public static previewingConveyor() {
-        return GridMap._previewConveyor;
-    }
-
     public static previewPositon(mouseX: number, mouseY: number) {
-        if (GridMap._previewMachine !== null)
-            GridMap._previewMachine.setPosition(new Vector2(mouseX, mouseY));
-        //if(GridMap._previewConveyor !== null) GridMap._previewConveyor = new Vector2(mouseX, mouseY);
+        if (GridMap._previewing instanceof MachineInstance) {
+            GridMap._previewing.setPosition(new Vector2(mouseX, mouseY));
+        }
+        else if (GridMap._previewing instanceof BeltInstance) {
+            if (GridMap._previewing.start === null)
+                GridMap._previewing.setStart(new Vector2(mouseX, mouseY));
+            else
+                GridMap._previewing.setEnd(0, new Vector2(mouseX, mouseY));
+        }
     }
 
     public static previewRotate(time: number) {
-        if (GridMap._previewMachine !== null)
-            GridMap._previewMachine.rotate(time);
-        //if(GridMap._previewConveyor !== null) GridMap._previewConveyor = new Vector2(mouseX, mouseY);
+        if (GridMap._previewing instanceof MachineInstance)
+            GridMap._previewing.rotate(time);
     }
 
     public static previewCancel() {
-        GridMap._previewMachine = null;
-        GridMap._previewConveyor = null;
+        GridMap._previewing = null;
     }
 
     public static isOccupied(pos: Vector2): boolean {
         return GridMap.grid[pos.y][pos.x].occupied;
     }
 
-    public static buildConveyor(): boolean {
-        return true;
-    }
-    public static checkConveyor(): boolean {
-        return true;
-    }
-
     public static build(): boolean {
-        if (GridMap._previewMachine != null) return GridMap.buildMachine();
-        if (GridMap._previewConveyor != null) return GridMap.buildConveyor();
+        if (GridMap._previewing instanceof MachineInstance) {
+            GridMap._machines.push(GridMap._previewing)
+            const rect: Rect = GridMap._previewing.shape()!;
+            for (let i = 0; i < rect.h; i++) {
+                for (let j = 0; j < rect.w; j++) {
+                    GridMap.grid[rect.min_y + i][rect.min_x + j].occupied = true;
+                    GridMap.grid[rect.min_y + i][rect.min_x + j].by = GridMap._previewing;
+                }
+            }
+            console.log("built", GridMap._previewing, "total:", GridMap._machines.length, "machines");
+            GridMap._previewing = null;
+            return true;
+        }
+        else if (GridMap._previewing instanceof BeltInstance) {
+            GridMap._belts.push(GridMap._previewing)
+            GridMap._previewing.shape().forEach(v => {
+                GridMap.grid[v.y][v.x].occupied = true;
+                GridMap.grid[v.y][v.x].by = GridMap._previewing;
+            });
+            console.log("built", GridMap._previewing, "total:", GridMap._belts.length, "belts");
+            GridMap._previewing = null;
+            return true;
+        }
         return false;
     }
 
     public static get allMachines(): ReadonlyArray<MachineInstance> {
         return GridMap._machines;
+    }
+
+    public static get allBelts(): ReadonlyArray<BeltInstance> {
+        return GridMap._belts;
     }
 }
 

@@ -97,6 +97,10 @@ class Vector2 {
     static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
         return v1.multiply(s1).add(v2.multiply(s2));
     }
+
+    static copy(v: Vector2): Vector2 {
+        return new Vector2(v.x, v.y);
+    }
 }
 
 export default Vector2;

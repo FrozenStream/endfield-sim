@@ -1,5 +1,6 @@
 import GridMap from "./GridMap";
 import I18n from "./I18n";
+import { Belt } from "./machines/Belt";
 import { Machine } from "./machines/Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
@@ -7,37 +8,35 @@ import Vector2 from "./utils/Vector2";
 
 
 
-class MachineIconsManager {
+class IconsManager {
     private iconCollection: HTMLElement;
 
     public static icons: Map<string, HTMLDivElement> = new Map();
     public static selectedIcon: HTMLElement | null = null;
 
-    private i18n: I18n = new I18n('/i18n/machines');
+    private i18n: I18n = new I18n('/i18n');
 
     constructor(collectionId: string) {
         this.iconCollection = document.getElementById(collectionId)!;
-        for (const [key, machine] of Machine.getAllMachines()) {
-            this.addIcon(key, machine);
+        this.addBeltIcon(Belt.soildBelt);
+        for (const [_, machine] of Machine.getAllMachines()) {
+            this.addMachineIcon(machine);
         }
     }
 
-    public addIcon(key: string, machine: Machine): void {
-        // 创建一个容器来包装图标和名称
-        const iconWrapper = document.createElement('div');
-
+    private buildIconElement(imgCache: HTMLImageElement): HTMLDivElement {
         const iconElement = document.createElement('div');
         iconElement.className = 'icon-item';
-        const img = machine.imgCache;
+        const img = imgCache;
         iconElement.appendChild(img);
-        // 将图标元素添加到包装容器
-        iconWrapper.appendChild(iconElement);
+        return iconElement;
+    }
 
-        // 添加名称显示（在蓝色背景外）
+    private buildNameElement(id: string): HTMLDivElement {
         const nameElement = document.createElement('div');
         nameElement.className = 'icon-name'; // 添加CSS类名
         this.i18n.addTranslateList(() => {
-            nameElement.textContent = this.i18n.t(machine.id);
+            nameElement.textContent = this.i18n.t(id);
         });
         nameElement.style.fontSize = '12px';
         nameElement.style.textAlign = 'center';
@@ -45,36 +44,71 @@ class MachineIconsManager {
         nameElement.style.maxWidth = '100%';
         nameElement.style.overflow = 'hidden';
         nameElement.style.textOverflow = 'ellipsis';
+        return nameElement;
+    }
+
+    public addMachineIcon(machine: Machine): void {
+        // 创建一个容器来包装图标和名称
+        const iconWrapper = document.createElement('div');
+
+        const iconElement = this.buildIconElement(machine.imgCache);
+        const nameElement = this.buildNameElement(machine.id);
+
+        iconWrapper.appendChild(iconElement);
         iconWrapper.appendChild(nameElement);
 
         // 将整个包装容器添加到iconCollection中
         this.iconCollection.appendChild(iconWrapper);
 
-        MachineIconsManager.icons.set(key, iconElement);
+        IconsManager.icons.set(machine.id, iconElement);
 
         iconElement.addEventListener('click', () => {
             if (GridMap.PreviewMachine?.machine === machine) {
-                MachineIconsManager.cancel();
+                IconsManager.cancel();
                 return;
             }
-            MachineIconsManager.select(key);
+            IconsManager.select(machine.id);
+        });
+    }
+
+    public addBeltIcon(belt: Belt): void {
+        // 创建一个容器来包装图标和名称
+        const iconWrapper = document.createElement('div');
+
+        const iconElement = this.buildIconElement(belt.imgCache);
+        const nameElement = this.buildNameElement(belt.id);
+
+        iconWrapper.appendChild(iconElement);
+        iconWrapper.appendChild(nameElement);
+
+        // 将整个包装容器添加到iconCollection中
+        this.iconCollection.appendChild(iconWrapper);
+
+        IconsManager.icons.set(belt.id, iconElement);
+
+        iconElement.addEventListener('click', () => {
+            if (GridMap.PreviewMachine?.machine === machine) {
+                IconsManager.cancel();
+                return;
+            }
+            IconsManager.select(machine.id);
         });
     }
 
     public static cancel() {
         GridMap.previewCancel();
-        if (MachineIconsManager.selectedIcon)
-            MachineIconsManager.selectedIcon.classList.remove('active');
-        MachineIconsManager.selectedIcon = null;
+        if (IconsManager.selectedIcon)
+            IconsManager.selectedIcon.classList.remove('active');
+        IconsManager.selectedIcon = null;
     }
 
-    public static select(key: string) {
-        if (MachineIconsManager.selectedIcon) MachineIconsManager.selectedIcon.classList.remove('active');
+    public static select(id: string) {
+        if (IconsManager.selectedIcon) IconsManager.selectedIcon.classList.remove('active');
         // 更新选中的图标引用
-        MachineIconsManager.selectedIcon = MachineIconsManager.icons.get(key)!;
-        GridMap.PreviewMachine = Machine.getAllMachines().get(key)!;
+        IconsManager.selectedIcon = IconsManager.icons.get(id)!;
+        GridMap.PreviewMachine = Machine.getAllMachines().get(id)!;
         // 添加active类到当前选中的图标
-        MachineIconsManager.selectedIcon.classList.add('active');
+        IconsManager.selectedIcon.classList.add('active');
     }
 }
 
@@ -238,7 +272,7 @@ class GridCanvas {
             if (this.mouseDownButton === 0 && this.isMouseDown && !this.isDragging) {
                 // 如果是左键，没有拖动且鼠标曾经按下过，则认为是点击事件
                 if (GridMap.build()) {
-                    MachineIconsManager.cancel();
+                    IconsManager.cancel();
                     this.drawGrid();
                 }
             }
@@ -267,7 +301,7 @@ class GridCanvas {
     private bindRightClickEvents(): void {
         this.overlayCanvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            MachineIconsManager.cancel();
+            IconsManager.cancel();
             this.clearOverlay();
         });
     }
@@ -580,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = new GridCanvas('grid-wrapper');
 
     // 初始化图标管理器
-    const iconManager = new MachineIconsManager('icon-collection');
+    const iconManager = new IconsManager('icon-collection');
 
 
     // 绑定缩放滑块事件 - 现在通过图标操作
