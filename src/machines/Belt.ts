@@ -68,11 +68,12 @@ class BeltInstance {
     }
 
     public get length(): number {
-        return this.direc.length - 1;
+        return this.direc.length;
     }
 
     public shapeAt(index: number): number {
-        return Vector2.ABtoIndex(this.direc[index], this.direc[index + 1]);
+        const nextDir = index + 1 < this.direc.length ? this.direc[index + 1] : this.direc[index];
+        return Vector2.ABtoIndex(this.direc[index], nextDir);
     }
 
     public shape(): ReadonlyArray<Vector2> {

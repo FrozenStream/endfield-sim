@@ -2,6 +2,7 @@ import GridMap from "./GridMap";
 import I18n from "./I18n";
 import { Belt } from "./machines/Belt";
 import { Machine } from "./machines/Machines";
+import drawBelt from "./utils/drawUtil";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
 
@@ -354,8 +355,8 @@ class GridCanvas {
         if (!GridMap.onPreview()) return;
         this.overlayCtx.save();
         this.applyTransform(this.overlayCtx);
-        this.overlayCtx.fillStyle = 'rgba(100, 100, 255, 0.2)'; // 半透明蓝色填充
-        this.overlayCtx.strokeStyle = 'rgba(100, 100, 255, 0.7)'; // 半透明蓝色边框
+        this.overlayCtx.fillStyle = 'rgba(100, 100, 255, 0.25)'; // 半透明蓝色填充
+        this.overlayCtx.strokeStyle = 'rgba(100, 100, 255, 0.75)'; // 半透明蓝色边框
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
         if (GridMap.PreviewMachine) {
@@ -375,12 +376,27 @@ class GridCanvas {
                 width * this.gridSize, height * this.gridSize);
         }
         if (GridMap.PreviewBelt) {
-            GridMap.PreviewBelt.shape().forEach((v: Vector2) => {
-                this.overlayCtx!.fillRect(
-                    v.x * this.gridSize, v.y * this.gridSize,
-                    this.gridSize, this.gridSize
-                );
-            });
+            if (GridMap.PreviewBelt.startFIXED) {
+                const list = GridMap.PreviewBelt.shape();
+                for (let i = 0; i < list.length; i++) {
+                    const pos: Vector2 = list[i];
+                    drawBelt(this.overlayCtx,
+                        GridMap.PreviewBelt.shapeAt(i),
+                        pos.x * this.gridSize,
+                        pos.y * this.gridSize,
+                        this.gridSize
+                    );
+                }
+            }
+            else {
+                if (GridMap.PreviewBelt.start) {
+                    this.overlayCtx.fillRect(
+                        GridMap.PreviewBelt.start.x * this.gridSize, GridMap.PreviewBelt.start.y * this.gridSize,
+                        this.gridSize, this.gridSize
+                    );
+                }
+            }
+
         }
 
         this.overlayCtx.restore(); // 恢复绘图状态，确保不影响其他绘制

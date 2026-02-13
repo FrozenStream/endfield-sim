@@ -51,7 +51,11 @@ class Vector2 {
         return new Vector2(this.x > 0 ? 1 : (this.x < 0 ? -1 : 0), this.y > 0 ? 1 : (this.y < 0 ? -1 : 0));
     }
 
-    rotateCCW(time: number): Vector2 {
+    // toString():string{
+    //     return `${this.x}`
+    // }
+
+    rotateCW(time: number): Vector2 {
         time = (time + 4) % 4;
         switch (time) {
             case 0:
@@ -66,7 +70,7 @@ class Vector2 {
         throw new Error("Invalid time");
     }
 
-    rotateCW(time: number): Vector2 {
+    rotateCCW(time: number): Vector2 {
         time = (time + 4) % 4;
         switch (time) {
             case 0:
@@ -103,16 +107,44 @@ class Vector2 {
     static readonly RIGHT = new Vector2(1, 0);
 
     static readonly UP_LEFT = new Vector2(-1, -1);
-    static readonly UP_RIGHT = new Vector2(-1, 1);
-    static readonly DOWN_LEFT = new Vector2(1, -1);
+    static readonly LEFT_UP = new Vector2(-1, -1);
+    static readonly UP_RIGHT = new Vector2(1, -1);
+    static readonly RIGHT_UP = new Vector2(1, -1);
+    static readonly DOWN_LEFT = new Vector2(-1, 1);
+    static readonly LEFT_DOWN = new Vector2(-1, 1);
     static readonly DOWN_RIGHT = new Vector2(1, 1);
+    static readonly RIGHT_DOWN = new Vector2(1, 1);
 
     static readonly DIREC: Vector2[] = [
-        this.RIGHT, this.UP_RIGHT,
-        this.UP, this.UP_LEFT,
-        this.LEFT, this.DOWN_LEFT,
-        this.DOWN, this.DOWN_RIGHT
+        this.RIGHT, this.RIGHT_UP, this.UP_RIGHT,
+        this.UP, this.UP_LEFT, this.LEFT_UP,
+        this.LEFT, this.LEFT_DOWN, this.DOWN_LEFT,
+        this.DOWN, this.DOWN_RIGHT, this.RIGHT_DOWN
     ]
+
+    static ABtoIndex(v1: number, v2: number) {
+        if (v1 === 0) {
+            if (v2 === 0) return 0;
+            else if (v2 === 3) return 1;
+            else if (v2 === 9) return 11;
+        }
+        else if (v1 === 3) {
+            if (v2 === 0) return 2;
+            else if (v2 === 3) return 3;
+            else if (v2 === 6) return 4;
+        }
+        else if (v1 === 6) {
+            if (v2 === 3) return 5;
+            else if (v2 === 6) return 6;
+            else if (v2 === 9) return 7;
+        }
+        else if (v1 === 9) {
+            if (v2 === 6) return 8;
+            else if (v2 === 9) return 9;
+            else if (v2 === 0) return 10;
+        }
+        throw new Error("get bad array");
+    }
 
     static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
         return v1.multiply(s1).add(v2.multiply(s2));
@@ -123,70 +155,48 @@ class Vector2 {
     }
 
     static isOpposite(v1: number, v2: number) {
-        return (v1 + 4) % 8 === v2;
+        return (v1 + 6) % 12 === v2;
     }
 
     static isPerpendicular(v1: number, v2: number) {
-        return Math.abs(v1 - v2) === 2;
+        return Math.abs(v1 - v2) === 3;
     }
 
     static isDiagonal(v: number) {
-        return v % 2 === 1;
+        return v % 3 !== 0;
     }
 
     static toCCW(direction: number): number {
-        return (direction + 2) % 8;
+        return (direction + 3) % 12;
     }
 
     static toCW(direction: number): number {
-        return (direction + 6) % 8;
+        return (direction + 9) % 12;
     }
 
     static toBACK(direction: number): number {
-        return (direction + 4) % 8;
+        return (direction + 6) % 12;
     }
 
-    static toIndex(v: Vector2) {
-        if (v.x === -1) {
-            if (v.y === -1) return 3;
-            else if (v.y === 0) return 4;
-            else if (v.y === 1) return 5;
-        }
-        else if (v.x === 0) {
-            if (v.y === -1) return 2;
-            else if (v.y === 1) return 6;
-        }
-        else if (v.x === 1) {
-            if (v.y === -1) return 1;
-            else if (v.y === 0) return 0;
-            else if (v.y === 1) return 7;
-        }
-        return null;
-    }
+    // static toIndex(v: Vector2) {
+    //     if (v.x === -1) {
+    //         if (v.y === -1) return 3;
+    //         else if (v.y === 0) return 4;
+    //         else if (v.y === 1) return 5;
+    //     }
+    //     else if (v.x === 0) {
+    //         if (v.y === -1) return 2;
+    //         else if (v.y === 1) return 6;
+    //     }
+    //     else if (v.x === 1) {
+    //         if (v.y === -1) return 1;
+    //         else if (v.y === 0) return 0;
+    //         else if (v.y === 1) return 7;
+    //     }
+    //     return null;
+    // }
 
-    static ABtoIndex(v1: number, v2: number) {
-        if (v1 === 0) {
-            if (v2 === 0) return 0;
-            else if (v2 === 2) return 1;
-            else if (v2 === 6) return 7;
-        }
-        else if (v1 === 2) {
-            if (v2 === 0) return 1;
-            else if (v2 === 2) return 2;
-            else if (v2 === 4) return 3;
-        }
-        else if (v1 === 4) {
-            if (v2 === 2) return 3;
-            else if (v2 === 4) return 4;
-            else if (v2 === 6) return 5;
-        }
-        else if (v1 === 6) {
-            if (v2 === 4) return 5;
-            else if (v2 === 6) return 6;
-            else if (v2 === 0) return 7;
-        }
-        throw new Error("get bad array");
-    }
+
 }
 
 

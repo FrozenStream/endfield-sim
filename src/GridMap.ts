@@ -7,6 +7,7 @@ import Vector2 from "./utils/Vector2";
 interface GridCell {
     occupied: boolean;
     by: MachineInstance | BeltInstance | null;
+    beltDirec: number | null;
 }
 
 class GridMap {
@@ -22,7 +23,7 @@ class GridMap {
     public static init(width: number, height: number) {
         GridMap.grid = Array.from(
             { length: height },
-            () => Array.from({ length: width }, () => ({ occupied: false, by: null }))
+            () => Array.from({ length: width }, () => ({ occupied: false, by: null, beltDirec: null }))
         );
         GridMap.width = width;
         GridMap.height = height;
@@ -62,7 +63,7 @@ class GridMap {
             }
         }
         else {
-            GridMap._previewing.shape().forEach(({ pos, direc: dire }) => {
+            GridMap._previewing.shape().forEach((pos: Vector2) => {
                 if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
             });
         }
@@ -80,7 +81,7 @@ class GridMap {
         else if (GridMap._previewing instanceof BeltInstance) {
             if (!GridMap._previewing.startFIXED)
                 GridMap._previewing.setStart(new Vector2(mouseX, mouseY));
-            else GridMap._previewing.setEnd(0, new Vector2(mouseX, mouseY));
+            else GridMap._previewing.setEnd(3, new Vector2(mouseX, mouseY));
         }
     }
 
@@ -116,11 +117,14 @@ class GridMap {
             return true;
         }
         else if (GridMap._previewing instanceof BeltInstance) {
-            GridMap._belts.push(GridMap._previewing)
-            GridMap._previewing.shape().forEach(({ pos, direc: dire }) => {
+            GridMap._belts.push(GridMap._previewing);
+            const list: ReadonlyArray<Vector2> = GridMap._previewing.shape();
+            for (let i = 0; i < list.length; i++) {
+                const pos: Vector2 = list[i];
                 GridMap.grid[pos.y][pos.x].occupied = true;
                 GridMap.grid[pos.y][pos.x].by = GridMap._previewing;
-            });
+                GridMap.grid[pos.y][pos.x].beltDirec = GridMap._previewing.shapeAt(i);
+            };
             console.log("built", GridMap._previewing, "total:", GridMap._belts.length, "belts");
             GridMap._previewing = null;
             return true;
