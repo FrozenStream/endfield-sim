@@ -134,7 +134,19 @@ class Vector2 {
         return v % 2 === 1;
     }
 
-    static toIndex(v: Vector2): number | null {
+    static toCCW(direction: number): number {
+        return (direction + 2) % 8;
+    }
+
+    static toCW(direction: number): number {
+        return (direction + 6) % 8;
+    }
+
+    static toBACK(direction: number): number {
+        return (direction + 4) % 8;
+    }
+
+    static toIndex(v: Vector2) {
         if (v.x === -1) {
             if (v.y === -1) return 3;
             else if (v.y === 0) return 4;
@@ -151,6 +163,31 @@ class Vector2 {
         }
         return null;
     }
+
+    static ABtoIndex(v1: number, v2: number) {
+        if (v1 === 0) {
+            if (v2 === 0) return 0;
+            else if (v2 === 2) return 1;
+            else if (v2 === 6) return 7;
+        }
+        else if (v1 === 2) {
+            if (v2 === 0) return 1;
+            else if (v2 === 2) return 2;
+            else if (v2 === 4) return 3;
+        }
+        else if (v1 === 4) {
+            if (v2 === 2) return 3;
+            else if (v2 === 4) return 4;
+            else if (v2 === 6) return 5;
+        }
+        else if (v1 === 6) {
+            if (v2 === 4) return 5;
+            else if (v2 === 6) return 6;
+            else if (v2 === 0) return 7;
+        }
+        throw new Error("get bad array");
+    }
 }
+
 
 export default Vector2;

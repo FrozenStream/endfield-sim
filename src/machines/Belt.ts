@@ -7,13 +7,13 @@ class BeltInstance {
     public static readonly imgCache: HTMLImageElement;
 
     public start: Vector2 | null = null;
-    public directions: Array<number>;
+    public direc: Array<number>;
 
     public startFIXED: boolean = false;
 
     constructor(beltType: Belt) {
         this.beltType = beltType;
-        this.directions = [];
+        this.direc = [];
 
     }
 
@@ -25,64 +25,64 @@ class BeltInstance {
         this.startFIXED = true;
     }
 
-    public setEnd(faceDirection: number, end: Vector2) {
+    public setEnd(faceAt: number, end: Vector2) {
         if (this.start === null) throw new Error("start point is null");
         end = end.floor();
-        this.directions.push(faceDirection);
+        this.direc = [faceAt];
 
-        const point: Vector2 = this.start.add(Belt.DIRECTION[faceDirection]);
-        const relative: Vector2 = end.subtract(point);
-        const inFaceDirection: number = relative.dot(Belt.DIRECTION[faceDirection]);
+        const relative: Vector2 = end.subtract(this.start);
+        const inFaceLength: number = relative.dot(Vector2.DIREC[faceAt]);
 
-        if (inFaceDirection >= 0) {
-            for (let i = 0; i < inFaceDirection; i++) this.directions.push(faceDirection);
+        if (inFaceLength >= 0) {
+            // end在面朝方向，前进至垂直
+            for (let i = 0; i < inFaceLength; i++) this.direc.push(faceAt);
 
             if (relative.manhattanDistance() != 0) {
-                let dir_a = Belt.rotateCW(faceDirection);
-                let dir_b = Belt.rotateCCW(faceDirection);
-                if (relative.dot(Belt.DIRECTION[dir_a]) >= 0)
-                    for (let j = 0; j < inFaceDirection; j++) this.directions.push(dir_a);
+                const dir_a = Vector2.toCW(faceAt);
+                const dir_b = Vector2.toCCW(faceAt);
+                const l = relative.dot(Vector2.DIREC[dir_a]);
+                if (l >= 0)
+                    for (let j = 0; j < l; j++) this.direc.push(dir_a);
                 else
-                    for (let j = 0; j < inFaceDirection; j++) this.directions.push(dir_b);
+                    for (let j = 0; j < -l; j++) this.direc.push(dir_b);
             }
         }
         else {
-            let dir_a = Belt.rotateCW(faceDirection);
-            let dir_b = Belt.rotateCCW(faceDirection);
-            let dir_back = Belt.rotateBACK(faceDirection);
+            let dir_a = Vector2.toCW(faceAt);
+            let dir_b = Vector2.toCCW(faceAt);
+            let dir_back = Vector2.toBACK(faceAt);
             let rotated: boolean = false;
-            if (relative.dot(Belt.DIRECTION[dir_a]) > 0) {
+
+            const l = relative.dot(Vector2.DIREC[dir_a]);
+            if (l > 0) {
                 rotated = true;
-                for (let j = 0; j < -inFaceDirection; j++) this.directions.push(dir_a);
-            } else if (relative.dot(Belt.DIRECTION[dir_b]) > 0) {
+                for (let j = 0; j < l; j++) this.direc.push(dir_a);
+            } else if (l < 0) {
                 rotated = true;
-                for (let j = 0; j < -inFaceDirection; j++) this.directions.push(dir_b);
+                for (let j = 0; j < -l; j++) this.direc.push(dir_b);
             }
             if (rotated) {
-                for (let j = 0; j < -inFaceDirection; j++) this.directions.push(dir_back);
+                for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
             }
         }
     }
 
-    public shape(): ReadonlyArray<{ pos: Vector2, dire: Vector2 }> {
+    public get length(): number {
+        return this.direc.length - 1;
+    }
+
+    public shapeAt(index: number): number {
+        return Vector2.ABtoIndex(this.direc[index], this.direc[index + 1]);
+    }
+
+    public shape(): ReadonlyArray<Vector2> {
         let point: Vector2 = Vector2.copy(this.start!);
-        const arr: Array<{ pos: Vector2, dire: Vector2 }> = [];
-        arr.push({
-            pos: point,
-            dire: Belt.DIRECTION[this.directions[0]].add(Belt.DIRECTION[this.directions[0]])
-        })
-        const lenth = this.directions.length;
-        for (let i = 0; i < length - 1; i++) {
-            point = point.add(Belt.DIRECTION[this.directions[i]]);
-            arr.push({
-                pos: point,
-                dire: Belt.DIRECTION[this.directions[i]].add(Belt.DIRECTION[this.directions[i + 1]])
-            });
+        const arr: Array<Vector2> = [];
+        arr.push(point);
+        for (let i = 1; i < this.direc.length; i++) {
+            point = point.add(Vector2.DIREC[this.direc[i]]);
+            arr.push(point);
         }
-        arr.push({
-            pos: point,
-            dire: Belt.DIRECTION[this.directions[lenth - 1]].add(Belt.DIRECTION[this.directions[lenth - 1]])
-        })
         return arr;
     }
 }
@@ -92,22 +92,6 @@ class Belt {
     public readonly id: string;
     public readonly type: ItemEnum;
     public readonly imgCache: HTMLImageElement;
-
-    public static readonly DIRECTION: Array<Vector2> = [
-        Vector2.RIGHT, Vector2.UP, Vector2.LEFT, Vector2.DOWN
-    ];
-
-    public static rotateCCW(direction: number): number {
-        return (direction + 1) % 4;
-    }
-
-    public static rotateCW(direction: number): number {
-        return (direction + 3) % 4;
-    }
-
-    public static rotateBACK(direction: number): number {
-        return (direction + 2) % 4;
-    }
 
     constructor(id: string, type: ItemEnum, imgsrc: string) {
         this.id = id;
@@ -121,7 +105,6 @@ class Belt {
         img.style.objectFit = 'contain';
         this.imgCache = img;
     }
-
 
     public static readonly soildBelt: Belt = new Belt("solid_belt", ItemEnum.SOLID, '/icon_belt/image_grid_belt_01.png');
 }

@@ -374,8 +374,13 @@ class GridCanvas {
                 startX * this.gridSize, startY * this.gridSize,
                 width * this.gridSize, height * this.gridSize);
         }
-        else {
-
+        if (GridMap.PreviewBelt) {
+            GridMap.PreviewBelt.shape().forEach((v: Vector2) => {
+                this.overlayCtx!.fillRect(
+                    v.x * this.gridSize, v.y * this.gridSize,
+                    this.gridSize, this.gridSize
+                );
+            });
         }
 
         this.overlayCtx.restore(); // 恢复绘图状态，确保不影响其他绘制

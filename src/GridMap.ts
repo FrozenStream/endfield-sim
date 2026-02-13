@@ -62,7 +62,7 @@ class GridMap {
             }
         }
         else {
-            GridMap._previewing.shape().forEach(({ pos, dire }) => {
+            GridMap._previewing.shape().forEach(({ pos, direc: dire }) => {
                 if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
             });
         }
@@ -117,7 +117,7 @@ class GridMap {
         }
         else if (GridMap._previewing instanceof BeltInstance) {
             GridMap._belts.push(GridMap._previewing)
-            GridMap._previewing.shape().forEach(({ pos, dire }) => {
+            GridMap._previewing.shape().forEach(({ pos, direc: dire }) => {
                 GridMap.grid[pos.y][pos.x].occupied = true;
                 GridMap.grid[pos.y][pos.x].by = GridMap._previewing;
             });
