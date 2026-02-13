@@ -62,9 +62,15 @@ class GridMap {
             }
         }
         else {
-            GridMap._previewing.shape().forEach((pos: Vector2) => {
+            if (!GridMap._previewing.startFIXED) return [];
+            const vecs: ReadonlyArray<Vector2> = GridMap._previewing.shape();
+            for (let i = 0; i < vecs.length; i++) {
+                const pos = vecs[i];
+                const direc = GridMap._previewing.shapeAt(i);
                 if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
-            });
+                const mapDirec = GridMap.occupyingDirec(pos);
+                if (mapDirec && (Vector2.isOpposite(direc, mapDirec) || Vector2.isDiagonal(mapDirec) || Vector2.isDiagonal(direc))) list.push(pos);
+            }
         }
         return list;
     }
@@ -99,6 +105,10 @@ class GridMap {
 
     public static isOccupiedBy(pos: Vector2): MachineInstance | BeltInstance | null {
         return GridMap.grid[pos.y][pos.x].by;
+    }
+
+    public static occupyingDirec(pos: Vector2): number | null {
+        return GridMap.grid[pos.y][pos.x].beltDirec;
     }
 
     public static build(): boolean {

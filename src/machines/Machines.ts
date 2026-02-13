@@ -154,36 +154,93 @@ class Machine {
 
     // 精炼炉
     public static readonly Furnance: Machine = new Machine('furnance', '/icon_port/icon_port_furnance_1.png', 3, 3,
-        [], []
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
     );
     // 粉碎机
     public static readonly Grinder: Machine = new Machine('grinder', '/icon_port/icon_port_grinder_1.png', 3, 3,
-        [], []);
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
+    );
     // 塑形机
     public static readonly Shaper: Machine = new Machine('shaper', '/icon_port/icon_port_shaper_1.png', 3, 3,
-        [], []);
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
+    );
     // 配件机
     public static readonly Component: Machine = new Machine('component', '/icon_port/icon_port_cmpt_mc_1.png', 3, 3,
-        [], []);
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 1), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
+    );
     // 种植机
     public static readonly Planter: Machine = new Machine('planter', '/icon_port/icon_port_planter_1.png', 5, 5,
-        [], []);
+        [], []
+    );
     // 采种机
     public static readonly Seedcollector: Machine = new Machine('seedcollector', '/icon_port/icon_port_seedcol_1.png', 5, 5,
-        [], []);
+        [], []
+    );
 
     // 装备原件机
     public static readonly Winder: Machine = new Machine('winder', '/icon_port/icon_port_winder_1.png', 6, 4,
-        [], []);
+        [], []
+    );
     // 灌装机
     public static readonly FillingMachine: Machine = new Machine('fillingmachine', '/icon_port/icon_port_filling_pd_mc_1.png', 6, 4,
-        [], []);
+        [], []
+    );
     // 封装机
     public static readonly AssemblyMachine: Machine = new Machine('assemblymachine', '/icon_port/icon_port_tools_asm_mc_1.png', 6, 4,
-        [], []);
+        [], []
+    );
     // 研磨机
     public static readonly Thickener: Machine = new Machine('thickener', '/icon_port/icon_port_thickener_1.png', 6, 4,
-        [], []);
+        [], []
+    );
     // 反应池
     public static readonly MixPool: Machine = new Machine('mixpool', '/icon_port/icon_port_mix_pool_1.png');
     // 天有烘炉
