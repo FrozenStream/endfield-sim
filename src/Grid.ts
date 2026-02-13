@@ -267,16 +267,16 @@ class GridCanvas {
             // 只在按下和释放的是同一个按键时才处理
             if (this.mouseDownButton === e.button && this.isMouseDown && !this.isDragging) {
                 // 如果是左键，没有拖动且鼠标曾经按下过，则认为是点击事件
+                console.log(GridMap.howOccupying().length)
                 if (GridMap.PreviewMachine) {
-                    if (GridMap.howOccupying().length) return;
-                    if (!GridMap.build()) return;
-                    IconsManager.cancel();
-                    this.drawGrid();
-
+                    if (!GridMap.howOccupying().length && GridMap.build()) {
+                        IconsManager.cancel();
+                        this.drawGrid();
+                    }
                 }
                 else if (GridMap.PreviewBelt) {
                     if (GridMap.PreviewBelt.startFIXED) {
-                        if (GridMap.build()) {
+                        if (!GridMap.howOccupying().length && GridMap.build()) {
                             IconsManager.cancel();
                             this.drawGrid();
                         }
@@ -398,6 +398,15 @@ class GridCanvas {
             }
 
         }
+
+        // 绘制重叠提示
+        this.overlayCtx.fillStyle = 'rgba(255, 165, 0, 0.6)';
+        GridMap.howOccupying().forEach((v: Vector2) => {
+            this.overlayCtx!.fillRect(
+                v.x * this.gridSize, v.y * this.gridSize,
+                this.gridSize, this.gridSize
+            );
+        });
 
         this.overlayCtx.restore(); // 恢复绘图状态，确保不影响其他绘制
     }
@@ -576,6 +585,21 @@ class GridCanvas {
                 this.gridCtx!.lineTo(v2.x, v2.y);
                 this.gridCtx!.stroke();
             });
+        });
+
+        // 绘制传送带
+        GridMap.allBelts.forEach((beltInstance) => {
+            const list = beltInstance.shape();
+            for (let i = 0; i < list.length; i++) {
+                const pos: Vector2 = list[i];
+                drawBelt(
+                    this.gridCtx!,
+                    beltInstance.shapeAt(i),
+                    pos.x * this.gridSize,
+                    pos.y * this.gridSize,
+                    this.gridSize
+                );
+            }
         });
     }
 

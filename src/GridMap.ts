@@ -51,13 +51,12 @@ class GridMap {
 
     public static howOccupying(): Vector2[] {
         const list: Vector2[] = [];
-
         if (GridMap._previewing === null) return list;
         if (GridMap._previewing instanceof MachineInstance) {
             const rect: Rect = GridMap._previewing.shape()!;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {
-                    const v: Vector2 = new Vector2(rect.min_y + i, rect.min_x + j);
+                    const v: Vector2 = new Vector2(rect.min_x + j, rect.min_y + i);
                     if (GridMap.isOccupied(v)) list.push(v);
                 }
             }
@@ -67,7 +66,7 @@ class GridMap {
                 if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
             });
         }
-        return [];
+        return list;
     }
 
     /**
