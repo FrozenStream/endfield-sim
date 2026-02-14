@@ -45,7 +45,7 @@ class GridMap {
         return (GridMap._previewing instanceof BeltInstance) ? GridMap._previewing : null;
     }
 
-    public static onPreview(): boolean {
+    public static get onPreview(): boolean {
         return GridMap._previewing !== null;
     }
 
@@ -62,12 +62,12 @@ class GridMap {
             }
         }
         else {
-            if (!GridMap._previewing.startFIXED) return [];
+            if (!GridMap._previewing.started) return [];
             const vecs: ReadonlyArray<Vector2> = GridMap._previewing.shape();
             for (let i = 0; i < vecs.length; i++) {
                 const pos = vecs[i];
                 const direc = GridMap._previewing.shapeAt(i);
-                if (GridMap.isOccupiedBy(pos) instanceof MachineInstance) list.push(pos);
+                if (GridMap.isOccupiedBy(pos.floor()) instanceof MachineInstance) list.push(pos);
                 const mapDirec = GridMap.occupyingDirec(pos);
                 if (mapDirec && (Vector2.isOpposite(direc, mapDirec) || Vector2.isDiagonal(mapDirec) || Vector2.isDiagonal(direc))) list.push(pos);
             }
@@ -80,13 +80,18 @@ class GridMap {
      * @param mouseY 鼠标Y网格坐标(float)
      */
     public static previewPositon(mouseX: number, mouseY: number) {
+        const vec: Vector2 = new Vector2(mouseX, mouseY);
         if (GridMap._previewing instanceof MachineInstance) {
-            GridMap._previewing.setPosition(new Vector2(mouseX, mouseY));
+            GridMap._previewing.Position = vec;
         }
         else if (GridMap._previewing instanceof BeltInstance) {
-            if (!GridMap._previewing.startFIXED)
-                GridMap._previewing.setStart(new Vector2(mouseX, mouseY));
-            else GridMap._previewing.setEnd(3, new Vector2(mouseX, mouseY));
+            console.log("Belt started? ", GridMap._previewing.started);
+            if (!GridMap._previewing.started) {
+                const occupied: MachineInstance | BeltInstance | null = this.isOccupiedBy(vec.floor());
+                if (occupied instanceof MachineInstance) GridMap._previewing.setStart(occupied);
+                else GridMap._previewing.setStart(vec);
+            }
+            else GridMap._previewing.setEnd(vec);
         }
     }
 
@@ -114,6 +119,7 @@ class GridMap {
     public static build(): boolean {
         if (GridMap._previewing instanceof MachineInstance) {
             GridMap._machines.push(GridMap._previewing)
+            GridMap._previewing.build();
             const rect: Rect = GridMap._previewing.shape()!;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {

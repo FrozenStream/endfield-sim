@@ -1,3 +1,5 @@
+// TODO: 取消每次运算新建一个实例
+
 class Vector2 {
 
     x: number;
@@ -106,6 +108,7 @@ class Vector2 {
     static readonly LEFT = new Vector2(-1, 0);
     static readonly RIGHT = new Vector2(1, 0);
 
+
     static readonly UP_LEFT = new Vector2(-1, -1);
     static readonly LEFT_UP = new Vector2(-1, -1);
     static readonly UP_RIGHT = new Vector2(1, -1);
@@ -121,6 +124,13 @@ class Vector2 {
         this.LEFT, this.LEFT_DOWN, this.DOWN_LEFT,
         this.DOWN, this.DOWN_RIGHT, this.RIGHT_DOWN
     ]
+
+    static readonly RIGHT_n = 0;
+    static readonly UP_n = 3;
+    static readonly LEFT_n = 6;
+    static readonly DOWN_n = 9;
+
+    static readonly INF = new Vector2(1e9, 1e9);
 
     static ABtoIndex(v1: number, v2: number) {
         if (v1 === 0) {
@@ -178,25 +188,13 @@ class Vector2 {
         return (direction + 6) % 12;
     }
 
-    // static toIndex(v: Vector2) {
-    //     if (v.x === -1) {
-    //         if (v.y === -1) return 3;
-    //         else if (v.y === 0) return 4;
-    //         else if (v.y === 1) return 5;
-    //     }
-    //     else if (v.x === 0) {
-    //         if (v.y === -1) return 2;
-    //         else if (v.y === 1) return 6;
-    //     }
-    //     else if (v.x === 1) {
-    //         if (v.y === -1) return 1;
-    //         else if (v.y === 0) return 0;
-    //         else if (v.y === 1) return 7;
-    //     }
-    //     return null;
-    // }
-
-
+    static toIndex(v: Vector2) {
+        if (v.x === 1 && v.y === 0) return 0;
+        else if (v.x === 0 && v.y === -1) return 3;
+        else if (v.x === -1 && v.y === 0) return 6;
+        else if (v.x === 0 && v.y === 1) return 9;
+        return null;
+    }
 }
 
 

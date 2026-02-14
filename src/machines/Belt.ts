@@ -1,15 +1,30 @@
 import ItemEnum from "../utils/ItemEnum";
 import Vector2 from "../utils/Vector2";
+import { MachineInstance } from "./Machines";
 
+
+
+class BeltSec {
+    owner: BeltInstance;
+    index: number;
+    direc: number;
+    constructor(owner: BeltInstance, index: number, direc: number) {
+        this.owner = owner;
+        this.index = index;
+        this.direc = direc;
+    }
+}
 
 class BeltInstance {
     public readonly beltType: Belt;
     public static readonly imgCache: HTMLImageElement;
 
-    public start: Vector2 | null = null;
+    public start: MachineInstance | null = null;
+    public startPoint: Vector2 | null = null;
     public direc: Array<number>;
 
-    public startFIXED: boolean = false;
+    private _started: boolean = false;
+    private sections: ReadonlyArray<BeltSec> | null = null;
 
     constructor(beltType: Belt) {
         this.beltType = beltType;
@@ -17,54 +32,64 @@ class BeltInstance {
 
     }
 
-    public setStart(start: Vector2) {
-        this.start = start.floor();
+    public setStart(start: MachineInstance | Vector2) {
+        if (start instanceof Vector2) {
+            this.startPoint = start.floor();
+            this.start = null;
+        }
+        else {
+            this.startPoint = null;
+            this.start = start;
+        }
     }
 
-    public fixStart() {
-        this.startFIXED = true;
+    public lockStart() {
+        if (this.start) this._started = true;
     }
 
-    public setEnd(faceAt: number, end: Vector2) {
+    public get started() {
+        return this._started;
+    }
+
+    public setEnd(end: Vector2) {
         if (this.start === null) throw new Error("start point is null");
+        if (!this._started) return;
         end = end.floor();
+
+        const start = this.start.closestPort(end, false);
+        if (start === null) return;
+        const faceAt = this.start.portDirection_n(start);
+        this.startPoint = start.postion.add(Vector2.DIREC[faceAt]);
         this.direc = [faceAt];
 
-        const relative: Vector2 = end.subtract(this.start);
+        const relative: Vector2 = end.subtract(this.startPoint);
+        console.log('relative',relative);
         const inFaceLength: number = relative.dot(Vector2.DIREC[faceAt]);
+        const dir_a = Vector2.toCW(faceAt);
+        const dir_b = Vector2.toCCW(faceAt);
+        const dir_back = Vector2.toBACK(faceAt);
+        const l = relative.dot(Vector2.DIREC[dir_a]);
 
         if (inFaceLength >= 0) {
             // end在面朝方向，前进至垂直
             for (let i = 0; i < inFaceLength; i++) this.direc.push(faceAt);
-
-            if (relative.manhattanDistance() != 0) {
-                const dir_a = Vector2.toCW(faceAt);
-                const dir_b = Vector2.toCCW(faceAt);
-                const l = relative.dot(Vector2.DIREC[dir_a]);
-                if (l >= 0)
-                    for (let j = 0; j < l; j++) this.direc.push(dir_a);
-                else
-                    for (let j = 0; j < -l; j++) this.direc.push(dir_b);
+            if (relative.manhattanDistance() !== 0) {
+                if (l >= 0) for (let j = 0; j < l; j++) this.direc.push(dir_a);
+                else for (let j = 0; j < -l; j++) this.direc.push(dir_b);
             }
         }
         else {
-            let dir_a = Vector2.toCW(faceAt);
-            let dir_b = Vector2.toCCW(faceAt);
-            let dir_back = Vector2.toBACK(faceAt);
-            let rotated: boolean = false;
-
-            const l = relative.dot(Vector2.DIREC[dir_a]);
+            // 若有转向空间
             if (l > 0) {
-                rotated = true;
                 for (let j = 0; j < l; j++) this.direc.push(dir_a);
-            } else if (l < 0) {
-                rotated = true;
-                for (let j = 0; j < -l; j++) this.direc.push(dir_b);
+                for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
             }
-            if (rotated) {
+            if (l < 0) {
+                for (let j = 0; j < -l; j++) this.direc.push(dir_b);
                 for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
             }
         }
+        console.log(this.direc);
     }
 
     public get length(): number {
@@ -77,8 +102,9 @@ class BeltInstance {
     }
 
     public shape(): ReadonlyArray<Vector2> {
-        let point: Vector2 = Vector2.copy(this.start!);
+        if (!this.startPoint) return [];
         const arr: Array<Vector2> = [];
+        let point: Vector2 = Vector2.copy(this.startPoint);
         arr.push(point);
         for (let i = 1; i < this.direc.length; i++) {
             point = point.add(Vector2.DIREC[this.direc[i]]);

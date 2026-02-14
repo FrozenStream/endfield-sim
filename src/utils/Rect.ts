@@ -20,6 +20,10 @@ class Rect {
     center(): Vector2 {
         return new Vector2(this.min_x + this.w / 2, this.min_y + this.h / 2);
     }
+
+    mutiply(scalar: number): Rect { 
+        return new Rect(this.min_x * scalar, this.min_y * scalar, this.w * scalar, this.h * scalar);
+    }
 }
 
 

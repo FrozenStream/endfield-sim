@@ -1,11 +1,11 @@
 import GridMap from "./GridMap";
 import I18n from "./I18n";
-import { Belt } from "./machines/Belt";
-import { Machine } from "./machines/Machines";
-import drawBelt from "./utils/drawUtil";
+import { Belt, BeltInstance } from "./machines/Belt";
+import { Machine, MachineInstance } from "./machines/Machines";
+import { drawBelt, drawDiagonalLinesFill, drawMachine } from "./utils/drawUtil";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
-
+import { COLORS } from './colors';
 
 
 
@@ -112,6 +112,12 @@ class IconsManager {
         // 添加active类到当前选中的图标
         IconsManager.selectedIcon.classList.add('active');
     }
+}
+
+
+
+class InstanceAttention {
+    public static selecting: MachineInstance | BeltInstance | null = null;
 }
 
 class GridCanvas {
@@ -267,22 +273,23 @@ class GridCanvas {
             // 只在按下和释放的是同一个按键时才处理
             if (this.mouseDownButton === e.button && this.isMouseDown && !this.isDragging) {
                 // 如果是左键，没有拖动且鼠标曾经按下过，则认为是点击事件
-                console.log(GridMap.howOccupying().length)
+                const occupyCount = GridMap.howOccupying().length;
+                console.log("occupyCount:", occupyCount);
                 if (GridMap.PreviewMachine) {
-                    if (!GridMap.howOccupying().length && GridMap.build()) {
+                    if (!occupyCount && GridMap.build()) {
                         IconsManager.cancel();
                         this.drawGrid();
                     }
                 }
                 else if (GridMap.PreviewBelt) {
-                    if (GridMap.PreviewBelt.startFIXED) {
-                        if (!GridMap.howOccupying().length && GridMap.build()) {
+                    if (GridMap.PreviewBelt.started) {
+                        if (!occupyCount && GridMap.build()) {
                             IconsManager.cancel();
                             this.drawGrid();
                         }
                     }
                     else {
-                        GridMap.PreviewBelt.fixStart();
+                        GridMap.PreviewBelt.lockStart();
                     }
                 }
             }
@@ -352,55 +359,44 @@ class GridCanvas {
     // 预览选中机器的虚影
     private preview(): void {
         if (!this.overlayCtx) return;
-        if (!GridMap.onPreview()) return;
+        if (!GridMap.onPreview) return;
         this.overlayCtx.save();
         this.applyTransform(this.overlayCtx);
-        this.overlayCtx.fillStyle = 'rgba(100, 100, 255, 0.25)'; // 半透明蓝色填充
-        this.overlayCtx.strokeStyle = 'rgba(100, 100, 255, 0.75)'; // 半透明蓝色边框
+        this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL; // 半透明蓝色填充
+        this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE; // 半透明蓝色边框
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
         if (GridMap.PreviewMachine) {
-            const rect: Rect | null = GridMap.PreviewMachine.shape();
-            if (rect === null) return;
-            const [startX, startY, width, height] = rect.toTuple();
-
-            // 绘制填充矩形（注意：由于已应用了变换，这里直接使用网格坐标）
-            this.overlayCtx.fillRect(
-                startX * this.gridSize, startY * this.gridSize,
-                width * this.gridSize, height * this.gridSize
-            );
-
-            // 绘制矩形边框
-            this.overlayCtx.strokeRect(
-                startX * this.gridSize, startY * this.gridSize,
-                width * this.gridSize, height * this.gridSize);
+            drawMachine(this.overlayCtx, GridMap.PreviewMachine, this.gridSize);
         }
         if (GridMap.PreviewBelt) {
-            if (GridMap.PreviewBelt.startFIXED) {
+            if (GridMap.PreviewBelt.started) {
                 const list = GridMap.PreviewBelt.shape();
                 for (let i = 0; i < list.length; i++) {
                     const pos: Vector2 = list[i];
-                    drawBelt(this.overlayCtx,
-                        GridMap.PreviewBelt.shapeAt(i),
-                        pos.x * this.gridSize,
-                        pos.y * this.gridSize,
-                        this.gridSize
-                    );
+                    drawBelt(this.overlayCtx, GridMap.PreviewBelt.shapeAt(i),
+                        pos.x * this.gridSize, pos.y * this.gridSize, this.gridSize);
                 }
             }
             else {
-                if (GridMap.PreviewBelt.start) {
+                if (GridMap.PreviewBelt.startPoint) {
+                    this.overlayCtx.fillStyle = COLORS.UNILLEGAL_COLOR;
                     this.overlayCtx.fillRect(
-                        GridMap.PreviewBelt.start.x * this.gridSize, GridMap.PreviewBelt.start.y * this.gridSize,
+                        GridMap.PreviewBelt.startPoint.x * this.gridSize,
+                        GridMap.PreviewBelt.startPoint.y * this.gridSize,
                         this.gridSize, this.gridSize
                     );
+                }
+                else if (GridMap.PreviewBelt.start) {
+                    this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
+                    drawDiagonalLinesFill(this.overlayCtx, GridMap.PreviewBelt.start, this.gridSize);
                 }
             }
 
         }
 
         // 绘制重叠提示
-        this.overlayCtx.fillStyle = 'rgba(255, 165, 0, 0.6)';
+        this.overlayCtx.fillStyle = COLORS.OVERLAP_WARNING;
         GridMap.howOccupying().forEach((v: Vector2) => {
             this.overlayCtx!.fillRect(
                 v.x * this.gridSize, v.y * this.gridSize,
@@ -521,7 +517,7 @@ class GridCanvas {
         const lineWidth = Math.min(2 / this.getScale(), 6);
 
         // 绘制四周边界线 - 使用粗实线
-        this.gridCtx.strokeStyle = '#999999';
+        this.gridCtx.strokeStyle = COLORS.GRID_BORDER;
         this.gridCtx.setLineDash([]);
         this.gridCtx.lineWidth = lineWidth;
 
@@ -529,7 +525,7 @@ class GridCanvas {
 
         // 当缩放级别足够高时，绘制内部网格线
         if (this.getScale() > 0.3) {
-            this.gridCtx.strokeStyle = '#999999';
+            this.gridCtx.strokeStyle = COLORS.GRID_LINE;
             this.gridCtx.setLineDash([5, 5]);
             this.gridCtx.lineWidth = lineWidth * 0.8;
 
@@ -554,37 +550,11 @@ class GridCanvas {
 
         // 绘制机器
         this.gridCtx.setLineDash([]);
-        this.gridCtx.fillStyle = '#9f9f9f';
-        this.gridCtx.strokeStyle = '#333333';
+        this.gridCtx.fillStyle = COLORS.MACHINE_FILL;
+        this.gridCtx.strokeStyle = COLORS.MACHINE_STROKE;
         this.gridCtx.lineWidth = 2;
         GridMap.allMachines.forEach((machineInstance) => {
-            // 清空区域内容，绘制新背景色和边框
-            const rect = machineInstance.shape();
-            if (!rect) return;
-            const [startX, startY, width, height] = rect.toTuple();
-            const LT = new Vector2(startX, startY).multiply(this.gridSize)
-            const RB = new Vector2(startX + width, startY + height).multiply(this.gridSize)
-
-            const min_x = Math.min(LT.x, RB.x);
-            const min_y = Math.min(LT.y, RB.y);
-            const max_x = Math.max(LT.x, RB.x);
-            const max_y = Math.max(LT.y, RB.y);
-            this.gridCtx!.fillRect(min_x, min_y, max_x - min_x, max_y - min_y);
-            this.gridCtx!.strokeRect(min_x, min_y, max_x - min_x, max_y - min_y);
-
-            machineInstance.portShape().forEach(({ v1, v2, v3 }) => {
-                v1 = v1.multiply(this.gridSize);
-                v2 = v2.multiply(this.gridSize);
-                v3 = v3.multiply(this.gridSize);
-                this.gridCtx!.beginPath();
-                this.gridCtx!.moveTo(v1.x, v1.y);
-                this.gridCtx!.lineTo(v2.x, v2.y);
-                this.gridCtx!.stroke();
-                this.gridCtx!.beginPath();
-                this.gridCtx!.moveTo(v3.x, v3.y);
-                this.gridCtx!.lineTo(v2.x, v2.y);
-                this.gridCtx!.stroke();
-            });
+            drawMachine(this.gridCtx!, machineInstance, this.gridSize);
         });
 
         // 绘制传送带

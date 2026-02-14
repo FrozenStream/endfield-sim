@@ -1,15 +1,21 @@
-import type ItemStack from "../ItemStack";
+import ItemStack from "../ItemStack";
 import ItemEnum from "../utils/ItemEnum";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
 
 
-interface IOblock {
+interface port {
     relPos: Vector2;
     type: ItemEnum;
     input: boolean;
     direction: Vector2;
     callback: (itemstack: ItemStack, instance: MachineInstance) => boolean;
+}
+
+
+interface portInstance {
+    portSrc: port;
+    postion: Vector2;
 }
 
 interface StorageData {
@@ -22,12 +28,13 @@ class MachineInstance {
     public readonly machine: Machine;
     public inventory: Array<ItemStack> = [];
     private _position: Vector2 | null = null;
-    private rotation: number = 0;
+    public rotation: number = 0;
 
-    private R: Vector2 = Vector2.RIGHT;
-    private D: Vector2 = Vector2.DOWN;
+    public R: Vector2 = Vector2.RIGHT;
+    public D: Vector2 = Vector2.DOWN;
 
     private rect: Rect | null = null;
+    private portInstances: ReadonlyArray<portInstance> | null = null;// 预览状态不使用
 
     constructor(machine: Machine) {
         this.machine = machine;
@@ -40,9 +47,17 @@ class MachineInstance {
         this.updateRect();
     }
 
-    public setPosition(position: Vector2) {
+    public set Position(position: Vector2) {
         this._position = position;
         this.updateRect();
+    }
+
+    public get Position(): Vector2 | undefined {
+        return this.rect?.center();
+    }
+
+    public get Rect(): Rect | null { 
+        return this.rect;
     }
 
     private updateRect() {
@@ -65,28 +80,40 @@ class MachineInstance {
         return this.rect;
     }
 
-    public portShape(): Array<{ v1: Vector2, v2: Vector2, v3: Vector2 }> {
-        let ans: Array<{ v1: Vector2, v2: Vector2, v3: Vector2 }> = [];
-        this.machine.IOs.forEach(io => {
-            const Tpos: Vector2 = this.rect!.center();
-            const center = Tpos.add(Vector2.linear(this.R, io.relPos.x, this.D, io.relPos.y));
-            let v2 = center.add(io.direction.rotateCW(this.rotation).multiply(0.1));
-            let v1 = center.add(io.direction.rotateCW(this.rotation + 1).multiply(0.1));
-            let v3 = center.add(io.direction.rotateCW(this.rotation - 1).multiply(0.1));
+    public build() {
+        if (!this.machine) throw new Error("machine not exist!");
+        if (!this._position) return;
+        for (let i = 0; i < this.machine.storage.length; i++) {
+            this.inventory.push(new ItemStack());
+        }
+        const list: portInstance[] = []
+        this.machine.ports.forEach((port: port) => {
+            list.push({
+                portSrc: port,
+                postion: Vector2.linear(this.R, port.relPos.x, this.D, port.relPos.y).add(this.Position!).floor()
+            });
+        });
+        this.portInstances = list;
+    }
 
-            if (io.input) {
-                v1 = v1.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
-                v2 = v2.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
-                v3 = v3.subtract(io.direction.rotateCW(this.rotation).multiply(0.4));
+    closestPort(pos: Vector2, input: boolean): portInstance | null {
+        if (!this.portInstances) return null;
+        let closest: portInstance | null = null;
+        let closest_num = 1e9;
+        let tmp;
+        this.portInstances.forEach((port: portInstance) => {
+            if (port.portSrc.input != input) return;
+            tmp = port.postion.subtract(pos).manhattanDistance();
+            if (!closest || tmp < closest_num) {
+                closest = port;
+                closest_num = tmp;
             }
-            else {
-                v1 = v1.add(io.direction.rotateCW(this.rotation).multiply(0.3));
-                v2 = v2.add(io.direction.rotateCW(this.rotation).multiply(0.3));
-                v3 = v3.add(io.direction.rotateCW(this.rotation).multiply(0.3));
-            }
-            ans.push({ v1, v2, v3 });
-        })
-        return ans;
+        });
+        return closest
+    }
+
+    portDirection_n(port: portInstance): number {
+        return Vector2.toIndex(port.portSrc.direction.rotateCCW(this.rotation))!;
     }
 }
 
@@ -97,20 +124,19 @@ class Machine {
     width: number;
     height: number;
 
-    storage: Array<StorageData>;
-    IOs: ReadonlyArray<IOblock>;
+    storage: ReadonlyArray<StorageData>;
+    ports: ReadonlyArray<port>;
 
     working: (instance: MachineInstance) => boolean;
 
     constructor(id: string, imgsrc: string, width: number = 3, height: number = 3,
-        storage: Array<StorageData> = [],
-        IOs: Array<IOblock> = [],
+        storage: Array<StorageData> = [], IOs: Array<port> = [],
         working: (instance: MachineInstance) => boolean = (_: MachineInstance) => true) {
         this.id = id;
         this.width = width;
         this.height = height;
         this.storage = storage;
-        this.IOs = IOs;
+        this.ports = IOs;
         this.working = working;
 
 
@@ -155,9 +181,8 @@ class Machine {
     // 精炼炉
     public static readonly Furnance: Machine = new Machine('furnance', '/icon_port/icon_port_furnance_1.png', 3, 3,
         [
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
         ],
         [
             { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
@@ -171,9 +196,8 @@ class Machine {
     // 粉碎机
     public static readonly Grinder: Machine = new Machine('grinder', '/icon_port/icon_port_grinder_1.png', 3, 3,
         [
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
         ],
         [
             { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
@@ -187,9 +211,8 @@ class Machine {
     // 塑形机
     public static readonly Shaper: Machine = new Machine('shaper', '/icon_port/icon_port_shaper_1.png', 3, 3,
         [
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
         ],
         [
             { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
@@ -203,9 +226,8 @@ class Machine {
     // 配件机
     public static readonly Component: Machine = new Machine('component', '/icon_port/icon_port_cmpt_mc_1.png', 3, 3,
         [
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false },
-            { type: ItemEnum.SOLID, NoIn: false, NoOut: false }, { type: ItemEnum.SOLID, NoIn: false, NoOut: false }
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
         ],
         [
             { relPos: new Vector2(-1, -1), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
@@ -218,11 +240,41 @@ class Machine {
     );
     // 种植机
     public static readonly Planter: Machine = new Machine('planter', '/icon_port/icon_port_planter_1.png', 5, 5,
-        [], []
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-2, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(2, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-2, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(-1, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(2, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
     );
     // 采种机
     public static readonly Seedcollector: Machine = new Machine('seedcollector', '/icon_port/icon_port_seedcol_1.png', 5, 5,
-        [], []
+        [
+            { type: ItemEnum.SOLID, NoIn: false, NoOut: true },
+            { type: ItemEnum.SOLID, NoIn: true, NoOut: false }
+        ],
+        [
+            { relPos: new Vector2(-2, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-1, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(0, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(1, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(2, -2), type: ItemEnum.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
+            { relPos: new Vector2(-2, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(-1, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(0, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(1, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+            { relPos: new Vector2(2, 2), type: ItemEnum.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
+        ]
     );
 
     // 装备原件机
