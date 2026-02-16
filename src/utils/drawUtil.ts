@@ -1,3 +1,4 @@
+import { InstanceAttention } from "../AttentionManager";
 import type { MachineInstance } from "../Machines";
 import Vector2 from "./Vector2";
 
@@ -148,7 +149,7 @@ function fillTriangle(canvas: CanvasRenderingContext2D, a: Vector2, b: Vector2, 
 
 
 function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
-    const rect = instance.shape();
+    const rect = instance.rect;
     if (!rect) return;
     const [startX, startY, width, height] = rect.mutiply(gridSize).toTuple();
 
@@ -156,17 +157,53 @@ function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance
     canvas.strokeRect(startX, startY, width, height);
 
     drawMachinePort(canvas, instance, gridSize);
+
+    if (InstanceAttention.select === instance) drawAttention(canvas, instance, gridSize);
+}
+
+function drawAttention(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
+    if (!instance.rect) return;
+
+    const rect = instance.rect.mutiply(gridSize);
+    const [x, y, width, height] = rect.toTuple();
+
+    // 保存当前画布状态
+    canvas.save();
+
+    // 设置高亮样式
+    canvas.strokeStyle = '#FFD700'; // 金色边框
+    canvas.lineWidth = 3;
+    canvas.setLineDash([5, 3]); // 虚线效果
+
+    // 绘制选中框
+    canvas.strokeRect(x, y, width, height);
+
+    // 绘制角标指示器
+    const indicatorSize = 8;
+    canvas.fillStyle = '#FFD700';
+
+    // 左上角
+    canvas.fillRect(x - indicatorSize / 2, y - indicatorSize / 2, indicatorSize, indicatorSize);
+    // 右上角
+    canvas.fillRect(x + width - indicatorSize / 2, y - indicatorSize / 2, indicatorSize, indicatorSize);
+    // 左下角
+    canvas.fillRect(x - indicatorSize / 2, y + height - indicatorSize / 2, indicatorSize, indicatorSize);
+    // 右下角
+    canvas.fillRect(x + width - indicatorSize / 2, y + height - indicatorSize / 2, indicatorSize, indicatorSize);
+
+    // 恢复画布状态
+    canvas.restore();
 }
 
 
 function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     canvas.beginPath();
-    instance.machine.ports.forEach(io => {
-        const Tpos: Vector2 = instance.Position!;
-        const center = Tpos.add(Vector2.linear(instance.R, io.relPos.x, instance.D, io.relPos.y));
-        let v2 = center.add(io.direction.rotateCW(instance.rotation).mul(0.1));
-        let v1 = center.add(io.direction.rotateCW(instance.rotation + 1).mul(0.1));
-        let v3 = center.add(io.direction.rotateCW(instance.rotation - 1).mul(0.1));
+    instance.currentMode.ports.forEach(io => {
+        const LT: Vector2 = instance.left_top!;
+        const center = Vector2.linear(instance.R, io.relPos.x, instance.D, io.relPos.y).addSelf(LT).addSelf(new Vector2(0.5, 0.5));
+        let v2 = io.direction.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
+        let v1 = io.direction.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
+        let v3 = io.direction.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
 
         if (io.input) {
             v1 = v1.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
@@ -191,7 +228,7 @@ function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInst
 
 
 function drawMachineLinesFill(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
-    const rect = instance.shape();
+    const rect = instance.rect;
     if (!rect) return;
     const [x, y, w, h] = rect.mutiply(gridSize).toTuple();
 
@@ -254,7 +291,7 @@ function drawGridLines(canvas: CanvasRenderingContext2D, width: number, height: 
 function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineInstance, transform: DOMMatrix, gridSize: number) {
     if (!canvas) return;
     // 清空区域内容，绘制新背景色和边框
-    const rect = instance.shape();
+    const rect = instance.rect;
     if (!rect) return;
     const [startX, startY, width, height] = rect.toTuple();
     const LT = new Vector2(startX, startY).mulSelf(gridSize).applySelf(transform);

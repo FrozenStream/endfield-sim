@@ -34,15 +34,11 @@
         
         <!-- 右侧功能区 (3/10)，分为上下两部分 -->
         <section class="right-panel">
-            <div class="top-section">
-                <h3>信息面板</h3>
-                <div class="info-content">
-                    <!-- 清空信息面板内容 -->
-                </div>
-            </div>
-            
+            <!-- 机器详情面板将由JavaScript动态生成 -->
+            <div id="machine-details-panel"></div>
+
+            <h3>工具图标</h3>
             <div class="bottom-section">
-                <h3>工具图标</h3>
                 <div class="item-collection" id="item-collection">
                     <!-- 工具图标将在这里动态添加 -->
                 </div>
@@ -53,5 +49,5 @@
 
     
 </body>
-<script type="module" src="/src/grid.ts"></script>
+<script type="module" src="/src/main.ts"></script>
 </html>

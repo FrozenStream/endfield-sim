@@ -1,4 +1,4 @@
-import ItemEnum from "./utils/ItemEnum";
+import EnumItemType from "./utils/EnumItem";
 import Vector2 from "./utils/Vector2";
 import { MachineInstance } from "./Machines";
 
@@ -117,10 +117,10 @@ class BeltInstance {
 
 class Belt {
     public readonly id: string;
-    public readonly type: ItemEnum;
+    public readonly type: EnumItemType;
     public readonly imgCache: HTMLImageElement;
 
-    constructor(id: string, type: ItemEnum, imgsrc: string) {
+    constructor(id: string, type: EnumItemType, imgsrc: string) {
         this.id = id;
         this.type = type;
 
@@ -133,7 +133,7 @@ class Belt {
         this.imgCache = img;
     }
 
-    public static readonly soildBelt: Belt = new Belt("solid_belt", ItemEnum.SOLID, '/icon_belt/image_grid_belt_01.png');
+    public static readonly soildBelt: Belt = new Belt("solid_belt", EnumItemType.SOLID, '/icon_belt/image_grid_belt_01.png');
 }
 
 

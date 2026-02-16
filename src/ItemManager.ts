@@ -1,3 +1,4 @@
+import { InstanceAttention } from "./AttentionManager";
 import I18n from "./I18n";
 import Item from "./Item";
 
@@ -12,7 +13,7 @@ class ItemIconManager {
     constructor(collectionId: string) {
         this.iconCollection = document.getElementById(collectionId)!;
         this.iconCollection.classList.add('item-manager-container');
-        
+
         for (const [_, item] of Item.allItems) {
             this.addItem(item);
         }
@@ -57,14 +58,11 @@ class ItemIconManager {
 
         ItemIconManager.icons.set(item.id, iconElement);
 
-        iconElement.addEventListener('click', () => {
-            // ItemManager的点击逻辑
-            if (ItemIconManager.selectedIcon) {
-                ItemIconManager.selectedIcon.classList.remove('item-selected');
-            }
-            ItemIconManager.selectedIcon = iconElement;
-            iconElement.classList.add('item-selected');
-            console.log("Selected item: " + item.id);
+        iconElement.addEventListener('wheel', (event) => {
+            // 阻止默认的滚动行为
+            event.preventDefault();
+            if (event.deltaY < 0) InstanceAttention.addItemto(item);
+            else InstanceAttention.delItemto(item);
         });
     }
 }

@@ -53,7 +53,7 @@ class GridMap {
         const list: Vector2[] = [];
         if (GridMap._previewing === null) return list;
         if (GridMap._previewing instanceof MachineInstance) {
-            const rect: Rect = GridMap._previewing.shape()!;
+            const rect: Rect = GridMap._previewing.rect!;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {
                     const v: Vector2 = new Vector2(rect.min_x + j, rect.min_y + i);
@@ -120,7 +120,7 @@ class GridMap {
         if (GridMap._previewing instanceof MachineInstance) {
             GridMap._machines.push(GridMap._previewing)
             GridMap._previewing.build();
-            const rect: Rect = GridMap._previewing.shape()!;
+            const rect: Rect = GridMap._previewing.rect!;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {
                     GridMap.grid[rect.min_y + i][rect.min_x + j].occupied = true;

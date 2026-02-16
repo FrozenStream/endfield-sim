@@ -1,167 +1,222 @@
 import GridMap from "./GridMap";
-import I18n from "./I18n";
-import { Belt, BeltInstance } from "./Belt";
-import { Machine, MachineInstance } from "./Machines";
 import { drawBelt, drawMachineLinesFill, drawMachine, drawGridLines, drawMachinesIcon } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './colors';
-import ItemIconManager from "./ItemManager";
+import { MachinesIconsManager } from "./MacineIconManager";
+import { InstanceAttention } from "./AttentionManager";
 
+/**
+ * 优化后的事件管理器类
+ * 集中处理所有canvas事件，提供统一的事件处理机制
+ */
+class GridCanvasEventManager {
+    private overlayCanvas: HTMLCanvasElement;
+    private gridCanvas: GridCanvas;
+    private isDragging: boolean = false;
+    private isMouseDown: boolean = false;
+    private mouseDownButton: number = -1;
+    private lastX: number = 0;
+    private lastY: number = 0;
+    private startX: number = 0;
+    private startY: number = 0;
+    private dragThreshold: number = 5;
+    private isMouseOver: boolean = false;
 
+    private readonly HOVER_DELAY: number = 10;
 
-class MachinesIconsManager {
-    private iconCollection: HTMLElement;
+    constructor(overlayCanvas: HTMLCanvasElement, gridCanvas: GridCanvas) {
+        this.overlayCanvas = overlayCanvas;
+        this.gridCanvas = gridCanvas;
+        this.bindEvents();
+    }
 
-    public static icons: Map<string, HTMLDivElement> = new Map();
-    public static selectedIcon: HTMLElement | null = null;
+    /**
+     * 统一绑定所有事件监听器
+     */
+    private bindEvents(): void {
+        // 鼠标事件
+        this.overlayCanvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        // 使用通用节流函数处理mousemove事件
+        this.overlayCanvas.addEventListener('mousemove', this.throttle(this.handleMouseMove.bind(this), this.HOVER_DELAY));
+        this.overlayCanvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.overlayCanvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        this.overlayCanvas.addEventListener('mouseenter', this.handleMouseEnter.bind(this));
 
-    private i18n: I18n = I18n.instance;
+        // 右键菜单事件
+        this.overlayCanvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
 
-    constructor(collectionId: string) {
-        this.iconCollection = document.getElementById(collectionId)!;
-        this.addBeltIcon(Belt.soildBelt);
-        for (const [_, machine] of Machine.getAllMachines()) {
-            this.addMachineIcon(machine);
+        // 滚轮事件
+        this.overlayCanvas.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+    }
+
+    private handleMouseDown(e: MouseEvent): void {
+        e.preventDefault();
+
+        this.isMouseDown = true;
+        this.mouseDownButton = e.button;
+        this.startX = e.clientX;
+        this.startY = e.clientY;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+
+        if (e.button === 0) { // 左键
+            this.overlayCanvas.style.cursor = 'grabbing';
         }
     }
 
-    private buildIconElement(imgCache: HTMLImageElement): HTMLDivElement {
-        const iconElement = document.createElement('div');
-        iconElement.className = 'machine-icon-element'; // 修改为独特的machine-icon-element类名
-        const img = imgCache;
-        iconElement.appendChild(img);
-        return iconElement;
-    }
+    private handleMouseMove(e: MouseEvent): void {
+        e.preventDefault();
 
-    private buildNameElement(id: string): HTMLDivElement {
-        const nameElement = document.createElement('div');
-        nameElement.className = 'machine-name-label'; // 修改为独特的machine-name-label类名
-        this.i18n.addTranslateList(() => {
-            nameElement.textContent = this.i18n.t(id);
-        });
-        nameElement.style.fontSize = '12px';
-        nameElement.style.textAlign = 'center';
-        nameElement.style.marginTop = '4px';
-        nameElement.style.maxWidth = '100%';
-        nameElement.style.overflow = 'hidden';
-        nameElement.style.textOverflow = 'ellipsis';
-        return nameElement;
-    }
+        if (this.isMouseDown && this.mouseDownButton === 0) {
+            // 检查是否达到拖动阈值
+            const distance = Math.sqrt(
+                Math.pow(e.clientX - this.startX, 2) +
+                Math.pow(e.clientY - this.startY, 2)
+            );
 
-    public addMachineIcon(machine: Machine): void {
-        // 创建一个容器来包装图标和名称
-        const iconWrapper = document.createElement('div');
-        iconWrapper.className = 'machine-wrapper'; // 添加包装容器类名
-
-        const iconElement = this.buildIconElement(machine.imgCache);
-        const nameElement = this.buildNameElement(machine.id);
-
-        iconWrapper.appendChild(iconElement);
-        iconWrapper.appendChild(nameElement);
-
-        // 将整个包装容器添加到iconCollection中
-        this.iconCollection.appendChild(iconWrapper);
-
-        MachinesIconsManager.icons.set(machine.id, iconElement);
-
-        iconElement.addEventListener('click', () => {
-            if (GridMap.PreviewMachine?.machine === machine) {
-                MachinesIconsManager.cancel();
-                return;
+            if (distance > this.dragThreshold) {
+                this.isDragging = true;
             }
-            MachinesIconsManager.select(machine, iconElement);
-        });
-    }
 
-    public addBeltIcon(belt: Belt): void {
-        // 创建一个容器来包装图标和名称
-        const iconWrapper = document.createElement('div');
-        iconWrapper.className = 'belt-wrapper'; // 添加传送带包装容器类名
-
-        const iconElement = this.buildIconElement(belt.imgCache);
-        const nameElement = this.buildNameElement(belt.id);
-
-        iconWrapper.appendChild(iconElement);
-        iconWrapper.appendChild(nameElement);
-
-        // 将整个包装容器添加到iconCollection中
-        this.iconCollection.appendChild(iconWrapper);
-
-        MachinesIconsManager.icons.set(belt.id, iconElement);
-
-        iconElement.addEventListener('click', () => {
-            if (GridMap.PreviewBelt?.beltType === belt) {
-                MachinesIconsManager.cancel();
-                return;
+            if (this.isDragging) {
+                // 处理拖拽逻辑
+                this.gridCanvas.handleDrag(e.clientX - this.lastX, e.clientY - this.lastY);
+                this.lastX = e.clientX;
+                this.lastY = e.clientY;
             }
-            MachinesIconsManager.select(belt, iconElement);
-        });
+        }
+
+        // 直接处理悬停逻辑，由外部节流控制频率
+        const mouseVec = this.gridCanvas.canvasToGridCoords(e.clientX, e.clientY);
+        this.gridCanvas.handleHover(mouseVec);
     }
 
-    public static cancel() {
-        GridMap.previewCancel();
-        if (MachinesIconsManager.selectedIcon)
-            MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
-        MachinesIconsManager.selectedIcon = null;
+    private handleMouseUp(e: MouseEvent): void {
+        e.preventDefault();
+
+        if (this.mouseDownButton === 0 && this.isMouseDown) { // 左键释放
+            if (!this.isDragging) {
+                // 点击事件处理
+                this.handleClick(e);
+            }
+
+            this.overlayCanvas.style.cursor = 'grab';
+        }
+
+        // 重置状态
+        this.resetMouseState();
     }
 
-    public static select(type: Machine | Belt, icon: HTMLDivElement) {
-        if (MachinesIconsManager.selectedIcon) MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
-        // 更新选中的图标引用
-        MachinesIconsManager.selectedIcon = icon;
-        if (type instanceof Machine) GridMap.PreviewMachine = type;
-        if (type instanceof Belt) GridMap.PreviewBelt = type;
-        // 添加selected类到当前选中的图标
-        MachinesIconsManager.selectedIcon.classList.add('machine-selected');
+    private handleMouseLeave(e: MouseEvent): void {
+        // 如果鼠标按下状态下离开，取消操作
+        if (this.isMouseDown && !this.isDragging) {
+            this.resetMouseState();
+        }
+
+        this.isMouseOver = false;
+        this.overlayCanvas.style.cursor = 'default';
+
+        // 清除悬停相关状态
+        this.clearHoverState();
+        this.gridCanvas.handleMouseLeave();
+    }
+
+    private handleMouseEnter(e: MouseEvent): void {
+        this.isMouseOver = true;
+        if (!this.isMouseDown) {
+            this.overlayCanvas.style.cursor = 'grab';
+        }
+    }
+
+    private handleContextMenu(e: MouseEvent): void {
+        e.preventDefault();
+        this.gridCanvas.handleRightClick();
+        this.resetMouseState();
+    }
+
+    private handleWheel(e: WheelEvent): void {
+        e.preventDefault();
+        this.gridCanvas.handleZoom(e.deltaY, e.clientX, e.clientY);
+    }
+
+    private handleClick(e: MouseEvent): void {
+        const mouseVec = this.gridCanvas.canvasToGridCoords(e.clientX, e.clientY);
+        this.gridCanvas.handleClick(mouseVec);
+    }
+
+    private clearHoverState(): void {
+        // 不需要特殊处理
+    }
+
+    private resetMouseState(): void {
+        this.isMouseDown = false;
+        this.isDragging = false;
+        this.mouseDownButton = -1;
+    }
+
+    /**
+     * 节流函数，限制高频事件的触发频率
+     */
+    private throttle<T extends (...args: any[]) => any>(func: T, limit: number): T {
+        let inThrottle: boolean;
+        return function (this: any, ...args: Parameters<T>) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        } as T;
+    }
+
+    /**
+     * 获取鼠标是否在canvas上
+     */
+    public get isMouseOverCanvas(): boolean {
+        return this.isMouseOver;
+    }
+
+    /**
+     * 销毁事件监听器，防止内存泄漏
+     */
+    public destroy(): void {
+        this.overlayCanvas.removeEventListener('mousedown', this.handleMouseDown);
+        this.overlayCanvas.removeEventListener('mousemove', this.handleMouseMove);
+        this.overlayCanvas.removeEventListener('mouseup', this.handleMouseUp);
+        this.overlayCanvas.removeEventListener('mouseleave', this.handleMouseLeave);
+        this.overlayCanvas.removeEventListener('mouseenter', this.handleMouseEnter);
+        this.overlayCanvas.removeEventListener('contextmenu', this.handleContextMenu);
+        this.overlayCanvas.removeEventListener('wheel', this.handleWheel);
+
+        this.clearHoverState();
+        this.resetMouseState();
     }
 }
 
-
-
-class InstanceAttention {
-    public static selecting: MachineInstance | BeltInstance | null = null;
-}
-
-class GridCanvas {
+/**
+ * 优化后的GridCanvas类
+ * 移除了分散的事件绑定代码，通过事件管理器统一处理
+ */
+export class GridCanvas {
     private container: HTMLElement;
-    private gridCanvas: HTMLCanvasElement;      // 用于绘制网格的canvas
-    private overlayCanvas: HTMLCanvasElement;   // 用于绘制机器预览等动态内容的canvas
+    private gridCanvas: HTMLCanvasElement;
+    private overlayCanvas: HTMLCanvasElement;
     private gridCtx: CanvasRenderingContext2D | null;
     private overlayCtx: CanvasRenderingContext2D | null;
+    private eventManager: GridCanvasEventManager | null = null;
 
     private gridSize: number = 50;
     private CanvasW: number = 0;
     private CanvasH: number = 0;
-    private isDragging: boolean = false;
-    private lastX: number = 0;
-    private lastY: number = 0;
-
-    // 添加变量用于判断是否为点击事件
-    private startX: number = 0;
-    private startY: number = 0;
-    private isMouseDown: boolean = false;
-    private mouseDownButton: number = 0;  // 记录按下的是哪个鼠标按键
-    private dragThreshold: number = 5; // 最大移动阈值，超过此值认为是拖动
-
-    // 使用变换矩阵替代offsetX和offsetY
     private transformMatrix: DOMMatrix = new DOMMatrix();
-
     private gridWidth: number = 80;
     private gridHeight: number = 80;
-
     private minScale: number = 0.2;
     private maxScale: number = 1;
 
-    // 跟踪鼠标是否在canvas上
-    private isMouseOverCanvas: boolean = false;
-
-    constructor(containerId: string) {
-        this.container = document.getElementById(containerId)!;
-
-        // 创建两个canvas：一个用于网格，一个用于覆盖层（机器预览等）
-        this.gridCanvas = document.createElement('canvas');
-        this.overlayCanvas = document.createElement('canvas');
-
+    constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement) {
+        this.container = container;
+        this.gridCanvas = gridCanvas;
+        this.overlayCanvas = overlayCanvas;
         this.gridCtx = null;
         this.overlayCtx = null;
 
@@ -170,12 +225,8 @@ class GridCanvas {
 
         this.setupCanvases();
         this.bindResizeListener();
-        this.bindDragEvents();
-        this.bindHoverEvents();
-        this.bindRightClickEvents();
-        this.bindWheelEvents();
-        this.bindRotateEvents(); // 添加键盘事件绑定
-        this.bindMouseEnterLeaveEvents(); // 添加鼠标进入/离开事件绑定
+        this.bindKeyboardEvents();
+        this.initializeEventManager();
         this.drawGrid();
     }
 
@@ -191,32 +242,31 @@ class GridCanvas {
         this.overlayCanvas.style.position = 'absolute';
         this.overlayCanvas.style.width = '100%';
         this.overlayCanvas.style.height = '100%';
-        this.overlayCanvas.style.zIndex = '2'; // 放在网格canvas之上
+        this.overlayCanvas.style.zIndex = '2';
 
-        // 将canvas添加到容器中
         this.container.appendChild(this.gridCanvas);
         this.container.appendChild(this.overlayCanvas);
 
         this.gridCtx = this.gridCanvas.getContext('2d');
         this.overlayCtx = this.overlayCanvas.getContext('2d');
-
-        // 根据设备像素比调整canvas的实际尺寸
         this.updateCanvasSize();
+    }
+
+    private initializeEventManager(): void {
+        // 初始化事件管理器，传入overlayCanvas作为主要交互层
+        this.eventManager = new GridCanvasEventManager(this.overlayCanvas, this);
     }
 
     private updateCanvasSize(): void {
         const rect = this.container.getBoundingClientRect();
-
         this.CanvasW = rect.width;
         this.CanvasH = rect.height;
 
-        // 设置canvas的实际尺寸
         this.gridCanvas.width = this.CanvasW * devicePixelRatio;
         this.gridCanvas.height = this.CanvasH * devicePixelRatio;
         this.overlayCanvas.width = this.CanvasW * devicePixelRatio;
         this.overlayCanvas.height = this.CanvasH * devicePixelRatio;
 
-        // 缩放绘图上下文以匹配设备像素比
         if (this.gridCtx) {
             this.gridCtx.scale(devicePixelRatio, devicePixelRatio);
         }
@@ -226,146 +276,148 @@ class GridCanvas {
     }
 
     private bindResizeListener(): void {
-        window.addEventListener('resize', () => {
-            this.updateCanvasSize();
-            this.drawGrid();
-            this.clearOverlay(); // 清空预览层
-        });
+        window.addEventListener('resize', this.handleResize);
     }
 
-    private bindDragEvents(): void {
-        this.overlayCanvas.addEventListener('mousedown', (e) => {
-            this.mouseDownButton = e.button;  // 记录按下的是哪个按键
-
-            // 只处理左键点击
-            if (e.button !== 0) return;
-
-            this.isDragging = false; // 开始时设为false
-            this.isMouseDown = true; // 记录鼠标按下状态
-            this.startX = e.clientX; // 记录开始位置
-            this.startY = e.clientY;
-            this.lastX = e.clientX;
-            this.lastY = e.clientY;
-            this.overlayCanvas.style.cursor = 'grabbing';
-        });
-
-        this.overlayCanvas.addEventListener('mousemove', (e) => {
-            if (this.isMouseDown && this.mouseDownButton === 0) {  // 只处理左键的情况
-                // 判断是否超过拖动阈值
-                const distance = Math.pow(e.clientX - this.startX, 2) + Math.pow(e.clientY - this.startY, 2);
-                if (distance > this.dragThreshold * this.dragThreshold) this.isDragging = true;
-            }
-
-            if (this.isDragging) {
-                const deltaX = e.clientX - this.lastX;
-                const deltaY = e.clientY - this.lastY;
-
-                this.transformMatrix = this.transformMatrix.preMultiplySelf(
-                    new DOMMatrix().translate(deltaX, deltaY)
-                )
-
-                this.lastX = e.clientX;
-                this.lastY = e.clientY;
-
-                this.drawGrid();
-            }
-        });
-
-        this.overlayCanvas.addEventListener('mouseup', (e) => {
-            // 只在按下和释放的是同一个按键时才处理
-            if (this.mouseDownButton === e.button && this.isMouseDown && !this.isDragging) {
-                // 如果是左键，没有拖动且鼠标曾经按下过，则认为是点击事件
-                const occupyCount = GridMap.howOccupying().length;
-                console.log("occupyCount:", occupyCount);
-                if (GridMap.PreviewMachine) {
-                    if (!occupyCount && GridMap.build()) {
-                        MachinesIconsManager.cancel();
-                        this.drawGrid();
-                    }
-                }
-                else if (GridMap.PreviewBelt) {
-                    if (GridMap.PreviewBelt.started) {
-                        if (!occupyCount && GridMap.build()) {
-                            MachinesIconsManager.cancel();
-                            this.drawGrid();
-                        }
-                    }
-                    else {
-                        GridMap.PreviewBelt.lockStart();
-                    }
-                }
-            }
-
-            this.isDragging = false;
-            this.isMouseDown = false; // 重置鼠标按下状态
-            this.mouseDownButton = -1;  // 重置鼠标按键记录
-            this.overlayCanvas.style.cursor = 'grab';
-        });
-
-        this.overlayCanvas.addEventListener('mouseleave', () => {
-            if (!this.isDragging && this.isMouseDown) {
-                // 鼠标离开时如果之前处于按下的状态，但未拖动，则取消此次操作
-                this.isMouseDown = false;
-            }
-
-            this.isDragging = false;
-            this.overlayCanvas.style.cursor = 'default';
-        });
-
-        // 设置初始光标样式
-        this.overlayCanvas.style.cursor = 'grab';
+    private bindKeyboardEvents(): void {
+        document.addEventListener('keydown', this.handleKeyboard);
     }
 
-    // 添加右键事件
-    private bindRightClickEvents(): void {
-        this.overlayCanvas.addEventListener('contextmenu', (e) => {
+    // 核心事件处理方法（供EventManager调用）
+
+    public handleDrag(deltaX: number, deltaY: number): void {
+        this.transformMatrix = this.transformMatrix.preMultiplySelf(
+            new DOMMatrix().translate(deltaX, deltaY)
+        );
+        this.drawGrid();
+    }
+
+    public handleClick(gridPos: Vector2): void {
+        const occupyCount = GridMap.howOccupying().length;
+        console.log("occupyCount:", occupyCount);
+
+        if (GridMap.PreviewMachine) {
+            if (!occupyCount && GridMap.build()) { MachinesIconsManager.cancel(); }
+        } else if (GridMap.PreviewBelt) {
+            if (GridMap.PreviewBelt.started) {
+                if (!occupyCount && GridMap.build()) { MachinesIconsManager.cancel(); }
+            } else { GridMap.PreviewBelt.lockStart(); }
+
+        } else { InstanceAttention.select = GridMap.isOccupiedBy(gridPos.floor()); }
+        this.drawGrid();
+    }
+
+    public handleRightClick(): void {
+        MachinesIconsManager.cancel();
+        this.clearOverlay();
+    }
+
+    public handleZoom(deltaY: number, clientX: number, clientY: number): void {
+        const rect = this.gridCanvas.getBoundingClientRect();
+        const mouseX = clientX - rect.left;
+        const mouseY = clientY - rect.top;
+
+        const wheel = deltaY < 0 ? 1 : -1;
+        const scaleFactor = Math.pow(1.1, wheel);
+
+        this.transformMatrix.preMultiplySelf(
+            new DOMMatrix().scaleSelf(scaleFactor, scaleFactor, 1, mouseX, mouseY)
+        );
+
+        const scaleDisplay = document.getElementById('current-scale');
+        if (scaleDisplay) {
+            scaleDisplay.textContent = `${this.getScale().toFixed(2)}x`;
+        }
+
+        this.drawGrid();
+        this.clearOverlay();
+        this.preview();
+    }
+
+    public handleHover(gridPos: Vector2): void {
+        GridMap.previewPositon(gridPos.x, gridPos.y);
+
+        const coordDisplay = document.getElementById('coordinates');
+        if (coordDisplay) {
+            coordDisplay.textContent = `(${1 + Math.floor(gridPos.x)}, ${1 + Math.floor(gridPos.y)})`;
+        }
+
+        this.clearOverlay();
+        this.preview();
+    }
+
+    public handleMouseLeave(): void {
+        const coordDisplay = document.getElementById('coordinates');
+        if (coordDisplay) coordDisplay.textContent = '(0, 0)';
+        this.clearOverlay();
+    }
+
+    public canvasToGridCoords(clientX: number, clientY: number): Vector2 {
+        const rect = this.gridCanvas.getBoundingClientRect();
+        const mouseVec = new Vector2(clientX - rect.left, clientY - rect.top)
+            .apply(this.transformMatrix.inverse())
+            .div(this.gridSize);
+        return mouseVec;
+    }
+
+    // 私有事件处理方法
+
+    private handleResize = (): void => {
+        this.updateCanvasSize();
+        this.drawGrid();
+        this.clearOverlay();
+    };
+
+    private handleKeyboard = (e: KeyboardEvent): void => {
+        if (e.key.toLowerCase() === 'r') {
             e.preventDefault();
-            MachinesIconsManager.cancel();
-            this.clearOverlay();
-        });
-    }
-
-    // 添加鼠标悬停事件处理
-    private bindHoverEvents(): void {
-        this.overlayCanvas.addEventListener('mousemove', (e: MouseEvent) => {
-            // 显示坐标
-            const rect = this.gridCanvas.getBoundingClientRect();
-            const mouseVec = new Vector2(e.clientX - rect.left, e.clientY - rect.top)
-                .apply(this.transformMatrix.inverse())
-                .div(this.gridSize);
-            GridMap.previewPositon(mouseVec.x, mouseVec.y);
-
-            // 更新页面上的坐标显示
-            const coordDisplay = document.getElementById('coordinates');
-            if (coordDisplay) {
-                coordDisplay.textContent = `(${1 + Math.floor(mouseVec.x)}, ${1 + Math.floor(mouseVec.y)})`;
+            if (e.ctrlKey && this.eventManager?.isMouseOverCanvas) {
+                // Ctrl+R: 围绕画布中心旋转
+                this.rotateAroundCenter();
+            } else if (this.eventManager?.isMouseOverCanvas) {
+                // R: 机器预览旋转
+                GridMap.previewRotate(1);
+                this.clearOverlay();
+                this.preview();
             }
+        }
+    };
 
-            this.clearOverlay();
-            this.preview();
-        });
+    private rotateAroundCenter(): void {
+        const rect = this.gridCanvas.getBoundingClientRect();
+        const centerX = (rect.left + rect.right) / 2;
+        const centerY = (rect.top + rect.bottom) / 2;
 
-        this.overlayCanvas.addEventListener('mouseleave', () => {
-            // 当鼠标离开画布时清除坐标显示
-            const coordDisplay = document.getElementById('coordinates');
-            if (coordDisplay) coordDisplay.textContent = '(0, 0)';
-            this.clearOverlay();
-        });
+        const rotationMatrix = new DOMMatrix()
+            .translateSelf(centerX, centerY)
+            .rotateSelf(90)
+            .translateSelf(-centerX, -centerY);
+
+        this.transformMatrix.preMultiplySelf(rotationMatrix);
+        this.drawGrid();
+        this.clearOverlay();
+        this.preview();
     }
 
-    // 清除覆盖层
+    private getScale(): number {
+        return Math.max(Math.abs(this.transformMatrix.a), Math.abs(this.transformMatrix.b));
+    }
+
+    private applyTransform(ctx: CanvasRenderingContext2D): void {
+        ctx.setTransform(ctx.getTransform().multiplySelf(this.transformMatrix));
+    }
+
     private clearOverlay(): void {
         if (this.overlayCtx) this.overlayCtx.clearRect(0, 0, this.CanvasW, this.CanvasH);
     }
 
-    // 预览选中机器的虚影
     private preview(): void {
         if (!this.overlayCtx) return;
         if (!GridMap.onPreview) return;
         this.overlayCtx.save();
         this.applyTransform(this.overlayCtx);
-        this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL; // 半透明蓝色填充
-        this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE; // 半透明蓝色边框
+        this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL;
+        this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE;
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
         if (GridMap.PreviewMachine) {
@@ -379,8 +431,7 @@ class GridCanvas {
                     drawBelt(this.overlayCtx, GridMap.PreviewBelt.shapeAt(i),
                         pos.x * this.gridSize, pos.y * this.gridSize, this.gridSize);
                 }
-            }
-            else {
+            } else {
                 if (GridMap.PreviewBelt.startPoint) {
                     this.overlayCtx.fillStyle = COLORS.UNILLEGAL_COLOR;
                     this.overlayCtx.fillRect(
@@ -388,16 +439,13 @@ class GridCanvas {
                         GridMap.PreviewBelt.startPoint.y * this.gridSize,
                         this.gridSize, this.gridSize
                     );
-                }
-                else if (GridMap.PreviewBelt.start) {
+                } else if (GridMap.PreviewBelt.start) {
                     this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
                     drawMachineLinesFill(this.overlayCtx, GridMap.PreviewBelt.start, this.gridSize);
                 }
             }
-
         }
 
-        // 绘制重叠提示
         this.overlayCtx.fillStyle = COLORS.OVERLAP_WARNING;
         GridMap.howOccupying().forEach((v: Vector2) => {
             this.overlayCtx!.fillRect(
@@ -406,73 +454,28 @@ class GridCanvas {
             );
         });
 
-        this.overlayCtx.restore(); // 恢复绘图状态，确保不影响其他绘制
-    }
-
-    private getScale(): number {
-        return Math.max(Math.abs(this.transformMatrix.a), Math.abs(this.transformMatrix.b));
-    }
-
-    private bindWheelEvents(): void {
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault(); // 阻止页面滚动
-
-            // 获取鼠标在canvas上的坐标
-            const rect = this.gridCanvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-
-            // 计算新的缩放级别
-            const wheel = e.deltaY < 0 ? 1 : -1;
-            const scaleFactor = Math.pow(1.1, wheel);
-
-            this.transformMatrix.preMultiplySelf(new DOMMatrix().scaleSelf(scaleFactor, scaleFactor, 1, mouseX, mouseY));
-
-            console.log('Scale:', this.getScale());
-
-            // 更新缩放显示
-            const scaleDisplay = document.getElementById('current-scale');
-            if (scaleDisplay) {
-                scaleDisplay.textContent = `${this.getScale().toFixed(2)}x`;
-            }
-
-            this.drawGrid();
-            this.clearOverlay();
-            this.preview();
-        };
-
-        this.overlayCanvas.addEventListener('wheel', handleWheel);
-    }
-
-    // 应用当前变换矩阵到Canvas上下文
-    private applyTransform(ctx: CanvasRenderingContext2D): void {
-        ctx.setTransform(ctx.getTransform().multiplySelf(this.transformMatrix));
+        this.overlayCtx.restore();
     }
 
     public drawGrid(): void {
         if (!this.gridCtx) return;
 
-        // 使用裁剪路径限制绘制区域，只显示可视区域
         this.gridCtx.save();
         this.gridCtx.beginPath();
         this.gridCtx.rect(0, 0, this.CanvasW, this.CanvasH);
         this.gridCtx.clip();
 
-        // 清除画布
         this.gridCtx.clearRect(0, 0, this.CanvasW, this.CanvasH);
 
-        // 应用变换矩阵
         this.gridCtx.save();
         this.applyTransform(this.gridCtx);
 
-        // 绘制四周边界线 - 使用粗实线
         const lineWidth = Math.min(2 / this.getScale(), 6);
         this.gridCtx.strokeStyle = COLORS.GRID_BORDER;
         this.gridCtx.setLineDash([]);
         this.gridCtx.lineWidth = lineWidth;
-        this.gridCtx.strokeRect(0, 0, this.gridWidth * this.gridSize, this.gridHeight * this.gridSize)
-        // 当缩放级别足够高时，绘制内部网格线
+        this.gridCtx.strokeRect(0, 0, this.gridWidth * this.gridSize, this.gridHeight * this.gridSize);
+
         if (this.getScale() > 0.3) {
             this.gridCtx.strokeStyle = COLORS.GRID_LINE;
             this.gridCtx.setLineDash([5, 5]);
@@ -480,7 +483,6 @@ class GridCanvas {
             drawGridLines(this.gridCtx, this.gridWidth, this.gridHeight, this.gridSize);
         }
 
-        // 绘制机器
         this.gridCtx.setLineDash([]);
         this.gridCtx.fillStyle = COLORS.MACHINE_FILL;
         this.gridCtx.strokeStyle = COLORS.MACHINE_STROKE;
@@ -489,7 +491,6 @@ class GridCanvas {
             drawMachine(this.gridCtx!, machineInstance, this.gridSize);
         });
 
-        // 绘制传送带
         GridMap.allBelts.forEach((beltInstance) => {
             const list = beltInstance.shape();
             for (let i = 0; i < list.length; i++) {
@@ -499,93 +500,37 @@ class GridCanvas {
             }
         });
 
-        // 恢复变换
         this.gridCtx.restore();
         GridMap.allMachines.forEach((instance) => {
-            drawMachinesIcon(this.gridCtx!, instance, this.transformMatrix, this.gridSize)
+            drawMachinesIcon(this.gridCtx!, instance, this.transformMatrix, this.gridSize);
         });
 
-        // 恢复绘图状态
         this.gridCtx.restore();
     }
 
-    // 添加公共方法来重置网格视图
     public resetView(): void {
         this.transformMatrix = new DOMMatrix();
-
-        // 更新缩放显示
         const scaleDisplay = document.getElementById('current-scale');
         if (scaleDisplay) {
             scaleDisplay.textContent = `${this.transformMatrix.a.toFixed(1)}x`;
         }
-
         this.drawGrid();
-        this.clearOverlay(); // 清除预览层
+        this.clearOverlay();
     }
 
-    // 添加围绕指定点的旋转方法
-    private rotateAroundPoint(): void {
-        // 获取鼠标在canvas上的坐标
-        const rect = this.gridCanvas.getBoundingClientRect();
-        const centerX = (rect.left + rect.right) / 2;
-        const centerY = (rect.top + rect.bottom) / 2;
-        // 创建旋转变换矩阵
-        const rotationMatrix = new DOMMatrix()
-            .translateSelf(centerX, centerY)  // 平移到中心点
-            .rotateSelf(90)               // 旋转指定角度
-            .translateSelf(-centerX, -centerY); // 平移回原位置
+    /**
+     * 销毁GridCanvas实例，清理所有资源
+     */
+    public destroy(): void {
+        if (this.eventManager) {
+            this.eventManager.destroy();
+            this.eventManager = null;
+        }
 
-        // 将旋转变换应用到视角旋转矩阵
-        this.transformMatrix.preMultiplySelf(rotationMatrix);
-    }
+        window.removeEventListener('resize', this.handleResize);
+        document.removeEventListener('keydown', this.handleKeyboard);
 
-    // 添加键盘事件绑定
-    private bindRotateEvents(): void {
-        document.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'r' && this.isMouseOverCanvas && e.ctrlKey) {
-                e.preventDefault();
-                // 执行围绕画布中心的旋转
-                this.rotateAroundPoint();
-                this.drawGrid();
-                this.clearOverlay();
-                this.preview();
-            } else if (e.key.toLowerCase() === 'r' && this.isMouseOverCanvas && !e.ctrlKey) {
-                // 单独按R键执行机器预览旋转功能
-                GridMap.previewRotate(1);
-                this.clearOverlay();
-                this.preview();
-            }
-        });
-    }
-
-    // 绑定鼠标进入/离开canvas事件
-    private bindMouseEnterLeaveEvents(): void {
-        this.overlayCanvas.addEventListener('mouseenter', () => {
-            this.isMouseOverCanvas = true;
-        });
-        this.overlayCanvas.addEventListener('mouseleave', () => {
-            this.isMouseOverCanvas = false;
-        });
+        this.gridCtx = null;
+        this.overlayCtx = null;
     }
 }
-
-// 初始化网格
-document.addEventListener('DOMContentLoaded', () => {
-    const grid = new GridCanvas('grid-wrapper');
-
-    // 初始化图标管理器
-    const iconManager = new MachinesIconsManager('icon-collection');
-    const itemManager = new ItemIconManager('item-collection');
-
-
-    // 绑定缩放滑块事件 - 现在通过图标操作
-    const zoomSlider = document.getElementById('zoom-slider') as HTMLInputElement;
-    const zoomValue = document.getElementById('zoom-value');
-
-    if (zoomSlider && zoomValue) {
-        zoomSlider.addEventListener('input', () => {
-            const scale = parseFloat(zoomSlider.value);
-            zoomValue.textContent = scale.toFixed(1);
-        });
-    }
-});

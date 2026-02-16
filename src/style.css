@@ -373,6 +373,251 @@ body {
     background-color: #27ae60;
 }
 
+/* ==================== 传输带槽位布局样式 ==================== */
+.belt-slots-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 20px 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    min-height: 100px;
+}
+
+.input-slots, .output-slots {
+    display: flex;
+    gap: 15px;
+}
+
+/* 输入槽位垂直排列 */
+.input-slots {
+    flex-direction: column;
+    align-items: center;
+}
+
+.slot {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(145deg, #ffffff 0%, #f1f3f4 100%);
+    border: 2px dashed #adb5bd;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 49%, rgba(173, 181, 189, 0.2) 50%, transparent 51%);
+    background-size: 10px 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.slot:hover {
+    transform: translateY(-3px) scale(1.05);
+    border-color: #6c757d;
+    background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.slot:hover::before {
+    opacity: 1;
+}
+
+.slot.input-slot {
+    background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #64b5f6;
+}
+
+.slot.output-slot {
+    background: linear-gradient(145deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-color: #81c784;
+}
+
+.plus-sign {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.slot.input-slot .plus-sign {
+    color: #1976d2;
+}
+
+.slot.output-slot .plus-sign {
+    color: #388e3c;
+}
+
+.slot:hover .plus-sign {
+    transform: scale(1.2);
+    color: #495057;
+}
+
+.slot.filled {
+    border-style: solid;
+    background: linear-gradient(145deg, #fff3e0 0%, #ffe0b2 100%);
+    border-color: #ff9800;
+    box-shadow: 0 3px 12px rgba(255, 152, 0, 0.3);
+}
+
+.slot.filled .plus-sign {
+    display: none;
+}
+
+.slot.filled::after {
+    content: '📦';
+    font-size: 28px;
+    animation: popIn 0.3s ease-out;
+}
+
+.slot.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+    position: relative;
+}
+
+.slot.selected::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    animation: selectedPulse 1.5s infinite;
+    pointer-events: none;
+}
+
+.slot.selected.input-slot {
+    background: linear-gradient(145deg, #bbdefb 0%, #90caf9 100%);
+    border-color: #1976d2;
+}
+
+.slot.selected.output-slot {
+    background: linear-gradient(145deg, #c8e6c9 0%, #a5d6a7 100%);
+    border-color: #388e3c;
+}
+
+@keyframes selectedPulse {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    50% { 
+        box-shadow: 0 0 0 8px rgba(0, 123, 255, 0.3);
+    }
+    100% { 
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+.arrow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+}
+
+.arrow {
+    font-size: 28px;
+    color: #495057;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    animation: pulseArrow 2s infinite;
+    /* 添加不可被鼠标选中的样式 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+}
+
+@keyframes pulseArrow {
+    0%, 100% { transform: translateX(0); opacity: 0.7; }
+    50% { transform: translateX(5px); opacity: 1; }
+}
+
+/* 物品图标和数量显示样式 */
+.item-icon {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.item-count {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+/* filled状态的槽位动画效果 */
+.slot.filled {
+    animation: slotFilled 0.3s ease-out;
+}
+
+@keyframes slotFilled {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 3px 12px rgba(255, 152, 0, 0.3);
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .belt-slots-layout {
+        padding: 15px 10px;
+    }
+    
+    .slot {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .plus-sign {
+        font-size: 20px;
+    }
+    
+    .arrow {
+        font-size: 24px;
+    }
+    
+    .item-count {
+        font-size: 10px;
+        padding: 1px 3px;
+    }
+}
+
 /* 右侧功能区 - 占30%宽度 */
 .right-panel {
     width: 30%;
