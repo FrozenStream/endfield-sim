@@ -8,7 +8,13 @@
 </head>
 <body>
     <header class="main-header">
-        <h1>主标题</h1>
+        <div class="header-content">
+            <h1>主标题</h1>
+            <div class="header-info">
+                <span class="coordinate-display">坐标: <span id="coordinates">(0, 0)</span></span>
+                <span class="scale-display">缩放: <span id="current-scale">1.0x</span></span>
+            </div>
+        </div>
     </header>
     
     <div class="container">
@@ -31,19 +37,14 @@
             <div class="top-section">
                 <h3>信息面板</h3>
                 <div class="info-content">
-                    <p>坐标: <span id="coordinates">(0, 0)</span></p>
-                    <p>缩放: <span id="current-scale">1.0x</span></p>
-                    <p>网格状态: <span id="grid-status">就绪</span></p>
+                    <!-- 清空信息面板内容 -->
                 </div>
             </div>
             
             <div class="bottom-section">
-                <h3>工具栏</h3>
-                <div class="tools-content">
-                    <button id="add-element">添加元素</button>
-                    <button id="remove-element">删除元素</button>
-                    <button id="save-grid">保存网格</button>
-                    <button id="load-grid">加载网格</button>
+                <h3>工具图标</h3>
+                <div class="item-collection" id="item-collection">
+                    <!-- 工具图标将在这里动态添加 -->
                 </div>
             </div>
         </section>

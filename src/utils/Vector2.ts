@@ -13,16 +13,40 @@ class Vector2 {
         return new Vector2(this.x + v.x, this.y + v.y);
     }
 
-    subtract(v: Vector2): Vector2 {
+    addSelf(v: Vector2): Vector2 {
+        this.x = this.x + v.x;
+        this.y = this.y + v.y;
+        return this;
+    }
+
+    sub(v: Vector2): Vector2 {
         return new Vector2(this.x - v.x, this.y - v.y);
     }
 
-    multiply(scalar: number): Vector2 {
+    subSelf(v: Vector2): Vector2 {
+        this.x = this.x - v.x;
+        this.y = this.y - v.y;
+        return this;
+    }
+
+    mul(scalar: number): Vector2 {
         return new Vector2(this.x * scalar, this.y * scalar);
     }
 
-    divide(scalar: number): Vector2 {
+    mulSelf(scalar: number): Vector2 {
+        this.x = this.x * scalar;
+        this.y = this.y * scalar;
+        return this;
+    }
+
+    div(scalar: number): Vector2 {
         return new Vector2(this.x / scalar, this.y / scalar);
+    }
+
+    divSelf(scalar: number): Vector2 {
+        this.x = this.x / scalar;
+        this.y = this.y / scalar;
+        return this;
     }
 
     dot(v: Vector2): number {
@@ -87,7 +111,7 @@ class Vector2 {
         throw new Error("Invalid time");
     }
 
-    applyMatrix(matrix: DOMMatrix): Vector2 {
+    apply(matrix: DOMMatrix): Vector2 {
         // 对于 2D 矩阵，变换公式为:
         // x' = a*x + c*y + e
         // y' = b*x + d*y + f
@@ -95,6 +119,14 @@ class Vector2 {
         const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
 
         return new Vector2(newX, newY);
+    }
+
+    applySelf(matrix: DOMMatrix): Vector2 { 
+        const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
+        const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
+        this.x = newX;
+        this.y = newY;
+        return this;
     }
 
 
@@ -157,7 +189,7 @@ class Vector2 {
     }
 
     static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
-        return v1.multiply(s1).add(v2.multiply(s2));
+        return v1.mul(s1).add(v2.mul(s2));
     }
 
     static copy(v: Vector2): Vector2 {

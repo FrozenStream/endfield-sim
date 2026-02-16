@@ -1,21 +1,21 @@
 import GridMap from "./GridMap";
 import I18n from "./I18n";
-import { Belt, BeltInstance } from "./machines/Belt";
-import { Machine, MachineInstance } from "./machines/Machines";
-import { drawBelt, drawDiagonalLinesFill, drawMachine } from "./utils/drawUtil";
-import type Rect from "./utils/Rect";
+import { Belt, BeltInstance } from "./Belt";
+import { Machine, MachineInstance } from "./Machines";
+import { drawBelt, drawMachineLinesFill, drawMachine, drawGridLines, drawMachinesIcon } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './colors';
+import ItemIconManager from "./ItemManager";
 
 
 
-class IconsManager {
+class MachinesIconsManager {
     private iconCollection: HTMLElement;
 
     public static icons: Map<string, HTMLDivElement> = new Map();
     public static selectedIcon: HTMLElement | null = null;
 
-    private i18n: I18n = new I18n('/i18n');
+    private i18n: I18n = I18n.instance;
 
     constructor(collectionId: string) {
         this.iconCollection = document.getElementById(collectionId)!;
@@ -27,7 +27,7 @@ class IconsManager {
 
     private buildIconElement(imgCache: HTMLImageElement): HTMLDivElement {
         const iconElement = document.createElement('div');
-        iconElement.className = 'icon-item';
+        iconElement.className = 'machine-icon-element'; // 修改为独特的machine-icon-element类名
         const img = imgCache;
         iconElement.appendChild(img);
         return iconElement;
@@ -35,7 +35,7 @@ class IconsManager {
 
     private buildNameElement(id: string): HTMLDivElement {
         const nameElement = document.createElement('div');
-        nameElement.className = 'icon-name'; // 添加CSS类名
+        nameElement.className = 'machine-name-label'; // 修改为独特的machine-name-label类名
         this.i18n.addTranslateList(() => {
             nameElement.textContent = this.i18n.t(id);
         });
@@ -51,6 +51,7 @@ class IconsManager {
     public addMachineIcon(machine: Machine): void {
         // 创建一个容器来包装图标和名称
         const iconWrapper = document.createElement('div');
+        iconWrapper.className = 'machine-wrapper'; // 添加包装容器类名
 
         const iconElement = this.buildIconElement(machine.imgCache);
         const nameElement = this.buildNameElement(machine.id);
@@ -61,20 +62,21 @@ class IconsManager {
         // 将整个包装容器添加到iconCollection中
         this.iconCollection.appendChild(iconWrapper);
 
-        IconsManager.icons.set(machine.id, iconElement);
+        MachinesIconsManager.icons.set(machine.id, iconElement);
 
         iconElement.addEventListener('click', () => {
             if (GridMap.PreviewMachine?.machine === machine) {
-                IconsManager.cancel();
+                MachinesIconsManager.cancel();
                 return;
             }
-            IconsManager.select(machine, iconElement);
+            MachinesIconsManager.select(machine, iconElement);
         });
     }
 
     public addBeltIcon(belt: Belt): void {
         // 创建一个容器来包装图标和名称
         const iconWrapper = document.createElement('div');
+        iconWrapper.className = 'belt-wrapper'; // 添加传送带包装容器类名
 
         const iconElement = this.buildIconElement(belt.imgCache);
         const nameElement = this.buildNameElement(belt.id);
@@ -85,32 +87,32 @@ class IconsManager {
         // 将整个包装容器添加到iconCollection中
         this.iconCollection.appendChild(iconWrapper);
 
-        IconsManager.icons.set(belt.id, iconElement);
+        MachinesIconsManager.icons.set(belt.id, iconElement);
 
         iconElement.addEventListener('click', () => {
             if (GridMap.PreviewBelt?.beltType === belt) {
-                IconsManager.cancel();
+                MachinesIconsManager.cancel();
                 return;
             }
-            IconsManager.select(belt, iconElement);
+            MachinesIconsManager.select(belt, iconElement);
         });
     }
 
     public static cancel() {
         GridMap.previewCancel();
-        if (IconsManager.selectedIcon)
-            IconsManager.selectedIcon.classList.remove('active');
-        IconsManager.selectedIcon = null;
+        if (MachinesIconsManager.selectedIcon)
+            MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
+        MachinesIconsManager.selectedIcon = null;
     }
 
     public static select(type: Machine | Belt, icon: HTMLDivElement) {
-        if (IconsManager.selectedIcon) IconsManager.selectedIcon.classList.remove('active');
+        if (MachinesIconsManager.selectedIcon) MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
         // 更新选中的图标引用
-        IconsManager.selectedIcon = icon;
+        MachinesIconsManager.selectedIcon = icon;
         if (type instanceof Machine) GridMap.PreviewMachine = type;
         if (type instanceof Belt) GridMap.PreviewBelt = type;
-        // 添加active类到当前选中的图标
-        IconsManager.selectedIcon.classList.add('active');
+        // 添加selected类到当前选中的图标
+        MachinesIconsManager.selectedIcon.classList.add('machine-selected');
     }
 }
 
@@ -277,14 +279,14 @@ class GridCanvas {
                 console.log("occupyCount:", occupyCount);
                 if (GridMap.PreviewMachine) {
                     if (!occupyCount && GridMap.build()) {
-                        IconsManager.cancel();
+                        MachinesIconsManager.cancel();
                         this.drawGrid();
                     }
                 }
                 else if (GridMap.PreviewBelt) {
                     if (GridMap.PreviewBelt.started) {
                         if (!occupyCount && GridMap.build()) {
-                            IconsManager.cancel();
+                            MachinesIconsManager.cancel();
                             this.drawGrid();
                         }
                     }
@@ -318,7 +320,7 @@ class GridCanvas {
     private bindRightClickEvents(): void {
         this.overlayCanvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            IconsManager.cancel();
+            MachinesIconsManager.cancel();
             this.clearOverlay();
         });
     }
@@ -329,8 +331,8 @@ class GridCanvas {
             // 显示坐标
             const rect = this.gridCanvas.getBoundingClientRect();
             const mouseVec = new Vector2(e.clientX - rect.left, e.clientY - rect.top)
-                .applyMatrix(this.transformMatrix.inverse())
-                .divide(this.gridSize);
+                .apply(this.transformMatrix.inverse())
+                .div(this.gridSize);
             GridMap.previewPositon(mouseVec.x, mouseVec.y);
 
             // 更新页面上的坐标显示
@@ -389,7 +391,7 @@ class GridCanvas {
                 }
                 else if (GridMap.PreviewBelt.start) {
                     this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
-                    drawDiagonalLinesFill(this.overlayCtx, GridMap.PreviewBelt.start, this.gridSize);
+                    drawMachineLinesFill(this.overlayCtx, GridMap.PreviewBelt.start, this.gridSize);
                 }
             }
 
@@ -463,89 +465,19 @@ class GridCanvas {
         // 应用变换矩阵
         this.gridCtx.save();
         this.applyTransform(this.gridCtx);
-        // 绘制网格线 - 绘制覆盖可视区域的网格
-        this.drawGridLines();
-
-        // 恢复变换
-        this.gridCtx.restore();
-        this.drawMachinesIcon(this.transformMatrix);
-
-        // 恢复绘图状态
-        this.gridCtx.restore();
-    }
-
-    public drawMachinesIcon(transform: DOMMatrix): void {
-        if (!this.gridCtx) return;
-        GridMap.allMachines.forEach((machineInstance) => {
-            // 清空区域内容，绘制新背景色和边框
-            const rect = machineInstance.shape();
-            if (!rect) return;
-            const [startX, startY, width, height] = rect.toTuple();
-            const LT = new Vector2(startX, startY)
-                .multiply(this.gridSize)
-                .applyMatrix(transform);
-            const RB = new Vector2(startX + width, startY + height)
-                .multiply(this.gridSize)
-                .applyMatrix(transform);
-
-            const min_x = Math.min(LT.x, RB.x);
-            const min_y = Math.min(LT.y, RB.y);
-            const max_x = Math.max(LT.x, RB.x);
-            const max_y = Math.max(LT.y, RB.y);
-
-            // 绘制图标
-            const img = machineInstance.machine.imgCache;
-            if (!img.complete) return;
-
-            // 保持原始宽高比
-            const imgAspectRatio = img.naturalWidth / img.naturalHeight;
-
-            const drawHeight = 0.8 * this.gridSize;
-            const drawWidth = 0.8 * imgAspectRatio * this.gridSize;
-
-            // 计算居中位置
-            const drawX = min_x + (max_x - min_x - drawWidth) / 2;
-            const drawY = min_y + (max_y - min_y - drawHeight) / 2;
-
-            // 绘制机器图片
-            this.gridCtx!.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-        });
-    }
-
-    private drawGridLines(): void {
-        if (!this.gridCtx) return;
-        const lineWidth = Math.min(2 / this.getScale(), 6);
 
         // 绘制四周边界线 - 使用粗实线
+        const lineWidth = Math.min(2 / this.getScale(), 6);
         this.gridCtx.strokeStyle = COLORS.GRID_BORDER;
         this.gridCtx.setLineDash([]);
         this.gridCtx.lineWidth = lineWidth;
-
         this.gridCtx.strokeRect(0, 0, this.gridWidth * this.gridSize, this.gridHeight * this.gridSize)
-
         // 当缩放级别足够高时，绘制内部网格线
         if (this.getScale() > 0.3) {
             this.gridCtx.strokeStyle = COLORS.GRID_LINE;
             this.gridCtx.setLineDash([5, 5]);
             this.gridCtx.lineWidth = lineWidth * 0.8;
-
-            // 绘制垂直线
-            for (let x = 1; x < this.gridWidth; x++) {
-                const screenX = x * this.gridSize;
-                this.gridCtx.beginPath();
-                this.gridCtx.moveTo(screenX, 0);
-                this.gridCtx.lineTo(screenX, this.gridHeight * this.gridSize);
-                this.gridCtx.stroke();
-            }
-
-            // 绘制水平线
-            for (let y = 1; y < this.gridHeight; y++) {
-                const screenY = y * this.gridSize;
-                this.gridCtx.beginPath();
-                this.gridCtx.moveTo(0, screenY);
-                this.gridCtx.lineTo(this.gridWidth * this.gridSize, screenY);
-                this.gridCtx.stroke();
-            }
+            drawGridLines(this.gridCtx, this.gridWidth, this.gridHeight, this.gridSize);
         }
 
         // 绘制机器
@@ -562,15 +494,19 @@ class GridCanvas {
             const list = beltInstance.shape();
             for (let i = 0; i < list.length; i++) {
                 const pos: Vector2 = list[i];
-                drawBelt(
-                    this.gridCtx!,
-                    beltInstance.shapeAt(i),
-                    pos.x * this.gridSize,
-                    pos.y * this.gridSize,
-                    this.gridSize
-                );
+                drawBelt(this.gridCtx!, beltInstance.shapeAt(i),
+                    pos.x * this.gridSize, pos.y * this.gridSize, this.gridSize);
             }
         });
+
+        // 恢复变换
+        this.gridCtx.restore();
+        GridMap.allMachines.forEach((instance) => {
+            drawMachinesIcon(this.gridCtx!, instance, this.transformMatrix, this.gridSize)
+        });
+
+        // 恢复绘图状态
+        this.gridCtx.restore();
     }
 
     // 添加公共方法来重置网格视图
@@ -638,7 +574,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = new GridCanvas('grid-wrapper');
 
     // 初始化图标管理器
-    const iconManager = new IconsManager('icon-collection');
+    const iconManager = new MachinesIconsManager('icon-collection');
+    const itemManager = new ItemIconManager('item-collection');
 
 
     // 绑定缩放滑块事件 - 现在通过图标操作

@@ -1,4 +1,4 @@
-import type { MachineInstance } from "../machines/Machines";
+import type { MachineInstance } from "../Machines";
 import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
@@ -116,11 +116,11 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
 
 
 function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
-    const d: Vector2 = Vector2.DIREC[direc].multiply(Vector2.isDiagonal(direc) ? 0.7 : 1);
+    const d: Vector2 = Vector2.DIREC[direc].mul(Vector2.isDiagonal(direc) ? 0.7 : 1);
     const center: Vector2 = new Vector2(x + size / 2, y + size / 2);
-    const a = center.add(d.multiply(7));
-    const b = center.subtract(d.multiply(3)).add(d.rotateCW(1).multiply(4));
-    const c = center.subtract(d.multiply(3)).add(d.rotateCCW(1).multiply(4));
+    const a = center.add(d.mul(7));
+    const b = center.sub(d.mul(3)).add(d.rotateCW(1).mul(4));
+    const c = center.sub(d.mul(3)).add(d.rotateCCW(1).mul(4));
 
     if (!Vector2.isDiagonal(direc)) {
         fillTriangle(canvas, a, b, c);
@@ -160,32 +160,33 @@ function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance
 
 
 function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
+    canvas.beginPath();
     instance.machine.ports.forEach(io => {
         const Tpos: Vector2 = instance.Position!;
         const center = Tpos.add(Vector2.linear(instance.R, io.relPos.x, instance.D, io.relPos.y));
-        let v2 = center.add(io.direction.rotateCW(instance.rotation).multiply(0.1));
-        let v1 = center.add(io.direction.rotateCW(instance.rotation + 1).multiply(0.1));
-        let v3 = center.add(io.direction.rotateCW(instance.rotation - 1).multiply(0.1));
+        let v2 = center.add(io.direction.rotateCW(instance.rotation).mul(0.1));
+        let v1 = center.add(io.direction.rotateCW(instance.rotation + 1).mul(0.1));
+        let v3 = center.add(io.direction.rotateCW(instance.rotation - 1).mul(0.1));
 
         if (io.input) {
-            v1 = v1.subtract(io.direction.rotateCW(instance.rotation).multiply(0.4));
-            v2 = v2.subtract(io.direction.rotateCW(instance.rotation).multiply(0.4));
-            v3 = v3.subtract(io.direction.rotateCW(instance.rotation).multiply(0.4));
+            v1 = v1.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
+            v2 = v2.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
+            v3 = v3.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
         }
         else {
-            v1 = v1.add(io.direction.rotateCW(instance.rotation).multiply(0.3));
-            v2 = v2.add(io.direction.rotateCW(instance.rotation).multiply(0.3));
-            v3 = v3.add(io.direction.rotateCW(instance.rotation).multiply(0.3));
+            v1 = v1.add(io.direction.rotateCW(instance.rotation).mul(0.3));
+            v2 = v2.add(io.direction.rotateCW(instance.rotation).mul(0.3));
+            v3 = v3.add(io.direction.rotateCW(instance.rotation).mul(0.3));
         }
-        v1 = v1.multiply(gridSize);
-        v2 = v2.multiply(gridSize);
-        v3 = v3.multiply(gridSize);
-        canvas.beginPath();
+        v1 = v1.mul(gridSize);
+        v2 = v2.mul(gridSize);
+        v3 = v3.mul(gridSize);
+
         canvas.moveTo(v1.x, v1.y);
         canvas.lineTo(v2.x, v2.y);
         canvas.lineTo(v3.x, v3.y);
-        canvas.stroke();
     })
+    canvas.stroke();
 }
 
 
@@ -231,4 +232,55 @@ function drawMachineLinesFill(canvas: CanvasRenderingContext2D, instance: Machin
     }
 }
 
-export { drawBelt, drawMachine, drawMachineLinesFill as drawDiagonalLinesFill };
+
+function drawGridLines(canvas: CanvasRenderingContext2D, width: number, height: number, gridSize: number) {
+    canvas.beginPath();
+    // 绘制垂直线
+    for (let x = 1; x < width; x++) {
+        const screenX = x * gridSize;
+        canvas.moveTo(screenX, 0);
+        canvas.lineTo(screenX, height * gridSize);
+    }
+    // 绘制水平线
+    for (let y = 1; y < height; y++) {
+        const screenY = y * gridSize;
+        canvas.moveTo(0, screenY);
+        canvas.lineTo(width * gridSize, screenY);
+    }
+    canvas.stroke();
+}
+
+
+function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineInstance, transform: DOMMatrix, gridSize: number) {
+    if (!canvas) return;
+    // 清空区域内容，绘制新背景色和边框
+    const rect = instance.shape();
+    if (!rect) return;
+    const [startX, startY, width, height] = rect.toTuple();
+    const LT = new Vector2(startX, startY).mulSelf(gridSize).applySelf(transform);
+    const RB = new Vector2(startX + width, startY + height).mulSelf(gridSize).applySelf(transform);
+
+    const min_x = Math.min(LT.x, RB.x);
+    const min_y = Math.min(LT.y, RB.y);
+    const max_x = Math.max(LT.x, RB.x);
+    const max_y = Math.max(LT.y, RB.y);
+
+    // 绘制图标
+    const img = instance.machine.imgCache;
+    if (!img.complete) return;
+
+    // 保持原始宽高比
+    const imgAspectRatio = img.naturalWidth / img.naturalHeight;
+
+    const drawHeight = 0.8 * gridSize;
+    const drawWidth = 0.8 * imgAspectRatio * gridSize;
+
+    // 计算居中位置
+    const drawX = min_x + (max_x - min_x - drawWidth) / 2;
+    const drawY = min_y + (max_y - min_y - drawHeight) / 2;
+
+    // 绘制机器图片
+    canvas.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
+export { drawBelt, drawMachine, drawMachineLinesFill, drawGridLines, drawMachinesIcon };

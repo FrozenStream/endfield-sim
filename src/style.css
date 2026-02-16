@@ -13,8 +13,6 @@ body {
 .main-header {
     background-color: #2c3e50;
     color: white;
-    text-align: center;
-    padding: 15px 0;
     width: 100%;
     position: fixed;
     top: 0;
@@ -23,9 +21,39 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    max-width: 100%;
+}
+
 .main-header h1 {
     font-size: 1.8em;
     margin: 0;
+    flex-shrink: 0;
+}
+
+.header-info {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.coordinate-display, .scale-display {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.coordinate-display:hover, .scale-display:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
 }
 
 .container {
@@ -67,6 +95,213 @@ body {
     gap: 15px;
 }
 
+/* ==================== IconsManager 样式 (机器图标管理器) ==================== */
+.machine-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.machine-icon-element {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    color: white;
+    font-size: 24px;
+    user-select: none;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.machine-icon-element::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.machine-icon-element:hover::before {
+    left: 100%;
+}
+
+.machine-icon-element img {
+    pointer-events: none;
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.machine-name-label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    text-align: center;
+    margin-top: 6px;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #2c3e50;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+
+.machine-icon-element:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+    background: linear-gradient(135deg, #2980b9 0%, #1f618d 100%);
+    border-color: #1abc9c;
+}
+
+.machine-icon-element.machine-selected {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+    border: 2px solid #ff6b6b;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+    50% { box-shadow: 0 0 30px rgba(231, 76, 60, 1); }
+    100% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+}
+
+.belt-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.belt-wrapper .machine-icon-element {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.belt-wrapper .machine-icon-element:hover {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    box-shadow: 0 8px 20px rgba(243, 156, 18, 0.4);
+}
+
+/* ==================== ItemManager 样式 (物品图标管理器) ==================== */
+.item-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* 修改ItemManager容器为网格布局 */
+.item-manager-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+    gap: 15px;
+    padding: 15px;
+    justify-items: center;
+    align-items: start;
+}
+
+.item-icon-element {
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+    color: white;
+    font-size: 22px;
+    user-select: none;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.item-icon-element::after {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+    top: -25%;
+    left: -25%;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.item-icon-element:hover::after {
+    opacity: 1;
+}
+
+.item-icon-element img {
+    pointer-events: none;
+    width: 65%;
+    height: 65%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    transition: transform 0.3s;
+}
+
+.item-icon-element:hover img {
+    transform: scale(1.1);
+}
+
+.item-name-label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 10px;
+    text-align: center;
+    margin-top: 5px;
+    max-width: 65px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #7f8c8d;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    background: rgba(255,255,255,0.7);
+    padding: 2px 6px;
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    white-space: nowrap;
+}
+
+.item-icon-element:hover {
+    transform: translateY(-6px) scale(1.15);
+    box-shadow: 0 10px 25px rgba(155, 89, 182, 0.6);
+    background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+    border-color: #af7ac5;
+}
+
+.item-icon-element.item-selected {
+    background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+    transform: scale(1.25);
+    box-shadow: 0 0 25px rgba(26, 188, 156, 0.9);
+    border: 2px solid #1dd1a1;
+    animation: bounce 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes bounce {
+    0% { transform: scale(1.25); }
+    100% { transform: scale(1.35); }
+}
+
+/* ==================== 兼容性样式 (保留原有样式以确保向后兼容) ==================== */
 .icon-item {
     width: 60px;
     height: 60px;
@@ -80,14 +315,14 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     color: white;
     font-size: 24px;
-    user-select: none; /* 禁止选中 */
-    -webkit-user-select: none; /* Safari兼容 */
-    -moz-user-select: none; /* Firefox兼容 */
-    -ms-user-select: none; /* IE/Edge兼容 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .icon-item img {
-    pointer-events: none; /* 确保图片不会干扰点击事件 */
+    pointer-events: none;
 }
 
 .icon-name {

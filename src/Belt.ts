@@ -1,5 +1,5 @@
-import ItemEnum from "../utils/ItemEnum";
-import Vector2 from "../utils/Vector2";
+import ItemEnum from "./utils/ItemEnum";
+import Vector2 from "./utils/Vector2";
 import { MachineInstance } from "./Machines";
 
 
@@ -62,7 +62,7 @@ class BeltInstance {
         this.startPoint = start.postion.add(Vector2.DIREC[faceAt]);
         this.direc = [faceAt];
 
-        const relative: Vector2 = end.subtract(this.startPoint);
+        const relative: Vector2 = end.sub(this.startPoint);
         console.log('relative',relative);
         const inFaceLength: number = relative.dot(Vector2.DIREC[faceAt]);
         const dir_a = Vector2.toCW(faceAt);

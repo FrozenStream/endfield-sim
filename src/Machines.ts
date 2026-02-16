@@ -1,7 +1,7 @@
-import ItemStack from "../ItemStack";
-import ItemEnum from "../utils/ItemEnum";
-import Rect from "../utils/Rect";
-import Vector2 from "../utils/Vector2";
+import ItemStack from "./ItemStack";
+import ItemEnum from "./utils/ItemEnum";
+import Rect from "./utils/Rect";
+import Vector2 from "./utils/Vector2";
 
 
 interface port {
@@ -61,12 +61,12 @@ class MachineInstance {
     }
 
     private updateRect() {
-        const R2 = this.R.multiply(this.machine.width / 2);
-        const D2 = this.D.multiply(this.machine.height / 2);
-        const LT: Vector2 = this._position!.subtract(R2).subtract(D2).round();
+        const R2 = this.R.mul(this.machine.width / 2);
+        const D2 = this.D.mul(this.machine.height / 2);
+        const LT: Vector2 = this._position!.sub(R2).sub(D2).round();
         const RD: Vector2 = this._position!.add(R2).add(D2).round();
-        const LD: Vector2 = this._position!.subtract(R2).add(D2).round();
-        const RT: Vector2 = this._position!.add(R2).subtract(D2).round();
+        const LD: Vector2 = this._position!.sub(R2).add(D2).round();
+        const RT: Vector2 = this._position!.add(R2).sub(D2).round();
 
         const min_x = Math.min(LT.x, RD.x, LD.x, RT.x);
         const max_x = Math.max(LT.x, RD.x, LD.x, RT.x);
@@ -103,7 +103,7 @@ class MachineInstance {
         let tmp;
         this.portInstances.forEach((port: portInstance) => {
             if (port.portSrc.input != input) return;
-            tmp = port.postion.subtract(pos).manhattanDistance();
+            tmp = port.postion.sub(pos).manhattanDistance();
             if (!closest || tmp < closest_num) {
                 closest = port;
                 closest_num = tmp;

@@ -1,5 +1,5 @@
-import { BeltInstance, type Belt } from "./machines/Belt";
-import { Machine, MachineInstance } from "./machines/Machines";
+import { BeltInstance, type Belt } from "./Belt";
+import { Machine, MachineInstance } from "./Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
 
