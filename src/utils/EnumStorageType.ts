@@ -1,5 +1,5 @@
-import ItemStack from "../ItemStack";
-import EnumItemType from "./EnumItem";
+import { ItemStack } from "../proto/ItemStack";
+import EnumItemType from "./EnumItemType";
 
 export interface InventoryConfig {
     type: EnumItemType;
@@ -16,11 +16,7 @@ export class EnumInventoryType {
     }
 
     buildItemStack(): ItemStack[] {
-        const stacklist: ItemStack[] = [];
-        for (const config of this.configs) {
-            stacklist.push(new ItemStack(null, config.type, 0, config.max));
-        }
-        return stacklist;
+        return this.configs.map(config => new ItemStack(null, config.type, 0, config.max));
     }
 
     public static readonly Storage_None: EnumInventoryType = new EnumInventoryType([]);

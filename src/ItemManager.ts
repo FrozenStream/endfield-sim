@@ -1,6 +1,6 @@
 import { InstanceAttention } from "./AttentionManager";
-import I18n from "./I18n";
-import Item from "./Item";
+import I18n from "./utils/I18n";
+import { Item } from "./proto/Item";
 
 class ItemIconManager {
     private iconCollection: HTMLElement;

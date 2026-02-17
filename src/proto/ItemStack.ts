@@ -1,18 +1,24 @@
-import type Item from "./Item";
-import EnumItemType from "./utils/EnumItem";
+import EnumItemType from "../utils/EnumItemType";
+import type { Item } from "./Item";
 
-class ItemStack {
+export class ItemStack {
     public item: Item | null;
     public readonly itemType: EnumItemType;
     public count: number;
     public readonly MaxCount: number;
 
-    constructor(item: Item | null = null, itemType: EnumItemType, count: number = 0, maxCount: number = 50) {
+    constructor(item: Item | null, itemType: EnumItemType, count: number = 0, maxCount: number = 50) {
         this.item = item;
         this.itemType = itemType;
         this.count = count;
         this.MaxCount = maxCount;
     }
+
+    public clear(): void {
+        this.item = null;
+        this.count = 0;
+    }
+
     public isEmpty(): boolean {
         if (this.item === null) return true;
         if (this.count === 0) return true;
@@ -55,5 +61,3 @@ class ItemStack {
         return count - num;
     }
 }
-
-export default ItemStack;

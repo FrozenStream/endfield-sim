@@ -73,6 +73,16 @@ class Vector2 {
         return new Vector2(Math.floor(this.x), Math.floor(this.y));
     }
 
+    clamp(minX: number, minY: number, maxX: number, maxY: number) {
+        return new Vector2(Math.min(Math.max(this.x, minX), maxX), Math.min(Math.max(this.y, minY), maxY));
+    }
+
+    clampSelf(minX: number, minY: number, maxX: number, maxY: number) {
+        this.x = Math.min(Math.max(this.x, minX), maxX);
+        this.y = Math.min(Math.max(this.y, minY), maxY);
+        return this;
+    }
+
     toT(): Vector2 {
         return new Vector2(this.x > 0 ? 1 : (this.x < 0 ? -1 : 0), this.y > 0 ? 1 : (this.y < 0 ? -1 : 0));
     }
@@ -121,7 +131,7 @@ class Vector2 {
         return new Vector2(newX, newY);
     }
 
-    applySelf(matrix: DOMMatrix): Vector2 { 
+    applySelf(matrix: DOMMatrix): Vector2 {
         const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
         const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
         this.x = newX;

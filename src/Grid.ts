@@ -1,7 +1,7 @@
 import GridMap from "./GridMap";
 import { drawBelt, drawMachineLinesFill, drawMachine, drawGridLines, drawMachinesIcon } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
-import { COLORS } from './colors';
+import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
 import { InstanceAttention } from "./AttentionManager";
 

@@ -1,6 +1,3 @@
-
-
-
 class EnumMachineLevel {
   public readonly type:string;
   constructor(type:string) {
@@ -12,3 +9,6 @@ class EnumMachineLevel {
   static readonly WAREHOUSE: EnumMachineLevel = new EnumMachineLevel('warehouse');
   static readonly ELECTRIC: EnumMachineLevel = new EnumMachineLevel('electric');
 }
+
+
+export default EnumMachineLevel;

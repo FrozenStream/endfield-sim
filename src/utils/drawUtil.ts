@@ -1,5 +1,5 @@
 import { InstanceAttention } from "../AttentionManager";
-import type { MachineInstance } from "../Machines";
+import type { MachineInstance } from "../instance/MachineInstance";
 import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
@@ -198,31 +198,36 @@ function drawAttention(canvas: CanvasRenderingContext2D, instance: MachineInstan
 
 function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     canvas.beginPath();
-    instance.currentMode.ports.forEach(io => {
-        const LT: Vector2 = instance.left_top!;
-        const center = Vector2.linear(instance.R, io.relPos.x, instance.D, io.relPos.y).addSelf(LT).addSelf(new Vector2(0.5, 0.5));
-        let v2 = io.direction.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
-        let v1 = io.direction.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
-        let v3 = io.direction.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
+    const LT: Vector2 = instance.left_top!;
 
-        if (io.input) {
-            v1 = v1.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
-            v2 = v2.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
-            v3 = v3.sub(io.direction.rotateCW(instance.rotation).mul(0.4));
-        }
-        else {
-            v1 = v1.add(io.direction.rotateCW(instance.rotation).mul(0.3));
-            v2 = v2.add(io.direction.rotateCW(instance.rotation).mul(0.3));
-            v3 = v3.add(io.direction.rotateCW(instance.rotation).mul(0.3));
-        }
-        v1 = v1.mul(gridSize);
-        v2 = v2.mul(gridSize);
-        v3 = v3.mul(gridSize);
+    for (const group of instance.currentMode.portGroups) {
+        for (let i = 0; i < group.length; i++) {
+            const center = Vector2.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
+            let v2 = group.direction[i].rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
+            let v1 = group.direction[i].rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
+            let v3 = group.direction[i].rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
 
-        canvas.moveTo(v1.x, v1.y);
-        canvas.lineTo(v2.x, v2.y);
-        canvas.lineTo(v3.x, v3.y);
-    })
+            if (group.isIn) {
+                const offset = group.direction[i].rotateCW(instance.rotation).mul(0.4);
+                v1.subSelf(offset);
+                v2.subSelf(offset);
+                v3.subSelf(offset);
+            }
+            else {
+                const offset = group.direction[i].rotateCW(instance.rotation).mul(0.3);
+                v1.addSelf(offset);
+                v2.addSelf(offset);
+                v3.addSelf(offset);
+            }
+            v1.mulSelf(gridSize);
+            v2.mulSelf(gridSize);
+            v3.mulSelf(gridSize);
+
+            canvas.moveTo(v1.x, v1.y);
+            canvas.lineTo(v2.x, v2.y);
+            canvas.lineTo(v3.x, v3.y);
+        }
+    }
     canvas.stroke();
 }
 
@@ -303,11 +308,15 @@ function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineIns
     const max_y = Math.max(LT.y, RB.y);
 
     // 绘制图标
-    const img = instance.machine.imgCache;
-    if (!img.complete) return;
-
-    // 保持原始宽高比
-    const imgAspectRatio = img.naturalWidth / img.naturalHeight;
+    const img = instance.machine.getImageResource();
+    let imgAspectRatio = 1;
+    if (img && (img instanceof HTMLImageElement)) {
+        imgAspectRatio = img.naturalWidth / img.naturalHeight;
+    }
+    else if (img && (img instanceof ImageBitmap)) {
+        imgAspectRatio = img.width / img.height;
+    }
+    else return;
 
     const drawHeight = 0.8 * gridSize;
     const drawWidth = 0.8 * imgAspectRatio * gridSize;

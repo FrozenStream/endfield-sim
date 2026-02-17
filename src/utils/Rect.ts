@@ -24,6 +24,21 @@ class Rect {
     mutiply(scalar: number): Rect { 
         return new Rect(this.min_x * scalar, this.min_y * scalar, this.w * scalar, this.h * scalar);
     }
+
+    // 添加 clamp 函数，将矩形限制在指定范围内
+    clamp(minX: number, minY: number, maxX: number, maxY: number): Rect {
+        const clampedMinX = Math.max(minX, Math.min(this.min_x, maxX));
+        const clampedMinY = Math.max(minY, Math.min(this.min_y, maxY));
+        const clampedMaxX = Math.max(minX, Math.min(this.min_x + this.w, maxX));
+        const clampedMaxY = Math.max(minY, Math.min(this.min_y + this.h, maxY));
+        
+        return new Rect(
+            clampedMinX,
+            clampedMinY,
+            clampedMaxX - clampedMinX,
+            clampedMaxY - clampedMinY
+        );
+    }
 }
 
 

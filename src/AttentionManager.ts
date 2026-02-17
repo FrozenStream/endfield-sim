@@ -1,7 +1,7 @@
-import { BeltInstance } from "./Belt";
-import type Item from "./Item";
-import type ItemStack from "./ItemStack";
-import { MachineInstance } from "./Machines";
+import { BeltInstance } from "./instance/BeltInstance";
+import { MachineInstance } from "./instance/MachineInstance";
+import type { Item } from "./proto/Item";
+import type { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumStorageType";
 
 
@@ -54,9 +54,12 @@ export class InstanceAttention {
     static addItemto(item: Item): void {
         if (!InstanceAttention.selectingInventory) return;
         if (InstanceAttention.selectingInventory.itemType !== item.type) return;
-        if (item !== InstanceAttention.selectingInventory.item) InstanceAttention.selectingInventory.item = item;
-        if (!InstanceAttention.selectingInventory.isFull())
+        if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
+            InstanceAttention.selectingInventory.clear();
+        if (!InstanceAttention.selectingInventory.isFull()) {
+            InstanceAttention.selectingInventory.item = item;
             InstanceAttention.selectingInventory.count += 1;
+        }
 
         // 添加物品后立即刷新显示
         if (InstanceAttention.currentflash) {
@@ -68,9 +71,12 @@ export class InstanceAttention {
     static delItemto(item: Item) {
         if (!InstanceAttention.selectingInventory) return;
         if (InstanceAttention.selectingInventory.itemType !== item.type) return;
-        if (item !== InstanceAttention.selectingInventory.item) InstanceAttention.selectingInventory.item = item;
-        if (!InstanceAttention.selectingInventory.isEmpty())
+        if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
+            InstanceAttention.selectingInventory.clear();
+        if (!InstanceAttention.selectingInventory.isEmpty()) {
+            InstanceAttention.selectingInventory.item = item;
             InstanceAttention.selectingInventory.count -= 1;
+        }
 
         // 添加物品后立即刷新显示
         if (InstanceAttention.currentflash) {
@@ -229,7 +235,7 @@ export class InstanceAttention {
         layout.appendChild(outputSlots);
         if (this.container) this.container.appendChild(layout);
 
-        inputSlot.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot, instance));
+        inputSlot.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot, instance.inventory[0]));
 
         InstanceAttention.currentflash = () => {
             InstanceAttention.updateImgAndNumber(instance.inventory[0], img1, num1);
@@ -238,26 +244,39 @@ export class InstanceAttention {
         InstanceAttention.currentflash();
     }
 
-    private static selectSlot(slot: HTMLDivElement, instance: MachineInstance) {
-        if (this.selectingSlot) {
-            this.selectingSlot.classList.remove('selected');
+    private static selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
+        if (InstanceAttention.selectingSlot) {
+            InstanceAttention.selectingSlot.classList.remove('selected');
         }
-        this.selectingSlot = slot;
-        this.selectingSlot.classList.add('selected');
-        this.selectingInventory = instance.inventory[0];
+        InstanceAttention.selectingSlot = slot;
+        InstanceAttention.selectingSlot.classList.add('selected');
+        InstanceAttention.selectingInventory = inventory;
     }
 
     static updateImgAndNumber(itemStack: ItemStack, img: HTMLImageElement, numberElement: HTMLSpanElement) {
-        if (!itemStack.item) {
-            if (img.src !== '') img.src = '';
-            numberElement.style.display = 'none';
-            img.style.display = 'none';
+        if (itemStack.MaxCount === 0) {
+            if (numberElement.style.display !== 'none') numberElement.style.display = 'none';
+            if (!itemStack.item) {
+                if (img.src !== '') img.src = '';
+                if (img.style.display !== 'none') img.style.display = 'none';
+            }
+            else {
+                if (img.src !== itemStack.item.imgCache.src) img.src = itemStack.item.imgCache.src;
+                if (img.style.display !== 'block') img.style.display = 'block';
+            }
         }
         else {
-            if (itemStack.item.imgCache.src !== img.src) img.src = itemStack.item.imgCache.src;
-            if (itemStack.count > 0) numberElement.textContent = itemStack.count.toString();
-            numberElement.style.display = 'block';
-            img.style.display = 'block';
+            if (itemStack.isEmpty()) {
+                if (img.src !== '') img.src = '';
+                if (img.style.display !== 'none') img.style.display = 'none';
+                if (numberElement.style.display !== 'none') numberElement.style.display = 'none';
+            }
+            else {
+                if (img.src !== itemStack.item!.imgCache.src) img.src = itemStack.item!.imgCache.src;
+                if (img.style.display !== 'block') img.style.display = 'block';
+                numberElement.textContent = itemStack.count.toString();
+                numberElement.style.display = 'block';
+            }
         }
     }
 }

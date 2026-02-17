@@ -1,5 +1,7 @@
-import { BeltInstance, type Belt } from "./Belt";
-import { Machine, MachineInstance } from "./Machines";
+import { MachineInstance, type portInstance } from "./instance/MachineInstance";
+import { type Belt } from "./proto/Belt";
+import { BeltInstance } from "./instance/BeltInstance";
+import { Machine } from "./proto/Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
 
@@ -75,6 +77,16 @@ class GridMap {
         return list;
     }
 
+
+    private static clampMachineShape(vec: Vector2, instance: MachineInstance) {
+        return vec.clampSelf(
+            instance.machine.width / 2,
+            instance.machine.height / 2,
+            GridMap.width - instance.machine.width / 2,
+            GridMap.height - instance.machine.height / 2
+        );
+    }
+
     /**
      * @param mouseX 鼠标X网格坐标(float)
      * @param mouseY 鼠标Y网格坐标(float)
@@ -82,12 +94,14 @@ class GridMap {
     public static previewPositon(mouseX: number, mouseY: number) {
         const vec: Vector2 = new Vector2(mouseX, mouseY);
         if (GridMap._previewing instanceof MachineInstance) {
+            GridMap.clampMachineShape(vec, GridMap._previewing);
             GridMap._previewing.Position = vec;
         }
         else if (GridMap._previewing instanceof BeltInstance) {
             console.log("Belt started? ", GridMap._previewing.started);
+            vec.clampSelf(0, 0, GridMap.width, GridMap.height);
             if (!GridMap._previewing.started) {
-                const occupied: MachineInstance | BeltInstance | null = this.isOccupiedBy(vec.floor());
+                const occupied: MachineInstance | BeltInstance | null = this.isOccupiedBy(vec);
                 if (occupied instanceof MachineInstance) GridMap._previewing.setStart(occupied);
                 else GridMap._previewing.setStart(vec);
             }
@@ -109,6 +123,7 @@ class GridMap {
     }
 
     public static isOccupiedBy(pos: Vector2): MachineInstance | BeltInstance | null {
+        pos = pos.floor();
         return GridMap.grid[pos.y][pos.x].by;
     }
 
@@ -153,6 +168,30 @@ class GridMap {
 
     public static get allBelts(): ReadonlyArray<BeltInstance> {
         return GridMap._belts;
+    }
+
+    public static portConnecting(port: portInstance): BeltInstance | null {
+        const pos = port.postion.add(port.direction);
+        const t = GridMap.isOccupiedBy(pos);
+        if (t instanceof BeltInstance) return t;
+        return null;
+    }
+
+
+    public static updateMachine(instance: MachineInstance) {
+        if (!instance.portInstances || !instance.pollingPointer) return;
+        for (let i = 0; i < instance.portInstances.length; i++) {
+            const begin: number = instance.pollingPointer[i];
+            const group: portInstance[] = instance.portInstances[i];
+            for (let j = 0; j < group.length; j++) {
+                const current: number = (begin + j) % group.length;
+                const connecting = GridMap.portConnecting(group[current]);
+                // 若该端口成功动作，则将轮询初始指针拨到下一个端口
+                if (group[current].portGroup.callback(connecting, instance)) instance.pollingPointer[i] = (current + 1) % group.length;
+
+            }
+        }
+
     }
 }
 

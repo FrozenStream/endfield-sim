@@ -1,9 +1,11 @@
-import EnumItemType from "./utils/EnumItem";
+import EnumItemType from "../utils/EnumItemType";
 
-class Item {
+export class Item {
     id: string;
     type: EnumItemType;
     imgCache: HTMLImageElement;
+    bitmapCache: ImageBitmap | null = null;
+
     constructor(id: string, type: EnumItemType, imgsrc: string) {
         this.id = id;
         this.type = type;
@@ -16,7 +18,26 @@ class Item {
         img.style.objectFit = 'contain';
         this.imgCache = img;
 
+        this.createImageBitmap(imgsrc);
+
         Item.allItems.set(id, this);
+    }
+
+    // 创建ImageBitmap的异步方法
+    private async createImageBitmap(imgsrc: string) {
+        try {
+            const response = await fetch(imgsrc);
+            const blob = await response.blob();
+            this.bitmapCache = await createImageBitmap(blob);
+            console.log(`ImageBitmap created for ${this.id}`);
+        } catch (error) {
+            console.error(`Failed to create ImageBitmap for ${this.id}:`, error);
+        }
+    }
+
+    // 获取图片资源的方法（优先返回ImageBitmap）
+    public getImageResource(): HTMLImageElement | ImageBitmap | null {
+        return this.bitmapCache || this.imgCache;
     }
 
     public static allItems: Map<string, Item> = new Map();
@@ -120,5 +141,3 @@ class Item {
     public static quartz_sand: Item = new Item('item_quartz_sand', EnumItemType.SOLID, '/items/item_quartz_sand.png');
     public static xiranite_powder: Item = new Item('item_xiranite_powder', EnumItemType.SOLID, '/items/item_xiranite_powder.png');
 }
-
-export default Item;
