@@ -45,8 +45,8 @@ export class ItemStack {
      */
     public merge(stack_in: ItemStack): boolean {
         if (this.itemType !== EnumItemType.ANY && this.itemType !== stack_in.itemType) return false;
-        if (stack_in.item === null) return true;
-        if (this.item === null) this.item = stack_in.item;
+        if (stack_in.isEmpty() === null) return true;
+        if (this.isEmpty()) this.item = stack_in.item;
         else if (this.item !== stack_in.item) return false;
         // 合并数量并处理溢出
         const num = Math.min(this.MaxCount - this.count, stack_in.count);

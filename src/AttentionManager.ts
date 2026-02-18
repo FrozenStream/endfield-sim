@@ -280,6 +280,11 @@ export class InstanceAttention {
             slots.push([slot, img, num]);
             slotsContainer.appendChild(slot);
 
+            console.log('inventory0', instance.inventory[0], 'inventory1', instance.inventory[1],
+                'inventory2', instance.inventory[2], 'inventory3', instance.inventory[3],
+                'inventory4', instance.inventory[4], 'inventory5', instance.inventory[5]
+            )
+
             // 为每个槽位添加点击事件
             slot.addEventListener('click', () => {
                 InstanceAttention.selectSlot(slot, instance.inventory[i]);
