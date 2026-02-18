@@ -47,7 +47,12 @@ export class EnumInventoryType {
     ])
 
     public static readonly Storage_6: EnumInventoryType = new EnumInventoryType([
-
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
     ])
 
 }

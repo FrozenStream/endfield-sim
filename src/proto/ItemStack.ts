@@ -19,6 +19,16 @@ export class ItemStack {
         this.count = 0;
     }
 
+    public copy(stack_in: ItemStack){
+        this.item = stack_in.item;
+        this.count = stack_in.count;
+    }
+
+    public moveIn(stack_in: ItemStack){
+        this.copy(stack_in);
+        stack_in.clear();
+    }
+
     public isEmpty(): boolean {
         if (this.item === null) return true;
         if (this.count === 0) return true;

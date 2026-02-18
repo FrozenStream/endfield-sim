@@ -25,63 +25,144 @@ export class BeltInventory {
     private _inventory: ItemStack[];
     private _delay: number[];
 
-    private static SecMaxDelay = 20;
+    private _count: number;
+
+    public static readonly SecMaxDelay = 20;
 
     constructor(length: number) {
         this.length = length;
         this._pointer = 0;
         this._pointerDelay = 0;
-        this._inventory = new Array(length);
-        this._delay = new Array(length).fill(0);
-        for (let i = 0; i < length; i++) {
+        this._count = 0;
+        this._inventory = new Array(length + 1);
+        this._delay = new Array(length + 1).fill(0);
+        for (let i = 0; i <= length; i++)
             this._inventory[i] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
+
+        console.log("BeltInventory.length", this.length);
+    }
+
+    private point(index: number): number {
+        return (this._pointer + index + this._inventory.length) % this._inventory.length;
+    }
+
+    private blockTail(index: number): { index: number, delay: number } {
+        if (this._pointerDelay === 0) {
+            return {
+                index: this.point(index),
+                delay: BeltInventory.SecMaxDelay - 1
+            }
+        }
+        else return {
+            index: this.point(index + 1),
+            delay: this._pointerDelay - 1
         }
     }
 
-    public get tail(): number { return (this._pointer - 1 + this._inventory.length) % this._inventory.length; }
-
-
-    /**
-     * @returns 传送带尾部物品，若为空则返回null
-     */
-    public tailInventory(): ItemStack | null {
-        const stack = this._inventory[this.tail];
-        const delay = this._delay[this.tail];
-        if (stack.isEmpty() || delay !== this._pointerDelay) return null;
-        return stack;
+    private blockHead(index: number): { index: number, delay: number } {
+        return {
+            index: this.point(index),
+            delay: this._pointerDelay
+        }
     }
 
-    public headInventory(): ItemStack | null {
-        const stack = this._inventory[this._pointer];
-        const delay = this._delay[this._pointer];
-        if (stack.isEmpty() || delay !== this._pointerDelay) return null;
-        return stack;
+    public get isFull(): boolean {
+        return this._count === this.length;
+    }
+
+    public get(data: { index: number, delay: number }): ItemStack | null {
+        if (!this._inventory[data.index].isEmpty() && this._delay[data.index] === data.delay)
+            return this._inventory[data.index];
+        else
+            return null;
+    }
+
+    public getTail(): ItemStack | null {
+        const tail = this.blockTail(this.length - 1);
+        return this.get(tail);
+    }
+
+    public getHead(): ItemStack | null {
+        const head = this.blockHead(0);
+        return this.get(head);
+    }
+
+    public getInventory(index: number): ({ itemstack: ItemStack, delay: number } | null) {
+        const a = this.point(index);
+        const b = this.point(index + 1);
+        if (!this._inventory[a].isEmpty() && this._delay[a] >= this._pointerDelay)
+            return {
+                itemstack: this._inventory[a],
+                delay: this._delay[a] - this._pointerDelay
+            }
+        else if (!this._inventory[b].isEmpty() && this._delay[b] < this._pointerDelay)
+            return {
+                itemstack: this._inventory[b],
+                delay: BeltInventory.SecMaxDelay - this._pointerDelay + this._delay[b]
+            }
+        return null;
     }
 
     public update() {
-        if (!this.tailInventory()) return;  // 若尾部有物品，则传送带堵塞
-        this._pointerDelay += 1;
-        if (this._pointerDelay >= BeltInventory.SecMaxDelay) {
-            this._pointerDelay = 0;
+        if (this.getTail() !== null) {     // 若尾部有物品，则传送带堵塞
+            console.log('Belt blocked');
+            if (this._count === this.length) return;    // 若全段阻塞，暂停更新
+
+            for (let i = this.length - 1; i >= 0; i--) {
+                const tmp = this.blockTail(i);
+                if (this.get(tmp) === null) {
+                    // 找到第一个未满节点后退出
+                    for (let j = i + 1; j < this.length; j++) {
+                        const tail = this.blockTail(j);
+                        if (this._delay[tail.index] === 0) {
+                            const before = this.blockHead(j).index;
+                            this._inventory[before].moveIn(this._inventory[tail.index]);
+                            this._delay[before] = BeltInventory.SecMaxDelay - 1;
+                        }
+                        else {
+                            this._delay[tail.index] -= 1;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        this._pointerDelay -= 1;
+        if (this._pointerDelay < 0) {
+            this._pointerDelay = BeltInventory.SecMaxDelay - 1;
             this._pointer = (this._pointer - 1 + this._inventory.length) % this._inventory.length;
         }
     }
 
     public insertable() {
-        const next = (this._pointer + 1 + this._inventory.length) % this._inventory.length;
-        if (!this._inventory[next].isEmpty() && BeltInventory.SecMaxDelay - this._delay[next] + this._pointerDelay < BeltInventory.SecMaxDelay) return false;
-        if (!this._inventory[this._pointer].isEmpty() && this._delay[this._pointer] < this._pointerDelay) return false;
+        const next = this.point(1);
+        if (!this._inventory[next].isEmpty() && BeltInventory.SecMaxDelay + this._delay[next] - this._pointerDelay < BeltInventory.SecMaxDelay) return false;
+        if (!this._inventory[this._pointer].isEmpty() && this._delay[this._pointer] >= this._pointerDelay) return false;
         return true;
     }
 
-    public insert(itemStack: ItemStack): boolean {
+    public insert(itemStack_in: ItemStack): boolean {
         if (!this.insertable()) return false;
-        this._inventory[this._pointer].merge(itemStack);
+        this._inventory[this._pointer].merge(itemStack_in);
         if (!this._inventory[this._pointer].isEmpty()) {
             this._delay[this._pointer] = this._pointerDelay;
+            console.log("insert");
+            this._count++;
             return true;
         }
         else return false;
+    }
+
+    public extract(itemStack_out: ItemStack): boolean {
+        const stack = this.getTail();
+        if (stack === null) return false;
+        itemStack_out.merge(stack);
+        if (stack.isEmpty()) {
+            this._count--;
+            console.log("extract");
+            return true;
+        }
+        return false;
     }
 }
 
@@ -91,6 +172,9 @@ export class BeltInstance {
 
     public start: MachineInstance | null = null;
     public startPoint: Vector2 | null = null;
+    public end: MachineInstance | null = null;
+    public endPoint: Vector2 | null = null;
+
     public direc: Array<number>;
     private _started: boolean = false;
 
@@ -124,18 +208,26 @@ export class BeltInstance {
         return this._started;
     }
 
-    public setEnd(end: Vector2) {
+    public setEnd(end: Vector2, instance?: MachineInstance) {
         if (this.start === null) throw new Error("start point is null");
         if (!this._started) return;
-        end = end.floor();
+        const port = instance?.closestPort(end, true, EnumItemType.SOLID);
+        if (!port) {
+            this.end = null;
+            this.endPoint = end;
+        }
+        else {
+            this.end = instance!;
+            this.endPoint = port.postion!.sub(port.direction);
+        }
 
-        const start = this.start.closestPort(end, false, EnumItemType.SOLID);
+        const start = this.start.closestPort(this.endPoint, false, EnumItemType.SOLID);
         if (start === null) return;
         const faceAt = Vector2.toIndex(start.direction)!;
-        this.startPoint = start.postion.add(Vector2.DIREC[faceAt]);
+        this.startPoint = start.postion.add(Vector2.DIREC[faceAt]).floor();
         this.direc = [faceAt];
 
-        const relative: Vector2 = end.sub(this.startPoint);
+        const relative: Vector2 = this.endPoint.floor().sub(this.startPoint);
         console.log('relative', relative);
         const inFaceLength: number = relative.dot(Vector2.DIREC[faceAt]);
         const dir_a = Vector2.toCW(faceAt);
@@ -162,16 +254,19 @@ export class BeltInstance {
                 for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
             }
         }
-        console.log(this.direc);
+
+        if (!port) this.direc.push(this.direc[this.direc.length - 1]);
+        else this.direc.push(Vector2.toIndex(port.direction)!);
+        console.log("belt directions:", this.direc);
     }
 
     public get length(): number {
-        return this.direc.length;
+        return this.direc.length - 1;
     }
 
     public shapeAt(index: number): number {
-        const nextDir = index + 1 < this.direc.length ? this.direc[index + 1] : this.direc[index];
-        return Vector2.ABtoIndex(this.direc[index], nextDir);
+        if (index >= this.length) throw new Error("index out of range");
+        return Vector2.ABtoIndex(this.direc[index], this.direc[index + 1]);
     }
 
     public shape(): ReadonlyArray<Vector2> {
@@ -179,7 +274,7 @@ export class BeltInstance {
         const arr: Array<Vector2> = [];
         let point: Vector2 = Vector2.copy(this.startPoint);
         arr.push(point);
-        for (let i = 1; i < this.direc.length; i++) {
+        for (let i = 1; i < this.length; i++) {
             point = point.add(Vector2.DIREC[this.direc[i]]);
             arr.push(point);
         }
@@ -188,10 +283,11 @@ export class BeltInstance {
 
     public build() {
         if (!this.startPoint) return;
+        this.inventory = new BeltInventory(this.length);
         this.sections = [];
         let point: Vector2 = Vector2.copy(this.startPoint);
         this.sections.push(new BeltSec(this, 0, this.shapeAt(0), point));
-        for (let i = 1; i < this.direc.length; i++) {
+        for (let i = 1; i < this.length; i++) {
             point = point.add(Vector2.DIREC[this.direc[i]]);
             this.sections.push(new BeltSec(this, i, this.shapeAt(i), point));
         }

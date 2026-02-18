@@ -2,7 +2,8 @@ import { BeltInstance } from "./instance/BeltInstance";
 import { MachineInstance } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
 import type { ItemStack } from "./proto/ItemStack";
-import { EnumInventoryType } from "./utils/EnumStorageType";
+import { EnumInventoryType } from "./utils/EnumInventoryType";
+import EnumItemType from "./utils/EnumItemType";
 
 
 
@@ -13,6 +14,12 @@ export class InstanceAttention {
     private static selectingInventory: ItemStack | null = null;
 
     private static currentflash: (() => void) | null = null;
+
+    public static flash() {
+        if (this.currentflash) {
+            this.currentflash();
+        }
+    }
 
     static readonly container = document.getElementById('machine-details-panel')!;
     static set select(instance: MachineInstance | BeltInstance | null) {
@@ -25,6 +32,9 @@ export class InstanceAttention {
                     break;
                 case EnumInventoryType.Storage_2x1:
                     InstanceAttention.createLayout_2x1(instance);
+                    break;
+                case EnumInventoryType.Storage_6:
+                    InstanceAttention.createLayout_6(instance);
                     break;
             }
             InstanceAttention.selectingInstance = instance;
@@ -53,7 +63,8 @@ export class InstanceAttention {
 
     static addItemto(item: Item): void {
         if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.itemType !== item.type) return;
+        if (InstanceAttention.selectingInventory.itemType !== EnumItemType.ANY &&
+            InstanceAttention.selectingInventory.itemType !== item.type) return;
         if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
             InstanceAttention.selectingInventory.clear();
         if (!InstanceAttention.selectingInventory.isFull()) {
@@ -70,7 +81,8 @@ export class InstanceAttention {
 
     static delItemto(item: Item) {
         if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.itemType !== item.type) return;
+        if (InstanceAttention.selectingInventory.itemType !== EnumItemType.ANY &&
+            InstanceAttention.selectingInventory.itemType !== item.type) return;
         if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
             InstanceAttention.selectingInventory.clear();
         if (!InstanceAttention.selectingInventory.isEmpty()) {
@@ -241,6 +253,49 @@ export class InstanceAttention {
             InstanceAttention.updateImgAndNumber(instance.inventory[0], img1, num1);
             InstanceAttention.updateImgAndNumber(instance.inventory[1], img2, num2);
         }
+        InstanceAttention.currentflash();
+    }
+
+    // 动态创建6槽位布局（2列3行排列）
+    static createLayout_6(instance: MachineInstance): void {
+        const layout = document.createElement('div');
+        layout.className = 'belt-slots-layout';
+        layout.id = 'belt-slots-layout-six';
+
+        // 创建2列3行的槽位容器
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'six-slots-grid';
+        slotsContainer.style.display = 'grid';
+        slotsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        slotsContainer.style.gridTemplateRows = 'repeat(3, 1fr)';
+        slotsContainer.style.gap = '8px';
+        slotsContainer.style.width = '100%';
+        slotsContainer.style.height = '100%';
+
+        // 创建6个槽位（按2列3行顺序排列）
+        const slots: [HTMLDivElement, HTMLImageElement, HTMLSpanElement][] = [];
+        for (let i = 0; i < 6; i++) {
+            const [slot, img, num] = InstanceAttention.buildInSlot_Solid();
+            slot.dataset.slotIndex = i.toString();
+            slots.push([slot, img, num]);
+            slotsContainer.appendChild(slot);
+
+            // 为每个槽位添加点击事件
+            slot.addEventListener('click', () => {
+                InstanceAttention.selectSlot(slot, instance.inventory[i]);
+            });
+        }
+
+        // 组装所有元素
+        layout.appendChild(slotsContainer);
+        if (this.container) this.container.appendChild(layout);
+
+        // 设置刷新函数
+        InstanceAttention.currentflash = () => {
+            for (let i = 0; i < 6; i++) {
+                InstanceAttention.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
+            }
+        };
         InstanceAttention.currentflash();
     }
 

@@ -1,8 +1,10 @@
 import { InstanceAttention } from "../AttentionManager";
+import { BeltInventory, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
 import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
+const BELT_SEC_MAX_DELAY = 20; // 传送带段最大延迟值
 
 function drawBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
     if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, x, y, size);
@@ -329,4 +331,45 @@ function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineIns
     canvas.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 }
 
-export { drawBelt, drawMachine, drawMachineLinesFill, drawGridLines, drawMachinesIcon };
+
+function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance, gridSize: number) {
+    if (!instance.inventory) return;
+
+    const inventory = instance.inventory;
+    const sections = instance.sections;
+
+    if (!sections) return;
+
+    // 遍历传送带的所有段
+    for (let i = 0; i < inventory.length; i++) {
+        const data = inventory.getInventory(i);
+        const pos = sections[i].position.add(new Vector2(0.5, 0.5));
+        if (!data) continue;
+        if (Vector2.isDiagonal(sections[i].direc)) {
+            let v1, v2;
+            if (sections[i].direc % 3 === 1) {
+                v1 = Vector2.DIREC[(sections[i].direc - 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v2 = Vector2.DIREC[(sections[i].direc + 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+            }
+            else {
+                v1 = Vector2.DIREC[(sections[i].direc + 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v2 = Vector2.DIREC[(sections[i].direc - 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+            }
+            const offset = data.delay / BeltInventory.SecMaxDelay - 0.5;
+            if (offset > 0) pos.addSelf(v2.mul(offset)).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
+            else pos.addSelf(v1.mul(offset)).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
+        }
+        else {
+            const offset = Vector2.DIREC[sections[i].direc].mul(data.delay / BeltInventory.SecMaxDelay - 0.5);
+            pos.addSelf(offset).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
+        }
+
+        const img = data.itemstack.item?.getImageResource();
+        if (!img) continue;
+
+        canvas.drawImage(img, pos.x, pos.y, gridSize * 0.8, gridSize * 0.8);
+    }
+}
+
+
+export { drawBelt, drawMachine, drawMachineLinesFill, drawGridLines, drawMachinesIcon, drawBeltItems };

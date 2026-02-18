@@ -1,7 +1,7 @@
-import type { BeltInstance, BeltInventory } from "../instance/BeltInstance";
+import type { BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance, portInstance } from "../instance/MachineInstance";
 import EnumItemType from "../utils/EnumItemType";
-import { EnumInventoryType } from "../utils/EnumStorageType";
+import { EnumInventoryType } from "../utils/EnumInventoryType";
 import Vector2 from "../utils/Vector2";
 import { Storager_In, Storager_Out } from "./Actions";
 
@@ -28,7 +28,7 @@ export class PortGroup {
     buildInstances(instance: MachineInstance): portInstance[] {
         const list: portInstance[] = []
         for (let i = 0; i < this.relpos.length; i++) {
-            const transfromedRelPos = Vector2.linear(instance.R, this.relpos[i].x, instance.D, this.relpos[i].y);
+            const transfromedRelPos = Vector2.linear(instance.R, this.relpos[i].x + 0.5, instance.D, this.relpos[i].y + 0.5);
             list.push({
                 portGroup: this,
                 postion: transfromedRelPos.addSelf(instance.left_top!),

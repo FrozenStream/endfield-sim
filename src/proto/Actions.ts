@@ -10,11 +10,9 @@ import type { MachineInstance } from "../instance/MachineInstance";
  */
 export function Storager_In(b: BeltInstance | null, m: MachineInstance): boolean {
     if (b === null || b?.inventory === null) return false;
-    const stack = b.inventory.tailInventory();
-    if (stack === null) return false;
     for (const inv of m.inventory) {
-        inv.merge(stack);
-        if (stack.isEmpty()) return true;
+        if (inv.isFull()) continue;
+        if (b.inventory.extract(inv)) return true;
     }
     return false;
 }
