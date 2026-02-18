@@ -4,7 +4,6 @@ import type { MachineInstance } from "../instance/MachineInstance";
 import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
-const BELT_SEC_MAX_DELAY = 20; // 传送带段最大延迟值
 
 function drawBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
     if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, x, y, size);
