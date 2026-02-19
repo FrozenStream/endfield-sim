@@ -141,3 +141,8 @@ export class Item {
     public static readonly quartz_sand: Item = new Item('item_quartz_sand', EnumItemType.SOLID, '/items/item_quartz_sand.png');
     public static readonly xiranite_powder: Item = new Item('item_xiranite_powder', EnumItemType.SOLID, '/items/item_xiranite_powder.png');
 }
+
+
+export function itemsTostring(items: (Item | null)[]): string {
+    return items.map(item => item?.id ?? "null").join(',');
+}

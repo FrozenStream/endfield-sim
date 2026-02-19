@@ -122,16 +122,23 @@ class GridMap {
         GridMap._previewing = null;
     }
 
+    public static isOutside(pos: Vector2): boolean {
+        return pos.x < 0 || pos.x >= GridMap.width || pos.y < 0 || pos.y >= GridMap.height;
+    }
+
     public static isOccupied(pos: Vector2): boolean {
+        if (GridMap.isOutside(pos)) return false;
         return GridMap.grid[pos.y][pos.x].occupied;
     }
 
     public static isOccupiedBy(pos: Vector2): MachineInstance | BeltInstance | null {
+        if (GridMap.isOutside(pos)) return null;
         pos = pos.floor();
         return GridMap.grid[pos.y][pos.x].by;
     }
 
     public static occupyingDirec(pos: Vector2): number | null {
+        if (GridMap.isOutside(pos)) return null;
         return GridMap.grid[pos.y][pos.x].beltDirec;
     }
 
@@ -208,6 +215,8 @@ class GridMap {
                     instance.pollingPointer[i] = (current + 1) % group.length;
             }
         }
+
+        instance.currentMode.working(instance);
     }
 
     private static updateBelt(instance: BeltInstance) {

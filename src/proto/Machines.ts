@@ -3,15 +3,49 @@ import type { MachineInstance, portInstance } from "../instance/MachineInstance"
 import EnumItemType from "../utils/EnumItemType";
 import { EnumInventoryType } from "../utils/EnumInventoryType";
 import Vector2 from "../utils/Vector2";
-import { 
-    furnance_Work, 
-    grinder_Work, 
+import {
+    furnance_Work,
+    furnance_In,
+    furnance_Out,
+    grinder_Work,
+    grinder_In,
+    grinder_Out,
     shaper_Work,
+    shaper_In,
+    shaper_Out,
     component_Work,
+    component_In,
+    component_Out,
     planter_Work,
+    planter_In_soild,
+    planter_Out,
     seedcollector_Work,
-    Storager_In, 
-    Storager_Out 
+    seedcollector_In,
+    seedcollector_Out,
+    winder_Work,
+    winder_In,
+    winder_Out,
+    fillingmachine_Work,
+    fillingmachine_In_soild,
+    fillingmachine_Out,
+    assemblymachine_Work,
+    assemblymachine_In,
+    assemblymachine_Out,
+    thickener_Work,
+    thickener_In,
+    thickener_Out,
+    mixpool_Work,
+    mixpool_In,
+    mixpool_Out,
+    xiraniteoven_Work,
+    xiraniteoven_In_soild,
+    xiraniteoven_Out,
+    dismantler_Work,
+    dismantler_In,
+    dismantler_Out,
+    Storager_In,
+    Storager_Out,
+    planter_In_liquid
 } from "./Actions";
 
 
@@ -135,8 +169,8 @@ export class Machine {
     public static readonly Furnance: Machine = new Machine('furnance', '/icon_port/icon_port_furnance_1.png', 3, 3,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, furnance_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, furnance_Out)
             ], furnance_Work)
         ]
     );
@@ -144,8 +178,8 @@ export class Machine {
     public static readonly Grinder: Machine = new Machine('grinder', '/icon_port/icon_port_grinder_1.png', 3, 3,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, grinder_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, grinder_Out)
             ], grinder_Work)
         ]
     );
@@ -153,8 +187,8 @@ export class Machine {
     public static readonly Shaper: Machine = new Machine('shaper', '/icon_port/icon_port_shaper_1.png', 3, 3,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, shaper_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, shaper_Out)
             ], shaper_Work)
         ]
     );
@@ -162,8 +196,8 @@ export class Machine {
     public static readonly Component: Machine = new Machine('component', '/icon_port/icon_port_cmpt_mc_1.png', 3, 3,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, component_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, component_Out)
             ], component_Work)
         ]
     );
@@ -171,8 +205,13 @@ export class Machine {
     public static readonly Planter: Machine = new Machine('planter', '/icon_port/icon_port_planter_1.png', 5, 5,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, planter_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, planter_Out)
+            ], planter_Work),
+            new MachineMode(MachineMode.liquidMode, EnumInventoryType.Storage_2x1_liquid_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, planter_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, planter_Out),
+                new PortGroup([new Vector2(0, 2)], [Vector2.LEFT], EnumItemType.LIQUID, true, planter_In_liquid)
             ], planter_Work)
         ]
     );
@@ -180,95 +219,73 @@ export class Machine {
     public static readonly Seedcollector: Machine = new Machine('seedcollector', '/icon_port/icon_port_seedcol_1.png', 5, 5,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, seedcollector_In),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, seedcollector_Out)
             ], seedcollector_Work)
         ]
     );
 
-    // // 装备原件机
-    // public static readonly Winder: Machine = new Machine('winder', '/icon_port/icon_port_winder_1.png', 6, 4,
-    //     [new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1, [
-    //         { relPos: new Vector2(0, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(1, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(2, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(3, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(4, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(5, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(0, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(1, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(2, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(3, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(4, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(5, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out }])
-    //     ]
-    // );
-    // // 灌装机
-    // public static readonly FillingMachine: Machine = new Machine('fillingmachine', '/icon_port/icon_port_filling_pd_mc_1.png', 6, 4,
-    //     [new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1, [
-    //         { relPos: new Vector2(0, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(1, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(2, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(3, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(4, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(5, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(0, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(1, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(2, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(3, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(4, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(5, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out }])
-    //     ]
-    // );
-    // // 封装机
-    // public static readonly AssemblyMachine: Machine = new Machine('assemblymachine', '/icon_port/icon_port_tools_asm_mc_1.png', 6, 4,
-    //     [new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1, [
-    //         { relPos: new Vector2(0, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(1, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(2, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(3, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(4, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(5, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(0, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(1, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(2, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(3, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(4, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(5, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out }])
-    //     ]
-    // );
-    // // 研磨机
-    // public static readonly Thickener: Machine = new Machine('thickener', '/icon_port/icon_port_thickener_1.png', 6, 4,
-    //     [new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1, [
-    //         { relPos: new Vector2(0, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(1, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(2, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(3, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(4, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(5, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //         { relPos: new Vector2(0, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(1, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(2, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(3, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(4, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //         { relPos: new Vector2(5, 3), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out }])
-    //     ]
-    // );
-    // // 反应池
-    // public static readonly MixPool: Machine = new Machine('mixpool', '/icon_port/icon_port_mix_pool_1.png', 5, 5,
-    //     [new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1,
-    //         [
-    //             { relPos: new Vector2(1, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //             { relPos: new Vector2(3, 0), type: EnumItemType.SOLID, input: true, direction: Vector2.DOWN, callback: Storager_In },
-    //             { relPos: new Vector2(1, 4), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out },
-    //             { relPos: new Vector2(3, 4), type: EnumItemType.SOLID, input: false, direction: Vector2.DOWN, callback: Storager_Out }
-    //         ])
-    //     ]
-    // );
-    // // 天有烘炉
-    // public static readonly XiraniteOven: Machine = new Machine('xiraniteoven', '/icon_port/icon_port_xiranite_oven_1.png');
-    // // 拆解机
-    // public static readonly Dismantler: Machine = new Machine('dismantler', '/icon_port/icon_port_dismantler_1.png', 6, 4,
-
-    // );
+    // 装备原件机
+    public static readonly Winder: Machine = new Machine('winder', '/icon_port/icon_port_winder_1.png', 6, 4,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, winder_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, winder_Out)
+            ], winder_Work)
+        ]
+    );
+    // 灌装机
+    public static readonly FillingMachine: Machine = new Machine('fillingmachine', '/icon_port/icon_port_filling_pd_mc_1.png', 6, 4,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, fillingmachine_In_soild),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, fillingmachine_Out)
+            ], fillingmachine_Work)
+        ]
+    );
+    // 封装机
+    public static readonly AssemblyMachine: Machine = new Machine('assemblymachine', '/icon_port/icon_port_tools_asm_mc_1.png', 6, 4,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, assemblymachine_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, assemblymachine_Out)
+            ], assemblymachine_Work)
+        ]
+    );
+    // 研磨机
+    public static readonly Thickener: Machine = new Machine('thickener', '/icon_port/icon_port_thickener_1.png', 6, 4,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, thickener_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, thickener_Out)
+            ], thickener_Work)
+        ]
+    );
+    // 反应池
+    public static readonly MixPool: Machine = new Machine('mixpool', '/icon_port/icon_port_mix_pool_1.png', 5, 5,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, mixpool_In),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, mixpool_Out)
+            ], mixpool_Work)
+        ]
+    );
+    // 天有烘炉
+    public static readonly XiraniteOven: Machine = new Machine('xiraniteoven', '/icon_port/icon_port_xiranite_oven_1.png', 5, 5,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, xiraniteoven_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, xiraniteoven_Out)
+            ], xiraniteoven_Work)
+        ]
+    );
+    // 拆解机
+    public static readonly Dismantler: Machine = new Machine('dismantler', '/icon_port/icon_port_dismantler_1.png', 6, 4,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, dismantler_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, dismantler_Out)
+            ], dismantler_Work)
+        ]
+    );
 }

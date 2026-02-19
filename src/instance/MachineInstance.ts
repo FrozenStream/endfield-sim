@@ -1,3 +1,4 @@
+import type { Item } from "../proto/Item";
 import type { ItemStack } from "../proto/ItemStack";
 import type { Machine, MachineMode, PortGroup } from "../proto/Machines";
 import type EnumItemType from "../utils/EnumItemType";
@@ -11,12 +12,49 @@ export interface portInstance {
 }
 
 
+export class WorkTimer {
+    private _isWorking: boolean = false;
+    private maxTime: number = 1e9;
+    private cur: number = 0;
+
+    private static readonly _timeScale: number = 50;
+
+    begin(maxTime: number) {
+        this._isWorking = true;
+        this.maxTime = maxTime * WorkTimer._timeScale;
+        this.cur = 0;
+    }
+
+    reset() {
+        this._isWorking = false;
+        this.maxTime = 1e9;
+        this.cur = 0;
+    }
+
+    update(deltaTime: number): boolean {
+        if (!this._isWorking) return false;
+        if (this.maxTime <= 0) return false;
+        this.cur += deltaTime;
+        if (this.cur >= this.maxTime) {
+            this.cur = 0;
+            return true;
+        }
+        return false;
+    }
+
+    toZero() {
+        this.cur = 0;
+    }
+}
+
+
 export class MachineInstance {
     public readonly machine: Machine;
     private _position: Vector2 | null = null;
     public rotation: number = 0;
 
     public currentMode: MachineMode;
+    public timer: WorkTimer = new WorkTimer();
 
     public R: Vector2 = Vector2.RIGHT;
     public D: Vector2 = Vector2.DOWN;
@@ -27,6 +65,8 @@ export class MachineInstance {
     public inventory: ItemStack[] = [];
     public portInstances: portInstance[][] | null = null;   // 预览状态不使用
     public pollingPointer: number[] | null = null;
+    public curInv: Item | string | null = null;
+    public curRecipe: any = null;
 
     constructor(machine: Machine) {
         this.machine = machine;
@@ -76,6 +116,8 @@ export class MachineInstance {
         this.inventory = this.currentMode.inventory.buildItemStack();
         this.portInstances = this.currentMode.portGroups.map(portGroup => portGroup.buildInstances(this));
         this.pollingPointer = this.currentMode.portGroups.map(_ => 0);
+        this.curInv = null;
+        this.curRecipe = null;
     }
 
     public closestPort(dst: Vector2, isIn: boolean, itemType: EnumItemType): portInstance | null {

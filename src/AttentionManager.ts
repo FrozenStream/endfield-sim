@@ -1,7 +1,7 @@
 import { BeltInstance } from "./instance/BeltInstance";
 import { MachineInstance } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
-import type { ItemStack } from "./proto/ItemStack";
+import { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumInventoryType";
 import EnumItemType from "./utils/EnumItemType";
 
@@ -30,7 +30,7 @@ export class InstanceAttention {
                 case EnumInventoryType.Storage_1x1_solid:
                     InstanceAttention.createLayout_1x1(instance);
                     break;
-                case EnumInventoryType.Storage_2x1:
+                case EnumInventoryType.Storage_2x1_solid:
                     InstanceAttention.createLayout_2x1(instance);
                     break;
                 case EnumInventoryType.Storage_6:
@@ -63,14 +63,9 @@ export class InstanceAttention {
 
     static addItemto(item: Item): void {
         if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.itemType !== EnumItemType.ANY &&
-            InstanceAttention.selectingInventory.itemType !== item.type) return;
-        if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
-            InstanceAttention.selectingInventory.clear();
-        if (!InstanceAttention.selectingInventory.isFull()) {
-            InstanceAttention.selectingInventory.item = item;
-            InstanceAttention.selectingInventory.count += 1;
-        }
+        if (InstanceAttention.selectingInventory.item !== item) InstanceAttention.selectingInventory.clear();
+        const newStack = new ItemStack(item, item.type, 1);
+        InstanceAttention.selectingInventory.merge(newStack);
 
         // 添加物品后立即刷新显示
         if (InstanceAttention.currentflash) {
@@ -81,14 +76,8 @@ export class InstanceAttention {
 
     static delItemto(item: Item) {
         if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.itemType !== EnumItemType.ANY &&
-            InstanceAttention.selectingInventory.itemType !== item.type) return;
-        if (!InstanceAttention.selectingInventory.isEmpty() && item !== InstanceAttention.selectingInventory.item)
-            InstanceAttention.selectingInventory.clear();
-        if (!InstanceAttention.selectingInventory.isEmpty()) {
-            InstanceAttention.selectingInventory.item = item;
-            InstanceAttention.selectingInventory.count -= 1;
-        }
+        if (InstanceAttention.selectingInventory.item !== item) InstanceAttention.selectingInventory.clear();
+        InstanceAttention.selectingInventory.count = Math.max(0, InstanceAttention.selectingInventory.count - 1);
 
         // 添加物品后立即刷新显示
         if (InstanceAttention.currentflash) {
@@ -221,6 +210,21 @@ export class InstanceAttention {
         layout.appendChild(outputSlots);
 
         if (this.container) this.container.appendChild(layout);
+
+        // 添加点击事件监听器
+        inputSlot1.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot1, instance.inventory[0]));
+        inputSlot2.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot2, instance.inventory[1]));
+        outputSlot.addEventListener('click', () => InstanceAttention.selectSlot(outputSlot, instance.inventory[2]));
+
+        // 设置刷新函数
+        InstanceAttention.currentflash = () => {
+            InstanceAttention.updateImgAndNumber(instance.inventory[0], img1, num1);
+            InstanceAttention.updateImgAndNumber(instance.inventory[1], img2, num2);
+            InstanceAttention.updateImgAndNumber(instance.inventory[2], img3, num3);
+        }
+
+        // 初始化显示
+        InstanceAttention.currentflash();
     }
 
     static createLayout_1x1(instance: MachineInstance): void {

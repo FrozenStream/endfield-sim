@@ -27,7 +27,7 @@ export class BeltInventory {
 
     private _count: number;
 
-    public static readonly SecMaxDelay = 20;
+    public static readonly SecMaxDelay = 100;
 
     constructor(length: number) {
         this.length = length;

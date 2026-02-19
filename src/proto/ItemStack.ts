@@ -2,40 +2,59 @@ import EnumItemType from "../utils/EnumItemType";
 import type { Item } from "./Item";
 
 export class ItemStack {
-    public item: Item | null;
-    public readonly itemType: EnumItemType;
-    public count: number;
+    private _item: Item | null;
+    private _count: number;
     public readonly MaxCount: number;
+    public readonly itemType: EnumItemType;
 
     constructor(item: Item | null, itemType: EnumItemType, count: number = 0, maxCount: number = 50) {
-        this.item = item;
-        this.itemType = itemType;
-        this.count = count;
+        this._item = item;
+        this._count = count;
         this.MaxCount = maxCount;
+        this.itemType = itemType;
+    }
+
+    public get item(): Item | null {
+        if (this.MaxCount === 0) return this._item;
+        if (!this.isEmpty()) return this._item;
+        else return null;
+    }
+
+    public set item(item: Item | null) {
+        this._item = item;
+    }
+
+    public get count(): number {
+        if (this._item === null) return 0;
+        return this._count;
+    }
+
+    public set count(count: number) {
+        this._count = Math.min(Math.max(0, count), this.MaxCount);
     }
 
     public clear(): void {
-        this.item = null;
-        this.count = 0;
+        this._item = null;
+        this._count = 0;
     }
 
-    public copy(stack_in: ItemStack){
-        this.item = stack_in.item;
-        this.count = stack_in.count;
+    public copy(stack_in: ItemStack) {
+        this._item = stack_in._item;
+        this._count = stack_in._count;
     }
 
-    public moveIn(stack_in: ItemStack){
+    public moveIn(stack_in: ItemStack) {
         this.copy(stack_in);
         stack_in.clear();
     }
 
     public isEmpty(): boolean {
-        if (this.item === null) return true;
-        if (this.count === 0) return true;
+        if (this._item === null || this._count === 0) return true;
         return false;
     }
+
     public isFull(): boolean {
-        return this.count === this.MaxCount;
+        return this._item !== null && this._count === this.MaxCount;
     }
 
     /**
@@ -46,12 +65,12 @@ export class ItemStack {
     public merge(stack_in: ItemStack): boolean {
         if (this.itemType !== EnumItemType.ANY && this.itemType !== stack_in.itemType) return false;
         if (stack_in.isEmpty() === null) return true;
-        if (this.isEmpty()) this.item = stack_in.item;
-        else if (this.item !== stack_in.item) return false;
+        if (this.isEmpty()) this._item = stack_in._item;
+        else if (this._item !== stack_in._item) return false;
         // 合并数量并处理溢出
-        const num = Math.min(this.MaxCount - this.count, stack_in.count);
-        this.count += num;
-        stack_in.count -= num;
+        const num = Math.min(this.MaxCount - this._count, stack_in._count);
+        this._count += num;
+        stack_in._count -= num;
         return stack_in.isEmpty();
     }
 
@@ -62,12 +81,12 @@ export class ItemStack {
      * @returns        剩余需要分割的元素数量
      */
     public split(stack_in: ItemStack, count: number): number {
-        if (this.itemType !== EnumItemType.ANY && this.itemType !== stack_in.itemType) return count;
+        if (stack_in.itemType !== EnumItemType.ANY && this.itemType !== stack_in.itemType) return count;
         if (this.isEmpty() || stack_in.isFull()) return count;
-        if (stack_in.item !== null && this.item !== stack_in.item) return count;
-        const num = Math.min(this.count, stack_in.MaxCount - stack_in.count, count);
-        stack_in.count += num;
-        this.count -= num;
+        if (stack_in._item !== null && this._item !== stack_in._item) return count;
+        const num = Math.min(this._count, stack_in.MaxCount - stack_in._count, count);
+        stack_in._count += num;
+        this._count -= num;
         return count - num;
     }
 }

@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 创建游戏循环管理器
     const gameLoop = GameLoop.getInstance();
     
-    // 设置不同的FPS：物理60FPS，渲染60FPS
-    gameLoop.setPhysicsFPS(60);  // 物理更新频率
+    // 设置不同的FPS：物理50FPS，渲染60FPS
+    gameLoop.setPhysicsFPS(50);  // 物理更新频率
     gameLoop.setRenderFPS(60);   // 渲染频率
     
     // 设置物理更新回调
@@ -73,75 +73,7 @@ function addDebugControls(gameLoop: GameLoop): void {
     fpsDisplay.textContent = 'FPS: 0';
     fpsDisplay.style.marginBottom = '10px';
     
-    const physicsFpsInput = document.createElement('input');
-    physicsFpsInput.type = 'number';
-    physicsFpsInput.value = '60';
-    physicsFpsInput.min = '10';
-    physicsFpsInput.max = '120';
-    physicsFpsInput.style.width = '60px';
-    physicsFpsInput.style.marginRight = '5px';
-    
-    const physicsLabel = document.createElement('label');
-    physicsLabel.textContent = '物理FPS: ';
-    physicsLabel.appendChild(physicsFpsInput);
-    physicsLabel.style.display = 'block';
-    physicsLabel.style.marginBottom = '5px';
-    
-    const renderFpsInput = document.createElement('input');
-    renderFpsInput.type = 'number';
-    renderFpsInput.value = '60';
-    renderFpsInput.min = '10';
-    renderFpsInput.max = '120';
-    renderFpsInput.style.width = '60px';
-    renderFpsInput.style.marginRight = '5px';
-    
-    const renderLabel = document.createElement('label');
-    renderLabel.textContent = '渲染FPS: ';
-    renderLabel.appendChild(renderFpsInput);
-    renderLabel.style.display = 'block';
-    renderLabel.style.marginBottom = '10px';
-    
-    const pauseBtn = document.createElement('button');
-    pauseBtn.textContent = '暂停';
-    pauseBtn.style.marginRight = '5px';
-    pauseBtn.onclick = () => {
-        if (gameLoop.getIsPaused()) {
-            gameLoop.resume();
-            pauseBtn.textContent = '暂停';
-        } else {
-            gameLoop.pause();
-            pauseBtn.textContent = '继续';
-        }
-    };
-    
-    const restartBtn = document.createElement('button');
-    restartBtn.textContent = '重启';
-    restartBtn.onclick = () => {
-        gameLoop.stop();
-        gameLoop.setPhysicsFPS(parseInt(physicsFpsInput.value) || 60);
-        gameLoop.setRenderFPS(parseInt(renderFpsInput.value) || 60);
-        gameLoop.start();
-        pauseBtn.textContent = '暂停';
-    };
-    
-    // 监听输入框变化
-    physicsFpsInput.addEventListener('change', () => {
-        const newFps = parseInt(physicsFpsInput.value) || 60;
-        physicsFpsInput.value = newFps.toString();
-        gameLoop.setPhysicsFPS(newFps);
-    });
-    
-    renderFpsInput.addEventListener('change', () => {
-        const newFps = parseInt(renderFpsInput.value) || 60;
-        renderFpsInput.value = newFps.toString();
-        gameLoop.setRenderFPS(newFps);
-    });
-    
     controlsDiv.appendChild(fpsDisplay);
-    controlsDiv.appendChild(physicsLabel);
-    controlsDiv.appendChild(renderLabel);
-    controlsDiv.appendChild(pauseBtn);
-    controlsDiv.appendChild(restartBtn);
     
     document.body.appendChild(controlsDiv);
 }
