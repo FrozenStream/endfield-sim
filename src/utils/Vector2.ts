@@ -9,6 +9,11 @@ class Vector2 {
         this.y = y;
     }
 
+    set(v: Vector2) {
+        this.x = v.x;
+        this.y = v.y;
+    }
+
     add(v: Vector2): Vector2 {
         return new Vector2(this.x + v.x, this.y + v.y);
     }

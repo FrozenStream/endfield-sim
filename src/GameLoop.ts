@@ -18,6 +18,8 @@ export class GameLoop {
     private fpsUpdateInterval: number = 1000; // FPS更新间隔(ms)
     private lastFpsUpdate: number = 0;
     private currentFPS: number = 0;
+    // 添加渲染时间累积，用于更精确的插值计算
+    private accumulatedRenderTime: number = 0;
     
     // 状态控制
     private isRunning: boolean = false;
@@ -109,6 +111,7 @@ export class GameLoop {
         this.isPaused = false;
         this.lastPhysicsTime = performance.now();
         this.lastRenderTime = performance.now();
+        this.accumulatedRenderTime = 0; // 初始化渲染时间累积
     }
 
     /**
@@ -163,15 +166,21 @@ export class GameLoop {
     private render(currentTime: number): void {
         const deltaTime = currentTime - this.lastRenderTime;
         this.lastRenderTime = currentTime;
+        this.accumulatedRenderTime += deltaTime;
 
         // 计算插值因子（用于平滑渲染）
-        const interpolation = Math.min(this.accumulatedPhysicsTime / this.physicsInterval, 1.0);
+        const interpolation = this.accumulatedRenderTime / this.physicsInterval;
 
         if (this.renderCallback) {
             this.renderCallback(interpolation);
         }
 
         this.frameCount++;
+        
+        // 重置渲染时间累积，避免数值过大
+        if (this.accumulatedRenderTime >= this.physicsInterval) {
+            this.accumulatedRenderTime -= this.physicsInterval;
+        }
     }
 
     /**

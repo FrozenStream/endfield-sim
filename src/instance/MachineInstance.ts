@@ -1,6 +1,7 @@
 import type { Item } from "../proto/Item";
 import type { ItemStack } from "../proto/ItemStack";
 import type { Machine, MachineMode, PortGroup } from "../proto/Machines";
+import { Config } from "../utils/Config";
 import type EnumItemType from "../utils/EnumItemType";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
@@ -17,11 +18,9 @@ export class WorkTimer {
     private maxTime: number = 1e9;
     private cur: number = 0;
 
-    private static readonly _timeScale: number = 50;
-
     begin(maxTime: number) {
         this._isWorking = true;
-        this.maxTime = maxTime * WorkTimer._timeScale;
+        this.maxTime = maxTime * Config.PhysicsFPS;
         this.cur = 0;
     }
 

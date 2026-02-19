@@ -108,7 +108,7 @@ class GridCanvasEventManager {
         this.resetMouseState();
     }
 
-    private handleMouseLeave(e: MouseEvent): void {
+    private handleMouseLeave(_: MouseEvent): void {
         // 如果鼠标按下状态下离开，取消操作
         if (this.isMouseDown && !this.isDragging) {
             this.resetMouseState();
@@ -122,7 +122,7 @@ class GridCanvasEventManager {
         this.gridCanvas.handleMouseLeave();
     }
 
-    private handleMouseEnter(e: MouseEvent): void {
+    private handleMouseEnter(_: MouseEvent): void {
         this.isMouseOver = true;
         if (!this.isMouseDown) {
             this.overlayCanvas.style.cursor = 'grab';
@@ -216,6 +216,7 @@ export class GridCanvas {
 
     // 插值渲染相关属性
     private previousTransformMatrix: DOMMatrix = new DOMMatrix();
+    private interpolatedTransform: DOMMatrix = new DOMMatrix();
     private interpolationFactor: number = 0;
 
     constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement) {
@@ -336,7 +337,6 @@ export class GridCanvas {
         }
 
         this.drawGrid();
-        this.clearOverlay();
         this.preview();
     }
 
@@ -348,7 +348,6 @@ export class GridCanvas {
             coordDisplay.textContent = `(${1 + Math.floor(gridPos.x)}, ${1 + Math.floor(gridPos.y)})`;
         }
 
-        this.clearOverlay();
         this.preview();
     }
 
@@ -383,7 +382,6 @@ export class GridCanvas {
             } else if (this.eventManager?.isMouseOverCanvas) {
                 // R: 机器预览旋转
                 GridMap.previewRotate(1);
-                this.clearOverlay();
                 this.preview();
             }
         }
@@ -401,7 +399,6 @@ export class GridCanvas {
 
         this.transformMatrix.preMultiplySelf(rotationMatrix);
         this.drawGrid();
-        this.clearOverlay();
         this.preview();
     }
 
@@ -417,10 +414,11 @@ export class GridCanvas {
         if (this.overlayCtx) this.overlayCtx.clearRect(0, 0, this.CanvasW, this.CanvasH);
     }
 
-    private preview(): void {
+    public preview(): void {
         if (!this.overlayCtx) return;
+        this.clearOverlay();
         this.overlayCtx.save();
-        this.applyTransform(this.overlayCtx);
+        this.applyInterpolatedTransform(this.overlayCtx);
         // 绘制机器
         this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL;
         this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE;
@@ -475,21 +473,13 @@ export class GridCanvas {
         this.previousTransformMatrix.setMatrixValue(this.transformMatrix.toString());
         
         GridMap.update();
-        this.clearOverlay();
-        this.preview();
     }
 
-    /**
-     * 设置插值因子，用于平滑渲染
-     * @param factor 插值因子 (0-1)
-     */
     public setInterpolation(factor: number): void {
         this.interpolationFactor = Math.max(0, Math.min(1, factor));
+        this.interpolatedTransform = this.getInterpolatedTransform()
     }
 
-    /**
-     * 获取插值后的变换矩阵
-     */
     private getInterpolatedTransform(): DOMMatrix {
         if (this.interpolationFactor <= 0) {
             return this.previousTransformMatrix;
@@ -508,6 +498,14 @@ export class GridCanvas {
         }
     }
 
+    private getInterpolatedScale(): number {
+        return Math.max(Math.abs(this.interpolatedTransform.a), Math.abs(this.interpolatedTransform.b));
+    }
+
+    private applyInterpolatedTransform(ctx: CanvasRenderingContext2D): void {
+        ctx.setTransform(ctx.getTransform().multiplySelf(this.interpolatedTransform));
+    }
+
     public drawGrid(): void {
         if (!this.gridCtx) return;
 
@@ -518,19 +516,17 @@ export class GridCanvas {
 
         this.gridCtx.clearRect(0, 0, this.CanvasW, this.CanvasH);
 
-        // 使用插值后的变换矩阵
-        const interpolatedTransform = this.getInterpolatedTransform();
         this.gridCtx.save();
-        this.applyTransformWithMatrix(this.gridCtx, interpolatedTransform);
+        this.applyInterpolatedTransform(this.gridCtx);
 
         // 绘制网格线
-        const lineWidth = Math.min(2 / this.getScaleFromMatrix(interpolatedTransform), 6);
+        const lineWidth = Math.min(2 / this.getInterpolatedScale(), 6);
         this.gridCtx.strokeStyle = COLORS.GRID_BORDER;
         this.gridCtx.setLineDash([]);
         this.gridCtx.lineWidth = lineWidth;
         this.gridCtx.strokeRect(0, 0, this.gridWidth * this.gridSize, this.gridHeight * this.gridSize);
 
-        if (this.getScaleFromMatrix(interpolatedTransform) > 0.3) {
+        if (this.getInterpolatedScale() > 0.3) {
             this.gridCtx.strokeStyle = COLORS.GRID_LINE;
             this.gridCtx.setLineDash([5, 5]);
             this.gridCtx.lineWidth = lineWidth * 0.8;
@@ -562,19 +558,15 @@ export class GridCanvas {
         // 绘制机器图标
         GridMap.allMachines.forEach((instance) => {
             // 图标绘制也使用插值变换
-            drawMachinesIcon(this.gridCtx!, instance, interpolatedTransform, this.gridSize);
+            drawMachinesIcon(this.gridCtx!, instance, this.interpolatedTransform, this.gridSize);
         });
 
         this.gridCtx.restore();
     }
 
-    private applyTransformWithMatrix(ctx: CanvasRenderingContext2D, matrix: DOMMatrix): void {
-        ctx.setTransform(ctx.getTransform().multiplySelf(matrix));
-    }
 
-    private getScaleFromMatrix(matrix: DOMMatrix): number {
-        return Math.max(Math.abs(matrix.a), Math.abs(matrix.b));
-    }
+
+
 
     public resetView(): void {
         this.transformMatrix = new DOMMatrix();

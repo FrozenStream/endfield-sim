@@ -3,6 +3,7 @@ import { GridCanvas } from "./Grid";
 import ItemIconManager from "./ItemManager";
 import { MachinesIconsManager as MachineIconsManager } from "./MacineIconManager";
 import { GameLoop } from "./GameLoop";
+import { Config } from "./utils/Config";
 
 const gridWrapper = document.getElementById('grid-wrapper')!;
 const gridCanvas = document.createElement('canvas');
@@ -20,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameLoop = GameLoop.getInstance();
     
     // 设置不同的FPS：物理50FPS，渲染60FPS
-    gameLoop.setPhysicsFPS(50);  // 物理更新频率
-    gameLoop.setRenderFPS(60);   // 渲染频率
+    gameLoop.setPhysicsFPS(Config.PhysicsFPS);  // 物理更新频率
+    gameLoop.setRenderFPS(Config.RenderFPS);   // 渲染频率
     
     // 设置物理更新回调
     gameLoop.setUpdateCallback(() => {
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.setInterpolation(interpolation);
         // 渲染逻辑
         grid.drawGrid();
+        grid.preview();
     });
     
     // 设置FPS显示回调

@@ -1,5 +1,6 @@
 import type { Belt } from "../proto/Belt";
 import { ItemStack } from "../proto/ItemStack";
+import { Config } from "../utils/Config";
 import EnumItemType from "../utils/EnumItemType";
 import Vector2 from "../utils/Vector2";
 import type { MachineInstance } from "./MachineInstance";
@@ -27,7 +28,10 @@ export class BeltInventory {
 
     private _count: number;
 
-    public static readonly SecMaxDelay = 100;
+    public static readonly BeltSpeed = 2;
+    public static readonly SecMaxDelay = Config.PhysicsFPS * 2;
+
+    public oldCache: ({ itemstack: ItemStack, delay: number } | null)[] = new Array(length);
 
     constructor(length: number) {
         this.length = length;
@@ -90,17 +94,26 @@ export class BeltInventory {
     public getInventory(index: number): ({ itemstack: ItemStack, delay: number } | null) {
         const a = this.point(index);
         const b = this.point(index + 1);
-        if (!this._inventory[a].isEmpty() && this._delay[a] >= this._pointerDelay)
-            return {
+        if (!this._inventory[a].isEmpty() && this._delay[a] >= this._pointerDelay) {
+            const tmp = {
                 itemstack: this._inventory[a],
                 delay: this._delay[a] - this._pointerDelay
-            }
-        else if (!this._inventory[b].isEmpty() && this._delay[b] < this._pointerDelay)
-            return {
+            };
+            this.oldCache[index] = tmp;
+            return tmp;
+        }
+        else if (!this._inventory[b].isEmpty() && this._delay[b] < this._pointerDelay) {
+            const tmp = {
                 itemstack: this._inventory[b],
                 delay: BeltInventory.SecMaxDelay - this._pointerDelay + this._delay[b]
-            }
-        return null;
+            };
+            this.oldCache[index] = tmp;
+            return tmp;
+        }
+        else {
+            this.oldCache[index] = null;
+            return null
+        };
     }
 
     public update() {

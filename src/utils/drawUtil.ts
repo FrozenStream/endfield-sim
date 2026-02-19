@@ -334,34 +334,35 @@ function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineIns
 function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance, gridSize: number) {
     if (!instance.inventory) return;
 
-    const inventory = instance.inventory;
-    const sections = instance.sections;
+    const inv = instance.inventory;
+    const sec = instance.sections;
 
-    if (!sections) return;
+    if (!sec) return;
 
     // 遍历传送带的所有段
-    for (let i = 0; i < inventory.length; i++) {
-        const data = inventory.getInventory(i);
-        const pos = sections[i].position.add(new Vector2(0.5, 0.5));
+    for (let i = 0; i < inv.length; i++) {
+        const data = inv.getInventory(i);
+        const pos = sec[i].position.add(new Vector2(0.1, 0.1));
         if (!data) continue;
-        if (Vector2.isDiagonal(sections[i].direc)) {
+        if (Vector2.isDiagonal(sec[i].direc)) {
             let v1, v2;
-            if (sections[i].direc % 3 === 1) {
-                v1 = Vector2.DIREC[(sections[i].direc - 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
-                v2 = Vector2.DIREC[(sections[i].direc + 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+            if (sec[i].direc % 3 === 1) {
+                v1 = Vector2.DIREC[(sec[i].direc - 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v2 = Vector2.DIREC[(sec[i].direc + 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
             }
             else {
-                v1 = Vector2.DIREC[(sections[i].direc + 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
-                v2 = Vector2.DIREC[(sections[i].direc - 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v1 = Vector2.DIREC[(sec[i].direc + 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v2 = Vector2.DIREC[(sec[i].direc - 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
             }
             const offset = data.delay / BeltInventory.SecMaxDelay - 0.5;
-            if (offset > 0) pos.addSelf(v2.mul(offset)).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
-            else pos.addSelf(v1.mul(offset)).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
+            if (offset > 0) pos.addSelf(v2.mul(offset));
+            else pos.addSelf(v1.mul(offset));
         }
         else {
-            const offset = Vector2.DIREC[sections[i].direc].mul(data.delay / BeltInventory.SecMaxDelay - 0.5);
-            pos.addSelf(offset).subSelf(new Vector2(0.4, 0.4)).mulSelf(gridSize);
+            const offset = Vector2.DIREC[sec[i].direc].mul(data.delay / BeltInventory.SecMaxDelay - 0.5);
+            pos.addSelf(offset);
         }
+        pos.mulSelf(gridSize);
 
         const img = data.itemstack.item?.getImageResource();
         if (!img) continue;
