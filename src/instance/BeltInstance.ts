@@ -1,4 +1,4 @@
-import type { Belt } from "../proto/Belt";
+import { Belt } from "../proto/Belt";
 import { ItemStack } from "../proto/ItemStack";
 import { Config } from "../utils/Config";
 import EnumItemType from "../utils/EnumItemType";
@@ -6,10 +6,10 @@ import Vector2 from "../utils/Vector2";
 import type { MachineInstance } from "./MachineInstance";
 
 export class BeltSec {
-    owner: BeltInstance;
-    index: number;
-    direc: number;
-    position: Vector2;
+    readonly owner: BeltInstance;
+    readonly index: number;
+    readonly direc: number;
+    readonly position: Vector2;
     constructor(owner: BeltInstance, index: number, direc: number, position: Vector2) {
         this.owner = owner;
         this.index = index;
@@ -116,6 +116,12 @@ export class BeltInventory {
         };
     }
 
+    public setInventory(index: number, data: { itemstack: ItemStack, delay: number } | null) {
+        if (data === null || data.itemstack.isEmpty()) return;
+        this._inventory[index] = data.itemstack;
+        this._delay[index] = data.delay;
+    }
+
     public update() {
         if (this.getTail() !== null) {     // 若尾部有物品，则传送带堵塞
             console.log('Belt blocked');
@@ -177,20 +183,30 @@ export class BeltInventory {
         }
         return false;
     }
+
+    public static concat(beltInv0: BeltInventory, beltInv1: BeltInventory): BeltInventory {
+        const newInv = new BeltInventory(beltInv0.length + beltInv1.length);
+        for (let i = 0; i < beltInv0.length; i++)newInv.setInventory(i, beltInv0.getInventory(i));
+        for (let i = 0; i < beltInv1.length; i++)newInv.setInventory(beltInv0.length + i, beltInv1.getInventory(i));
+        return newInv;
+    }
 }
 
 export class BeltInstance {
     public readonly beltType: Belt;
     public static readonly imgCache: HTMLImageElement;
 
+    // On_building elements    
+    private _started: boolean = false;
     public start: MachineInstance | null = null;
     public startPoint: Vector2 | null = null;
     public end: MachineInstance | null = null;
     public endPoint: Vector2 | null = null;
 
+    // after_built elements
     public direc: Array<number>;
-    private _started: boolean = false;
 
+    // data elements
     public sections: BeltSec[] | null = null;
     public inventory: BeltInventory | null = null;
 
@@ -199,7 +215,6 @@ export class BeltInstance {
     constructor(beltType: Belt) {
         this.beltType = beltType;
         this.direc = [];
-
     }
 
     public setStart(start: MachineInstance | Vector2) {
@@ -304,5 +319,12 @@ export class BeltInstance {
             point = point.add(Vector2.DIREC[this.direc[i]]);
             this.sections.push(new BeltSec(this, i, this.shapeAt(i), point));
         }
+    }
+
+    public static concat(belt0: BeltInstance, belt1: BeltInstance): BeltInstance {
+        const newBelt = new BeltInstance(Belt.soildBelt);
+        newBelt.startPoint = belt0.startPoint;
+
+        return newBelt;
     }
 }

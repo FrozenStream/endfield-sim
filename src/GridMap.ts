@@ -1,6 +1,6 @@
 import { MachineInstance, type portInstance } from "./instance/MachineInstance";
 import { type Belt } from "./proto/Belt";
-import { BeltInstance } from "./instance/BeltInstance";
+import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import { Machine } from "./proto/Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
@@ -8,70 +8,78 @@ import Vector2 from "./utils/Vector2";
 
 interface GridCell {
     occupied: boolean;
-    by: MachineInstance | BeltInstance | null;
+    by: MachineInstance | BeltSec | null;
     beltDirec: number | null;
 }
 
-class GridMap {
-    private static grid: GridCell[][];
-    private static width: number = 80;
-    private static height: number = 80;
+export class GridMap {
+    private grid: GridCell[][];
+    private _width: number = 80;
+    private _height: number = 80;
 
-    private static _previewing: MachineInstance | BeltInstance | null = null;
+    private _previewing: MachineInstance | BeltInstance | null = null;
 
-    private static _belts: Array<BeltInstance> = [];
-    private static _machines: Array<MachineInstance> = [];
+    private _belts: Set<BeltInstance> = new Set<BeltInstance>();
+    private _machines: Set<MachineInstance> = new Set<MachineInstance>();
 
-    public static init(width: number, height: number) {
-        GridMap.grid = Array.from(
+    constructor(width: number, height: number) {
+        this.grid = Array.from(
             { length: height },
             () => Array.from({ length: width }, () => ({ occupied: false, by: null, beltDirec: null }))
         );
-        GridMap.width = width;
-        GridMap.height = height;
+        this._width = width;
+        this._height = height;
     }
 
-    public static set PreviewMachine(machine: Machine) {
-        GridMap._previewing = new MachineInstance(machine);
+    public get width(): number {
+        return this._width;
     }
 
-    public static get PreviewMachine(): MachineInstance | null {
-        return (GridMap._previewing instanceof MachineInstance) ? GridMap._previewing : null;
+    public get height(): number {
+        return this._height;
     }
 
-    public static set PreviewBelt(belt: Belt) {
-        GridMap._previewing = new BeltInstance(belt);
+    public set PreviewMachine(machine: Machine) {
+        this._previewing = new MachineInstance(machine);
     }
 
-    public static get PreviewBelt(): BeltInstance | null {
-        return (GridMap._previewing instanceof BeltInstance) ? GridMap._previewing : null;
+    public get PreviewMachine(): MachineInstance | null {
+        return (this._previewing instanceof MachineInstance) ? this._previewing : null;
     }
 
-    public static get onPreview(): boolean {
-        return GridMap._previewing !== null;
+    public set PreviewBelt(belt: Belt) {
+        this._previewing = new BeltInstance(belt);
     }
 
-    public static howOccupying(): Vector2[] {
+    public get PreviewBelt(): BeltInstance | null {
+        return (this._previewing instanceof BeltInstance) ? this._previewing : null;
+    }
+
+    public get onPreview(): boolean {
+        return this._previewing !== null;
+    }
+
+    public howOccupying(): Vector2[] {
         const list: Vector2[] = [];
-        if (GridMap._previewing === null) return list;
-        if (GridMap._previewing instanceof MachineInstance) {
-            const rect: Rect | null = GridMap._previewing.rect;
+        if (this._previewing === null) return list;
+        if (this._previewing instanceof MachineInstance) {
+            const rect: Rect | null = this._previewing.rect;
             if (rect === null) return list;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {
                     const v: Vector2 = new Vector2(rect.min_x + j, rect.min_y + i);
-                    if (GridMap.isOccupied(v)) list.push(v);
+                    if (this.isOccupied(v)) list.push(v);
                 }
             }
         }
         else {
-            if (!GridMap._previewing.started) return [];
-            const vecs: ReadonlyArray<Vector2> = GridMap._previewing.shape();
+            if (!this._previewing.started) return [];
+            const vecs: ReadonlyArray<Vector2> = this._previewing.shape();
             for (let i = 0; i < vecs.length; i++) {
                 const pos = vecs[i];
-                const direc = GridMap._previewing.shapeAt(i);
-                if (GridMap.isOccupiedBy(pos.floor()) instanceof MachineInstance) list.push(pos);
-                const mapDirec = GridMap.occupyingDirec(pos);
+                const direc = this._previewing.shapeAt(i);
+                if (this.isOccupiedBy(pos.floor()) instanceof MachineInstance) list.push(pos);
+                const mapDirec = this.occupyingDirec(pos);
                 if (mapDirec && (Vector2.isOpposite(direc, mapDirec) || Vector2.isDiagonal(mapDirec) || Vector2.isDiagonal(direc))) list.push(pos);
             }
         }
@@ -79,12 +87,12 @@ class GridMap {
     }
 
 
-    private static clampMachineShape(vec: Vector2, instance: MachineInstance) {
+    private clampMachineShape(vec: Vector2, instance: MachineInstance) {
         return vec.clampSelf(
             instance.machine.width / 2,
             instance.machine.height / 2,
-            GridMap.width - instance.machine.width / 2,
-            GridMap.height - instance.machine.height / 2
+            this._width - instance.machine.width / 2,
+            this._height - instance.machine.height / 2
         );
     }
 
@@ -92,143 +100,156 @@ class GridMap {
      * @param mouseX 鼠标X网格坐标(float)
      * @param mouseY 鼠标Y网格坐标(float)
      */
-    public static previewPositon(mouseX: number, mouseY: number) {
+    public previewPositon(mouseX: number, mouseY: number) {
         const vec: Vector2 = new Vector2(mouseX, mouseY);
-        if (GridMap._previewing instanceof MachineInstance) {
-            GridMap.clampMachineShape(vec, GridMap._previewing);
-            GridMap._previewing.Position = vec;
+        if (this._previewing instanceof MachineInstance) {
+            this.clampMachineShape(vec, this._previewing);
+            this._previewing.Position = vec;
         }
-        else if (GridMap._previewing instanceof BeltInstance) {
-            console.log("Belt started? ", GridMap._previewing.started);
-            vec.clampSelf(0, 0, GridMap.width, GridMap.height);
-            const occupied: MachineInstance | BeltInstance | null = this.isOccupiedBy(vec);
-            if (!GridMap._previewing.started) {
-                if (occupied instanceof MachineInstance) GridMap._previewing.setStart(occupied);
-                else GridMap._previewing.setStart(vec);
+        else if (this._previewing instanceof BeltInstance) {
+            console.log("Belt started? ", this._previewing.started);
+            vec.clampSelf(0, 0, this._width, this._height);
+            const occupied: MachineInstance | BeltSec | null = this.isOccupiedBy(vec);
+            if (!this._previewing.started) {
+                if (occupied instanceof MachineInstance) this._previewing.setStart(occupied);
+                else this._previewing.setStart(vec);
             }
             else {
-                if (occupied instanceof MachineInstance) GridMap._previewing.setEnd(vec, occupied);
-                else GridMap._previewing.setEnd(vec);
+                if (occupied instanceof MachineInstance) this._previewing.setEnd(vec, occupied);
+                else this._previewing.setEnd(vec);
             }
         }
     }
 
-    public static previewRotate(time: number) {
-        if (GridMap._previewing instanceof MachineInstance)
-            GridMap._previewing.rotate(time);
+    public previewRotate(time: number) {
+        if (this._previewing instanceof MachineInstance)
+            this._previewing.rotate(time);
     }
 
-    public static previewCancel() {
-        GridMap._previewing = null;
+    public previewCancel() {
+        this._previewing = null;
     }
 
-    public static isOutside(pos: Vector2): boolean {
-        return pos.x < 0 || pos.x >= GridMap.width || pos.y < 0 || pos.y >= GridMap.height;
+    public isOutside(pos: Vector2): boolean {
+        return pos.x < 0 || pos.x >= this._width || pos.y < 0 || pos.y >= this._height;
     }
 
-    public static isOccupied(pos: Vector2): boolean {
-        if (GridMap.isOutside(pos)) return false;
-        return GridMap.grid[pos.y][pos.x].occupied;
+    public isOccupied(pos: Vector2): boolean {
+        if (this.isOutside(pos)) return false;
+        return this.grid[pos.y][pos.x].occupied;
     }
 
-    public static isOccupiedBy(pos: Vector2): MachineInstance | BeltInstance | null {
-        if (GridMap.isOutside(pos)) return null;
+    public isOccupiedBy(pos: Vector2): MachineInstance | BeltSec | null {
+        if (this.isOutside(pos)) return null;
         pos = pos.floor();
-        return GridMap.grid[pos.y][pos.x].by;
+        return this.grid[pos.y][pos.x].by;
     }
 
-    public static occupyingDirec(pos: Vector2): number | null {
-        if (GridMap.isOutside(pos)) return null;
-        return GridMap.grid[pos.y][pos.x].beltDirec;
+    public occupyingDirec(pos: Vector2): number | null {
+        if (this.isOutside(pos)) return null;
+        return this.grid[pos.y][pos.x].beltDirec;
     }
 
-    public static build(): boolean {
-        if (GridMap._previewing === null) return false;
-        if (GridMap._previewing instanceof MachineInstance) {
-            GridMap._machines.push(GridMap._previewing)
-            GridMap._previewing.build();
+    public build(): boolean {
+        if (this._previewing === null) return false;
+        if (this._previewing instanceof MachineInstance) {
+            this._machines.add(this._previewing)
+            this._previewing.build();
             // 标记领地
-            const rect: Rect = GridMap._previewing.rect!;
+            const rect: Rect = this._previewing.rect!;
             for (let i = 0; i < rect.h; i++) {
                 for (let j = 0; j < rect.w; j++) {
-                    GridMap.grid[rect.min_y + i][rect.min_x + j].occupied = true;
-                    GridMap.grid[rect.min_y + i][rect.min_x + j].by = GridMap._previewing;
+                    this.grid[rect.min_y + i][rect.min_x + j].occupied = true;
+                    this.grid[rect.min_y + i][rect.min_x + j].by = this._previewing;
                 }
             }
-            console.log("built", GridMap._previewing, "total:", GridMap._machines.length, "machines");
+            console.log("built", this._previewing, "total:", this._machines.size, "machines");
             // 清空预览
-            GridMap._previewing = null;
+            this._previewing = null;
             return true;
         }
-        else if (GridMap._previewing instanceof BeltInstance) {
-            GridMap._belts.push(GridMap._previewing);
-            GridMap._previewing.build();
+        else if (this._previewing instanceof BeltInstance) {
+            this._belts.add(this._previewing);
+            this._previewing.build();
+            if (!this._previewing.sections) return false;
             // 标记领地
-            const list: ReadonlyArray<Vector2> = GridMap._previewing.shape();
+            const list: ReadonlyArray<Vector2> = this._previewing.shape();
             for (let i = 0; i < list.length; i++) {
                 const pos: Vector2 = list[i];
-                GridMap.grid[pos.y][pos.x].occupied = true;
-                GridMap.grid[pos.y][pos.x].by = GridMap._previewing;
-                GridMap.grid[pos.y][pos.x].beltDirec = GridMap._previewing.shapeAt(i);
+                this.grid[pos.y][pos.x].occupied = true;
+                this.grid[pos.y][pos.x].by = this._previewing.sections[i];
+                this.grid[pos.y][pos.x].beltDirec = this._previewing.shapeAt(i);
             };
-            console.log("built", GridMap._previewing, "total:", GridMap._belts.length, "belts");
+            console.log("built", this._previewing, "total:", this._belts.size, "belts");
             // 清空预览
-            GridMap._previewing = null;
+            this._previewing = null;
             return true;
         }
         return false;
     }
 
-    public static get allMachines(): ReadonlyArray<MachineInstance> {
-        return GridMap._machines;
+    public beltConcat(belt0: BeltInstance, belt1: BeltInstance) {
+        const newBelt = BeltInstance.concat(belt0, belt1);
+        this.clearBelt(belt0);
+        this.clearBelt(belt1);
     }
 
-    public static get allBelts(): ReadonlyArray<BeltInstance> {
-        return GridMap._belts;
+    private clearBelt(belt: BeltInstance) {
+        if (!belt.sections) return;
+        for (const section of belt.sections) {
+            const pos = section.position;
+            this.grid[pos.y][pos.x].by = null;
+        }
     }
 
-    public static portConnecting(port: portInstance): BeltInstance | null {
+    public get allMachines(): ReadonlySet<MachineInstance> {
+        return this._machines;
+    }
+
+    public get allBelts(): ReadonlySet<BeltInstance> {
+        return this._belts;
+    }
+
+    public portConnecting(port: portInstance): BeltSec | null {
         if (port.portGroup.isIn) {
             const pos = port.postion.sub(port.direction).floor();
-            const t = GridMap.isOccupiedBy(pos);
-            if (t instanceof BeltInstance) return t;
+            const t = this.isOccupiedBy(pos);
+            if (t instanceof BeltSec) return t;
         }
         else {
             const pos = port.postion.add(port.direction).floor();
-            const t = GridMap.isOccupiedBy(pos);
-            if (t instanceof BeltInstance) return t;
+            const t = this.isOccupiedBy(pos);
+            if (t instanceof BeltSec) return t;
         }
         return null;
     }
 
-
-    private static updateMachine(instance: MachineInstance) {
+    private updateMachine(instance: MachineInstance) {
         if (!instance.portInstances || !instance.pollingPointer) return;
         for (let i = 0; i < instance.portInstances.length; i++) {
             const begin: number = instance.pollingPointer[i];
             const group: portInstance[] = instance.portInstances[i];
             for (let j = 0; j < group.length; j++) {
                 const current: number = (begin + j) % group.length;
-                const connecting = GridMap.portConnecting(group[current]);
+                const connecting = this.portConnecting(group[current]);
                 // 若该端口成功动作，则将轮询初始指针拨到下一个端口
-                if (group[current].portGroup.callback(connecting, instance))
+                if (connecting && group[current].portGroup.callback(connecting.owner, instance))
                     instance.pollingPointer[i] = (current + 1) % group.length;
             }
         }
-
         instance.currentMode.working(instance);
     }
 
-    private static updateBelt(instance: BeltInstance) {
+    private updateBelt(instance: BeltInstance) {
         if (instance.inventory === null) return;
         instance.inventory.update();
     }
 
-    public static update() {
-        for (const instance of this._machines) GridMap.updateMachine(instance);
-        for (const instance of this._belts) GridMap.updateBelt(instance);
+    public update() {
+        for (const instance of this._machines) this.updateMachine(instance);
+        for (const instance of this._belts) this.updateBelt(instance);
     }
 }
 
 
-export default GridMap;
+export default this;

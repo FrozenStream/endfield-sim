@@ -116,9 +116,9 @@ export function Storager_In(b: BeltInstance | null, m: MachineInstance): boolean
     if (b === null || b?.inventory === null) return false;
     const tail = b.inventory.getTail();
     if (tail === null) return false;
-    for (const inv of m.inventory) 
+    for (const inv of m.inventory)
         if (!inv.isEmpty() && !inv.isFull() && inv.item === tail.item && b.inventory.extract(inv)) { return true; }
-    for (const inv of m.inventory) 
+    for (const inv of m.inventory)
         if (!inv.isFull() && b.inventory.extract(inv)) return true;
     return false;
 }
@@ -364,9 +364,9 @@ export function mixpool_In(b: BeltInstance | null, m: MachineInstance): boolean 
     if (b === null || b?.inventory === null) return false;
     const tail = b.inventory.getTail();
     if (tail === null) return false;
-    for (const inv of m.inventory) 
+    for (const inv of m.inventory)
         if (!inv.isEmpty() && !inv.isFull() && inv.item === tail.item && b.inventory.extract(inv)) { return true; }
-    for (const inv of m.inventory) 
+    for (const inv of m.inventory)
         if (!inv.isFull() && b.inventory.extract(inv)) return true;
     return false;
 }

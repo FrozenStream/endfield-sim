@@ -1,18 +1,20 @@
 import { Belt } from "./proto/Belt";
-import GridMap from "./GridMap";
 import I18n from "./utils/I18n";
 import { Machine } from "./proto/Machines";
+import type { GridMap } from "./GridMap";
 
 export class MachinesIconsManager {
     private iconCollection: HTMLElement;
+    private gridMap: GridMap;
 
-    public static icons: Map<string, HTMLDivElement> = new Map();
-    public static selectedIcon: HTMLElement | null = null;
+    public icons: Map<string, HTMLDivElement> = new Map();
+    public selectedIcon: HTMLElement | null = null;
 
     private i18n: I18n = I18n.instance;
 
-    constructor(collectionId: string) {
+    constructor(collectionId: string, gridMap: GridMap) {
         this.iconCollection = document.getElementById(collectionId)!;
+        this.gridMap = gridMap;
         this.addBeltIcon(Belt.soildBelt);
         for (const [_, machine] of Machine.allMachines) {
             this.addMachineIcon(machine);
@@ -56,14 +58,14 @@ export class MachinesIconsManager {
         // 将整个包装容器添加到iconCollection中
         this.iconCollection.appendChild(iconWrapper);
 
-        MachinesIconsManager.icons.set(machine.id, iconElement);
+        this.icons.set(machine.id, iconElement);
 
         iconElement.addEventListener('click', () => {
-            if (GridMap.PreviewMachine?.machine === machine) {
-                MachinesIconsManager.cancel();
+            if (this.gridMap.PreviewMachine?.machine === machine) {
+                this.cancel();
                 return;
             }
-            MachinesIconsManager.select(machine, iconElement);
+            this.select(machine, iconElement);
         });
     }
 
@@ -81,31 +83,31 @@ export class MachinesIconsManager {
         // 将整个包装容器添加到iconCollection中
         this.iconCollection.appendChild(iconWrapper);
 
-        MachinesIconsManager.icons.set(belt.id, iconElement);
+        this.icons.set(belt.id, iconElement);
 
         iconElement.addEventListener('click', () => {
-            if (GridMap.PreviewBelt?.beltType === belt) {
-                MachinesIconsManager.cancel();
+            if (this.gridMap.PreviewBelt?.beltType === belt) {
+                this.cancel();
                 return;
             }
-            MachinesIconsManager.select(belt, iconElement);
+            this.select(belt, iconElement);
         });
     }
 
-    public static cancel() {
-        GridMap.previewCancel();
-        if (MachinesIconsManager.selectedIcon)
-            MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
-        MachinesIconsManager.selectedIcon = null;
+    public cancel() {
+        this.gridMap.previewCancel();
+        if (this.selectedIcon)
+            this.selectedIcon.classList.remove('machine-selected');
+        this.selectedIcon = null;
     }
 
-    public static select(type: Machine | Belt, icon: HTMLDivElement) {
-        if (MachinesIconsManager.selectedIcon) MachinesIconsManager.selectedIcon.classList.remove('machine-selected');
+    public select(type: Machine | Belt, icon: HTMLDivElement) {
+        if (this.selectedIcon) this.selectedIcon.classList.remove('machine-selected');
         // 更新选中的图标引用
-        MachinesIconsManager.selectedIcon = icon;
-        if (type instanceof Machine) GridMap.PreviewMachine = type;
-        if (type instanceof Belt) GridMap.PreviewBelt = type;
+        this.selectedIcon = icon;
+        if (type instanceof Machine) this.gridMap.PreviewMachine = type;
+        if (type instanceof Belt) this.gridMap.PreviewBelt = type;
         // 添加selected类到当前选中的图标
-        MachinesIconsManager.selectedIcon.classList.add('machine-selected');
+        this.selectedIcon.classList.add('machine-selected');
     }
 }

@@ -1,10 +1,10 @@
-import GridMap from "./GridMap";
 import { drawBelt, drawMachineLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
 import { InstanceAttention } from "./AttentionManager";
 import type { BeltInstance } from "./instance/BeltInstance";
+import type { GridMap } from "./GridMap";
 
 /**
  * 优化后的事件管理器类
@@ -208,18 +208,16 @@ export class GridCanvas {
     private gridSize: number = 50;
     private CanvasW: number = 0;
     private CanvasH: number = 0;
-    private transformMatrix: DOMMatrix = new DOMMatrix();
-    private gridWidth: number = 80;
-    private gridHeight: number = 80;
+
     private minScale: number = 0.2;
     private maxScale: number = 1;
+    private transformMatrix: DOMMatrix = new DOMMatrix();
 
-    // 插值渲染相关属性
-    private previousTransformMatrix: DOMMatrix = new DOMMatrix();
-    private interpolatedTransform: DOMMatrix = new DOMMatrix();
-    private interpolationFactor: number = 0;
+    private gridMap: GridMap;
+    private machinesIconsManager: MachinesIconsManager;
 
-    constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement) {
+    constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement,
+        gridMap: GridMap, machinesIconsManager: MachinesIconsManager) {
         this.container = container;
         this.gridCanvas = gridCanvas;
         this.overlayCanvas = overlayCanvas;
@@ -227,8 +225,8 @@ export class GridCanvas {
         this.overlayCtx = null;
 
         this.transformMatrix = new DOMMatrix();
-        this.previousTransformMatrix = new DOMMatrix();
-        GridMap.init(this.gridWidth, this.gridHeight);
+        this.gridMap = gridMap;
+        this.machinesIconsManager = machinesIconsManager;
 
         this.setupCanvases();
         this.bindResizeListener();
@@ -300,22 +298,22 @@ export class GridCanvas {
     }
 
     public handleClick(gridPos: Vector2): void {
-        const occupyCount = GridMap.howOccupying().length;
+        const occupyCount = this.gridMap.howOccupying().length;
         console.log("occupyCount:", occupyCount);
 
-        if (GridMap.PreviewMachine) {
-            if (!occupyCount && GridMap.build()) { MachinesIconsManager.cancel(); }
-        } else if (GridMap.PreviewBelt) {
-            if (GridMap.PreviewBelt.started) {
-                if (!occupyCount && GridMap.build()) { MachinesIconsManager.cancel(); }
-            } else { GridMap.PreviewBelt.lockStart(); }
+        if (this.gridMap.PreviewMachine) {
+            if (!occupyCount && this.gridMap.build()) { this.machinesIconsManager.cancel(); }
+        } else if (this.gridMap.PreviewBelt) {
+            if (this.gridMap.PreviewBelt.started) {
+                if (!occupyCount && this.gridMap.build()) { this.machinesIconsManager.cancel(); }
+            } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } else { InstanceAttention.select = GridMap.isOccupiedBy(gridPos.floor()); }
+        } else { InstanceAttention.select = this.gridMap.isOccupiedBy(gridPos.floor()); }
         this.drawGrid();
     }
 
     public handleRightClick(): void {
-        MachinesIconsManager.cancel();
+        this.machinesIconsManager.cancel();
         this.clearOverlay();
     }
 
@@ -341,7 +339,7 @@ export class GridCanvas {
     }
 
     public handleHover(gridPos: Vector2): void {
-        GridMap.previewPositon(gridPos.x, gridPos.y);
+        this.gridMap.previewPositon(gridPos.x, gridPos.y);
 
         const coordDisplay = document.getElementById('coordinates');
         if (coordDisplay) {
@@ -381,7 +379,7 @@ export class GridCanvas {
                 this.rotateAroundCenter();
             } else if (this.eventManager?.isMouseOverCanvas) {
                 // R: 机器预览旋转
-                GridMap.previewRotate(1);
+                this.gridMap.previewRotate(1);
                 this.preview();
             }
         }
@@ -418,50 +416,46 @@ export class GridCanvas {
         if (!this.overlayCtx) return;
         this.clearOverlay();
         this.overlayCtx.save();
-        this.applyInterpolatedTransform(this.overlayCtx);
+        this.applyTransform(this.overlayCtx);
         // 绘制机器
         this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL;
         this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE;
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
-        if (GridMap.PreviewMachine) {
-            drawMachine(this.overlayCtx, GridMap.PreviewMachine, this.gridSize);
+        if (this.gridMap.PreviewMachine) {
+            drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize);
         }
         // 绘制传送带
-        if (GridMap.PreviewBelt) {
-            if (GridMap.PreviewBelt.started) {
+        if (this.gridMap.PreviewBelt) {
+            if (this.gridMap.PreviewBelt.started) {
                 // 已指定起点，绘制完整传送带
-                const list = GridMap.PreviewBelt.shape();
-                for (let i = 0; i < list.length; i++) {
-                    const pos: Vector2 = list[i];
-                    drawBelt(this.overlayCtx, GridMap.PreviewBelt.shapeAt(i), pos.x * this.gridSize, pos.y * this.gridSize, this.gridSize);
-                }
+                drawBelt(this.overlayCtx, this.gridMap.PreviewBelt, this.gridSize);
             } else {
-                if (GridMap.PreviewBelt.startPoint) {
+                if (this.gridMap.PreviewBelt.startPoint) {
                     // 起始点不在机器上，绘制警告方格
                     this.overlayCtx.fillStyle = COLORS.UNILLEGAL_COLOR;
                     this.overlayCtx.fillRect(
-                        GridMap.PreviewBelt.startPoint.x * this.gridSize,
-                        GridMap.PreviewBelt.startPoint.y * this.gridSize,
+                        this.gridMap.PreviewBelt.startPoint.x * this.gridSize,
+                        this.gridMap.PreviewBelt.startPoint.y * this.gridSize,
                         this.gridSize, this.gridSize
                     );
-                } else if (GridMap.PreviewBelt.start) {
+                } else if (this.gridMap.PreviewBelt.start) {
                     // 起始点在机器上，绘制选中效果
                     this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
-                    drawMachineLinesFill(this.overlayCtx, GridMap.PreviewBelt.start, this.gridSize);
+                    drawMachineLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start, this.gridSize);
                 }
             }
         }
         // 绘制重叠部分提示
         this.overlayCtx.fillStyle = COLORS.OVERLAP_WARNING;
-        GridMap.howOccupying().forEach((v: Vector2) => {
+        this.gridMap.howOccupying().forEach((v: Vector2) => {
             this.overlayCtx!.fillRect(
                 v.x * this.gridSize, v.y * this.gridSize,
                 this.gridSize, this.gridSize
             );
         });
 
-        GridMap.allBelts.forEach((belt: BeltInstance) => {
+        this.gridMap.allBelts.forEach((belt: BeltInstance) => {
             drawBeltItems(this.overlayCtx!, belt, this.gridSize);
         });
 
@@ -469,41 +463,7 @@ export class GridCanvas {
     }
 
     public update(): void {
-        // 保存当前变换矩阵作为下一帧的前一状态
-        this.previousTransformMatrix.setMatrixValue(this.transformMatrix.toString());
-        
-        GridMap.update();
-    }
-
-    public setInterpolation(factor: number): void {
-        this.interpolationFactor = Math.max(0, Math.min(1, factor));
-        this.interpolatedTransform = this.getInterpolatedTransform()
-    }
-
-    private getInterpolatedTransform(): DOMMatrix {
-        if (this.interpolationFactor <= 0) {
-            return this.previousTransformMatrix;
-        } else if (this.interpolationFactor >= 1) {
-            return this.transformMatrix;
-        } else {
-            // 简单的线性插值
-            const a = this.previousTransformMatrix.a + (this.transformMatrix.a - this.previousTransformMatrix.a) * this.interpolationFactor;
-            const b = this.previousTransformMatrix.b + (this.transformMatrix.b - this.previousTransformMatrix.b) * this.interpolationFactor;
-            const c = this.previousTransformMatrix.c + (this.transformMatrix.c - this.previousTransformMatrix.c) * this.interpolationFactor;
-            const d = this.previousTransformMatrix.d + (this.transformMatrix.d - this.previousTransformMatrix.d) * this.interpolationFactor;
-            const e = this.previousTransformMatrix.e + (this.transformMatrix.e - this.previousTransformMatrix.e) * this.interpolationFactor;
-            const f = this.previousTransformMatrix.f + (this.transformMatrix.f - this.previousTransformMatrix.f) * this.interpolationFactor;
-            
-            return new DOMMatrix([a, b, c, d, e, f]);
-        }
-    }
-
-    private getInterpolatedScale(): number {
-        return Math.max(Math.abs(this.interpolatedTransform.a), Math.abs(this.interpolatedTransform.b));
-    }
-
-    private applyInterpolatedTransform(ctx: CanvasRenderingContext2D): void {
-        ctx.setTransform(ctx.getTransform().multiplySelf(this.interpolatedTransform));
+        this.gridMap.update();
     }
 
     public drawGrid(): void {
@@ -517,20 +477,20 @@ export class GridCanvas {
         this.gridCtx.clearRect(0, 0, this.CanvasW, this.CanvasH);
 
         this.gridCtx.save();
-        this.applyInterpolatedTransform(this.gridCtx);
+        this.applyTransform(this.gridCtx);
 
         // 绘制网格线
-        const lineWidth = Math.min(2 / this.getInterpolatedScale(), 6);
+        const lineWidth = Math.min(2 / this.getScale(), 6);
         this.gridCtx.strokeStyle = COLORS.GRID_BORDER;
         this.gridCtx.setLineDash([]);
         this.gridCtx.lineWidth = lineWidth;
-        this.gridCtx.strokeRect(0, 0, this.gridWidth * this.gridSize, this.gridHeight * this.gridSize);
+        this.gridCtx.strokeRect(0, 0, this.gridMap.width * this.gridSize, this.gridMap.height * this.gridSize);
 
-        if (this.getInterpolatedScale() > 0.3) {
+        if (this.getScale() > 0.3) {
             this.gridCtx.strokeStyle = COLORS.GRID_LINE;
             this.gridCtx.setLineDash([5, 5]);
             this.gridCtx.lineWidth = lineWidth * 0.8;
-            drawGridLines(this.gridCtx, this.gridWidth, this.gridHeight, this.gridSize);
+            drawGridLines(this.gridCtx, this.gridMap.width, this.gridMap.height, this.gridSize);
         }
 
         // 绘制机器
@@ -538,33 +498,22 @@ export class GridCanvas {
         this.gridCtx.fillStyle = COLORS.MACHINE_FILL;
         this.gridCtx.strokeStyle = COLORS.MACHINE_STROKE;
         this.gridCtx.lineWidth = 2;
-        GridMap.allMachines.forEach((machineInstance) => {
-            drawMachine(this.gridCtx!, machineInstance, this.gridSize);
-        });
+        this.gridMap.allMachines.forEach((machineInstance) =>
+            drawMachine(this.gridCtx!, machineInstance, this.gridSize));
 
         // 绘制传送带
-        GridMap.allBelts.forEach((beltInstance) => {
-            const list = beltInstance.shape();
-            for (let i = 0; i < list.length; i++) {
-                const pos: Vector2 = list[i];
-                drawBelt(this.gridCtx!, beltInstance.shapeAt(i),
-                    pos.x * this.gridSize, pos.y * this.gridSize, this.gridSize);
-            }
-        });
+        this.gridMap.allBelts.forEach((beltInstance) =>
+            drawBelt(this.gridCtx!, beltInstance, this.gridSize));
 
         // 回退transform，避免图片方向错误
         this.gridCtx.restore();
 
         // 绘制机器图标
-        GridMap.allMachines.forEach((instance) => {
-            // 图标绘制也使用插值变换
-            drawMachinesIcon(this.gridCtx!, instance, this.interpolatedTransform, this.gridSize);
-        });
+        this.gridMap.allMachines.forEach((instance) =>
+            drawMachinesIcon(this.gridCtx!, instance, this.transformMatrix, this.gridSize));
 
         this.gridCtx.restore();
     }
-
-
 
 
 

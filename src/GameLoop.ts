@@ -4,13 +4,13 @@
  */
 export class GameLoop {
     private static instance: GameLoop | null = null;
-    
+
     // 物理更新相关
     private physicsFPS: number = 60;
     private physicsInterval: number = 1000 / 60;
     private lastPhysicsTime: number = 0;
     private accumulatedPhysicsTime: number = 0;
-    
+
     // 渲染相关
     private renderFPS: number = 60;
     private lastRenderTime: number = 0;
@@ -20,17 +20,17 @@ export class GameLoop {
     private currentFPS: number = 0;
     // 添加渲染时间累积，用于更精确的插值计算
     private accumulatedRenderTime: number = 0;
-    
+
     // 状态控制
     private isRunning: boolean = false;
     private isPaused: boolean = false;
-    
+
     // 回调函数
     private updateCallback: (() => void) | null = null;
     private renderCallback: ((interpolation: number) => void) | null = null;
     private fpsCallback: ((fps: number) => void) | null = null;
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): GameLoop {
         if (!GameLoop.instance) {
@@ -85,14 +85,14 @@ export class GameLoop {
      */
     public start(): void {
         if (this.isRunning) return;
-        
+
         this.isRunning = true;
         this.isPaused = false;
         this.lastPhysicsTime = performance.now();
         this.lastRenderTime = performance.now();
         this.lastFpsUpdate = performance.now();
         this.frameCount = 0;
-        
+
         this.gameLoop(performance.now());
     }
 
@@ -131,7 +131,7 @@ export class GameLoop {
         if (!this.isPaused) {
             // 更新物理状态
             this.updatePhysics(currentTime);
-            
+
             // 更新FPS统计
             this.updateFPS(currentTime);
         }
@@ -153,9 +153,7 @@ export class GameLoop {
 
         // 以固定时间步长更新物理状态
         while (this.accumulatedPhysicsTime >= this.physicsInterval) {
-            if (this.updateCallback) {
-                this.updateCallback();
-            }
+            if (this.updateCallback) this.updateCallback();
             this.accumulatedPhysicsTime -= this.physicsInterval;
         }
     }
@@ -166,21 +164,13 @@ export class GameLoop {
     private render(currentTime: number): void {
         const deltaTime = currentTime - this.lastRenderTime;
         this.lastRenderTime = currentTime;
-        this.accumulatedRenderTime += deltaTime;
+        this.accumulatedRenderTime = (this.accumulatedRenderTime + deltaTime) % this.physicsInterval;
 
         // 计算插值因子（用于平滑渲染）
         const interpolation = this.accumulatedRenderTime / this.physicsInterval;
-
-        if (this.renderCallback) {
-            this.renderCallback(interpolation);
-        }
+        if (this.renderCallback) this.renderCallback(interpolation);
 
         this.frameCount++;
-        
-        // 重置渲染时间累积，避免数值过大
-        if (this.accumulatedRenderTime >= this.physicsInterval) {
-            this.accumulatedRenderTime -= this.physicsInterval;
-        }
     }
 
     /**
@@ -191,7 +181,7 @@ export class GameLoop {
             this.currentFPS = Math.round((this.frameCount * 1000) / (currentTime - this.lastFpsUpdate));
             this.frameCount = 0;
             this.lastFpsUpdate = currentTime;
-            
+
             if (this.fpsCallback) {
                 this.fpsCallback(this.currentFPS);
             }

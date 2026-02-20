@@ -1,14 +1,13 @@
-import { BeltInstance } from "./instance/BeltInstance";
+import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import { MachineInstance } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumInventoryType";
-import EnumItemType from "./utils/EnumItemType";
 
 
 
 export class InstanceAttention {
-    private static selectingInstance: MachineInstance | BeltInstance | null = null;
+    private static selectingInstance: MachineInstance | BeltSec | null = null;
 
     private static selectingSlot: HTMLDivElement | null = null;
     private static selectingInventory: ItemStack | null = null;
@@ -22,7 +21,8 @@ export class InstanceAttention {
     }
 
     static readonly container = document.getElementById('machine-details-panel')!;
-    static set select(instance: MachineInstance | BeltInstance | null) {
+
+    static set select(instance: MachineInstance | BeltSec | null) {
         if (!instance) { this.cancel(); return; }
         if (instance instanceof MachineInstance && instance !== this.selectingInstance) {
             this.clear();
@@ -43,7 +43,7 @@ export class InstanceAttention {
         }
     }
 
-    static get select(): MachineInstance | BeltInstance | null {
+    static get select(): MachineInstance | BeltSec | null {
         return InstanceAttention.selectingInstance;
     }
 

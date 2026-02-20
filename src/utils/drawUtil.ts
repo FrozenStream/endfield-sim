@@ -5,10 +5,17 @@ import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
 
-function drawBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
-    if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, x, y, size);
-    else drawStraightBelt(canvas, direc, x, y, size);
-    drawBeltDirection(canvas, direc, x, y, size);
+function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
+    const list = instance.shape();
+    for (let i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
+            const pos: Vector2 = list[i].mul(size);
+            const direc = instance.shapeAt(i);
+            if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
+            else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
+            drawBeltDirection(canvas, direc, pos.x, pos.y, size);
+        }
+    }
 }
 
 function drawStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
@@ -18,9 +25,7 @@ function drawStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: nu
         canvas.beginPath();
         canvas.moveTo(x, y + edge);
         canvas.lineTo(x + size, y + edge);
-        canvas.stroke();
 
-        canvas.beginPath();
         canvas.moveTo(x, y + oedge);
         canvas.lineTo(x + size, y + oedge);
         canvas.stroke();
@@ -29,9 +34,7 @@ function drawStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: nu
         canvas.beginPath();
         canvas.moveTo(x + edge, y);
         canvas.lineTo(x + edge, y + size);
-        canvas.stroke();
 
-        canvas.beginPath();
         canvas.moveTo(x + oedge, y);
         canvas.lineTo(x + oedge, y + size);
         canvas.stroke();

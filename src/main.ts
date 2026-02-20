@@ -4,6 +4,7 @@ import ItemIconManager from "./ItemManager";
 import { MachinesIconsManager as MachineIconsManager } from "./MacineIconManager";
 import { GameLoop } from "./GameLoop";
 import { Config } from "./utils/Config";
+import { GridMap } from "./GridMap";
 
 const gridWrapper = document.getElementById('grid-wrapper')!;
 const gridCanvas = document.createElement('canvas');
@@ -11,35 +12,32 @@ const overlayCanvas = document.createElement('canvas');
 
 // 初始化网格
 document.addEventListener('DOMContentLoaded', () => {
-    const grid = new GridCanvas(gridWrapper, gridCanvas, overlayCanvas);
-
-    // 初始化图标管理器
-    const machineIconsManager = new MachineIconsManager('icon-collection');
+    // 初始化   
+    const gridMap = new GridMap(Config.gridWidth, Config.gridHeight);
+    const machineIconsManager = new MachineIconsManager('icon-collection', gridMap);
     const itemIconManager = new ItemIconManager('item-collection');
+    const grid = new GridCanvas(gridWrapper, gridCanvas, overlayCanvas, gridMap, machineIconsManager);
 
     // 创建游戏循环管理器
     const gameLoop = GameLoop.getInstance();
-    
-    // 设置不同的FPS：物理50FPS，渲染60FPS
+
     gameLoop.setPhysicsFPS(Config.PhysicsFPS);  // 物理更新频率
-    gameLoop.setRenderFPS(Config.RenderFPS);   // 渲染频率
-    
+    gameLoop.setRenderFPS(Config.RenderFPS);    // 渲染频率
+
     // 设置物理更新回调
     gameLoop.setUpdateCallback(() => {
         // 物理更新逻辑
         grid.update();
         InstanceAttention.flash();
     });
-    
+
     // 设置渲染回调
-    gameLoop.setRenderCallback((interpolation: number) => {
-        // 设置插值因子
-        grid.setInterpolation(interpolation);
+    gameLoop.setRenderCallback((_: number) => {
         // 渲染逻辑
         grid.drawGrid();
         grid.preview();
     });
-    
+
     // 设置FPS显示回调
     gameLoop.setFPSCallback((fps: number) => {
         const fpsDisplay = document.getElementById('fps-display');
@@ -47,10 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
             fpsDisplay.textContent = `FPS: ${fps}`;
         }
     });
-    
+
     // 启动游戏循环
     gameLoop.start();
-    
+
     // 添加调试控制按钮
     addDebugControls(gameLoop);
 });
@@ -69,13 +67,13 @@ function addDebugControls(gameLoop: GameLoop): void {
     controlsDiv.style.padding = '10px';
     controlsDiv.style.borderRadius = '5px';
     controlsDiv.style.fontFamily = 'monospace';
-    
+
     const fpsDisplay = document.createElement('div');
     fpsDisplay.id = 'fps-display';
     fpsDisplay.textContent = 'FPS: 0';
     fpsDisplay.style.marginBottom = '10px';
-    
+
     controlsDiv.appendChild(fpsDisplay);
-    
+
     document.body.appendChild(controlsDiv);
 }
