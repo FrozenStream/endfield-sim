@@ -3,7 +3,7 @@ import { ItemStack } from "../proto/ItemStack";
 import { Config } from "../utils/Config";
 import EnumItemType from "../utils/EnumItemType";
 import Vector2 from "../utils/Vector2";
-import type { MachineInstance } from "./MachineInstance";
+import { MachineInstance, portInstance } from "./MachineInstance";
 
 export class BeltSec {
     readonly owner: BeltInstance;
@@ -196,9 +196,10 @@ export class BeltInstance {
     public readonly beltType: Belt;
     public static readonly imgCache: HTMLImageElement;
 
-    // On_building elements    
+    // On_building elements
+    private _vaild: boolean = true;
     private _started: boolean = false;
-    public start: MachineInstance | null = null;
+    public start: MachineInstance | BeltSec | portInstance | null = null;
     public startPoint: Vector2 | null = null;
     public end: MachineInstance | null = null;
     public endPoint: Vector2 | null = null;
@@ -217,14 +218,20 @@ export class BeltInstance {
         this.direc = [];
     }
 
-    public setStart(start: MachineInstance | Vector2) {
+    public get vaild() {
+        return this._vaild;
+    }
+
+    public setStart(start: MachineInstance | BeltSec | portInstance | Vector2, pos: Vector2) {
         if (start instanceof Vector2) {
             this.startPoint = start.floor();
             this.start = null;
+            this._vaild = false;
         }
         else {
-            this.startPoint = null;
+            this.startPoint = pos;
             this.start = start;
+            this._vaild = true;
         }
     }
 
@@ -237,7 +244,6 @@ export class BeltInstance {
     }
 
     public setEnd(end: Vector2, instance?: MachineInstance) {
-        if (this.start === null) throw new Error("start point is null");
         if (!this._started) return;
         const port = instance?.closestPort(end, true, EnumItemType.SOLID);
         if (!port) {
@@ -246,17 +252,29 @@ export class BeltInstance {
         }
         else {
             this.end = instance!;
-            this.endPoint = port.postion!.sub(port.direction);
+            this.endPoint = port.position!.sub(port.direction);
         }
 
-        const start = this.start.closestPort(this.endPoint, false, EnumItemType.SOLID);
-        if (start === null) return;
-        const faceAt = Vector2.toIndex(start.direction)!;
-        this.startPoint = start.postion.add(Vector2.DIREC[faceAt]).floor();
+        let faceAt: number;
+        if (this.start instanceof MachineInstance) {
+            const start = this.start.closestPort(this.endPoint, false, EnumItemType.SOLID);
+            if (start === null) return;
+            faceAt = Vector2.toIndex(start.direction)!;
+            this.startPoint = start.position.add(Vector2.DIREC[faceAt]).floor();
+        }
+        else if (this.start instanceof BeltSec) {
+            faceAt = this.start.owner.direc[this.start.index + 1];
+            this.startPoint = this.start.position.add(Vector2.DIREC[faceAt]);
+        }
+        else if (this.start instanceof portInstance) {
+            faceAt = Vector2.toIndex(this.start.direction)!
+            this.startPoint = this.start.position.add(Vector2.DIREC[faceAt]).floor();
+        }
+        else throw new Error("start point is null");
+
         this.direc = [faceAt];
 
         const relative: Vector2 = this.endPoint.floor().sub(this.startPoint);
-        console.log('relative', relative);
         const inFaceLength: number = relative.dot(Vector2.DIREC[faceAt]);
         const dir_a = Vector2.toCW(faceAt);
         const dir_b = Vector2.toCCW(faceAt);
@@ -324,6 +342,23 @@ export class BeltInstance {
     public static concat(belt0: BeltInstance, belt1: BeltInstance): BeltInstance {
         const newBelt = new BeltInstance(Belt.soildBelt);
         newBelt.startPoint = belt0.startPoint;
+
+        // 连接方向数组，跳过belt1的第一个元素避免重复
+        newBelt.direc = belt0.direc.concat(belt1.direc.slice(1));
+
+        // 设置起点和终点
+        newBelt.start = belt0.start;
+        newBelt.end = belt1.end;
+        newBelt.endPoint = belt1.endPoint;
+        newBelt._started = true;
+
+        // 构建传送带段
+        newBelt.build();
+
+        // 合并库存系统
+        if (belt0.inventory && belt1.inventory) {
+            newBelt.inventory = BeltInventory.concat(belt0.inventory, belt1.inventory);
+        }
 
         return newBelt;
     }

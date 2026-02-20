@@ -6,10 +6,18 @@ import type EnumItemType from "../utils/EnumItemType";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
 
-export interface portInstance {
-    portGroup: PortGroup;
-    postion: Vector2;
+export class portInstance {
+    owner: MachineInstance;
+    portGroupSrc: PortGroup;
+    position: Vector2;
     direction: Vector2;
+
+    constructor(owner: MachineInstance, portGroupSrc: PortGroup, postion: Vector2, direction: Vector2) {
+        this.owner = owner;
+        this.portGroupSrc = portGroupSrc;
+        this.position = postion;
+        this.direction = direction;
+    }
 }
 
 
@@ -126,8 +134,8 @@ export class MachineInstance {
         let dist;
         for (const instanceGroup of this.portInstances) {
             for (const instance of instanceGroup) {
-                if (instance.portGroup.isIn !== isIn || instance.portGroup.itemType !== itemType) continue;
-                dist = instance.postion.sub(dst).manhattanDistance();
+                if (instance.portGroupSrc.isIn !== isIn || instance.portGroupSrc.itemType !== itemType) continue;
+                dist = instance.position.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
                     closest = instance;
                     closest_num = dist;

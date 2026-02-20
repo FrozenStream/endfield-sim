@@ -1,10 +1,11 @@
-import { drawBelt, drawMachineLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems } from "./utils/drawUtil";
+import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
 import { InstanceAttention } from "./AttentionManager";
-import type { BeltInstance } from "./instance/BeltInstance";
+import { BeltSec, type BeltInstance } from "./instance/BeltInstance";
 import type { GridMap } from "./GridMap";
+import { MachineInstance, portInstance } from "./instance/MachineInstance";
 
 /**
  * 优化后的事件管理器类
@@ -431,7 +432,7 @@ export class GridCanvas {
                 // 已指定起点，绘制完整传送带
                 drawBelt(this.overlayCtx, this.gridMap.PreviewBelt, this.gridSize);
             } else {
-                if (this.gridMap.PreviewBelt.startPoint) {
+                if (!this.gridMap.PreviewBelt.vaild && this.gridMap.PreviewBelt.startPoint) {
                     // 起始点不在机器上，绘制警告方格
                     this.overlayCtx.fillStyle = COLORS.UNILLEGAL_COLOR;
                     this.overlayCtx.fillRect(
@@ -442,7 +443,16 @@ export class GridCanvas {
                 } else if (this.gridMap.PreviewBelt.start) {
                     // 起始点在机器上，绘制选中效果
                     this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
-                    drawMachineLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start, this.gridSize);
+                    if (this.gridMap.PreviewBelt.start instanceof MachineInstance)
+                        drawRectLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.rect, this.gridSize);
+                    else if (this.gridMap.PreviewBelt.start instanceof portInstance) {
+                        drawCellLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.position.floor(), this.gridSize, COLORS.CELL_LINES_FILL);
+                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPoint, this.gridSize, COLORS.PREVIEW_GREEN)
+                    }
+                    else if (this.gridMap.PreviewBelt.start instanceof BeltSec) {
+                        drawCellLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.position, this.gridSize, COLORS.CELL_LINES_FILL);
+                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPoint, this.gridSize, COLORS.PREVIEW_GREEN)
+                    }
                 }
             }
         }

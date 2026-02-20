@@ -74,8 +74,20 @@ class Vector2 {
         return new Vector2(Math.round(this.x), Math.round(this.y));
     }
 
+    roundSelf(): Vector2 {
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+        return this;
+    }
+
     floor(): Vector2 {
         return new Vector2(Math.floor(this.x), Math.floor(this.y));
+    }
+
+    floorSelf(): Vector2 {
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
+        return this;
     }
 
     clamp(minX: number, minY: number, maxX: number, maxY: number) {
@@ -176,6 +188,7 @@ class Vector2 {
     static readonly UP_n = 3;
     static readonly LEFT_n = 6;
     static readonly DOWN_n = 9;
+    static readonly straightVector_digital = [this.RIGHT_n, this.UP_n, this.LEFT_n, this.DOWN_n]
 
     static readonly INF = new Vector2(1e9, 1e9);
 

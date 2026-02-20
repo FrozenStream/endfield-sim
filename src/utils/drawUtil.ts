@@ -1,20 +1,19 @@
 import { InstanceAttention } from "../AttentionManager";
 import { BeltInventory, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
+import type Rect from "./Rect";
 import Vector2 from "./Vector2";
 
 const beltWidth: number = 40;
 
-function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
+export function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
     const list = instance.shape();
-    for (let i = 0; i < list.length; i++) {
-        for (let i = 0; i < list.length; i++) {
-            const pos: Vector2 = list[i].mul(size);
-            const direc = instance.shapeAt(i);
-            if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
-            else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
-            drawBeltDirection(canvas, direc, pos.x, pos.y, size);
-        }
+    for (let i = 0; i < instance.length; i++) {
+        const pos: Vector2 = list[i].mul(size);
+        const direc = instance.shapeAt(i);
+        if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
+        else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
+        drawBeltDirection(canvas, direc, pos.x, pos.y, size);
     }
 }
 
@@ -119,7 +118,6 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
     }
 }
 
-
 function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
     const d: Vector2 = Vector2.DIREC[direc].mul(Vector2.isDiagonal(direc) ? 0.7 : 1);
     const center: Vector2 = new Vector2(x + size / 2, y + size / 2);
@@ -141,7 +139,6 @@ function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: n
     }
 }
 
-
 function fillTriangle(canvas: CanvasRenderingContext2D, a: Vector2, b: Vector2, c: Vector2) {
     canvas.beginPath();
     canvas.moveTo(a.x, a.y);
@@ -152,7 +149,7 @@ function fillTriangle(canvas: CanvasRenderingContext2D, a: Vector2, b: Vector2, 
 }
 
 
-function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
+export function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     const rect = instance.rect;
     if (!rect) return;
     const [startX, startY, width, height] = rect.mutiply(gridSize).toTuple();
@@ -236,8 +233,7 @@ function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInst
 }
 
 
-function drawMachineLinesFill(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
-    const rect = instance.rect;
+export function drawRectLinesFill(canvas: CanvasRenderingContext2D, rect: Rect | null, gridSize: number) {
     if (!rect) return;
     const [x, y, w, h] = rect.mutiply(gridSize).toTuple();
 
@@ -278,8 +274,57 @@ function drawMachineLinesFill(canvas: CanvasRenderingContext2D, instance: Machin
     }
 }
 
+export function drawCellLinesFill(canvas: CanvasRenderingContext2D, vec: Vector2, gridSize: number, color: string) {
+    const [x, y, w, h] = [vec.x * gridSize, vec.y * gridSize, gridSize, gridSize];
 
-function drawGridLines(canvas: CanvasRenderingContext2D, width: number, height: number, gridSize: number) {
+    // 设置填充颜色为透明黄色
+    canvas.fillStyle = color;
+
+    // 设置斜线间距
+    const num = 15;
+    const spacing = (w + h) / num;
+
+    // 绘制斜线网格
+    canvas.beginPath();
+
+    for (let i = 1; i <= num; i += 2) {
+        const offset1 = (i - 1) * spacing;
+        const offset2 = i * spacing;
+        let flag: boolean = false;
+
+        canvas.beginPath();
+        const X11 = Math.min(x + w, x + offset1);
+        const Y11 = Math.max(y, y - w + offset1);
+        canvas.moveTo(X11, Y11);
+
+        const X12 = Math.min(x + w, x + offset2);
+        const Y12 = Math.max(y, y - w + offset2);
+
+        if (X11 < x + w && X12 > x + w) flag = true;
+        if (flag) canvas.lineTo(x + w, y + h);
+        canvas.lineTo(X12, Y12);
+
+        const X21 = Math.max(x, x - h + offset2);
+        const Y21 = Math.min(y + h, y + offset2);
+        canvas.lineTo(X21, Y21);
+        if (flag) canvas.lineTo(x, y);
+
+        const X22 = Math.max(x, x - h + offset1);
+        const Y22 = Math.min(y + h, y + offset1);
+        canvas.lineTo(X22, Y22);
+        canvas.closePath();
+        canvas.fill();
+    }
+}
+
+export function drawCellFill(canvas: CanvasRenderingContext2D, vec: Vector2 | null, gridSize: number, color: string) {
+    if (vec === null) return;
+    vec = vec.floor();
+    canvas.fillStyle = color;
+    canvas.fillRect(vec.x * gridSize, vec.y * gridSize, gridSize, gridSize);
+}
+
+export function drawGridLines(canvas: CanvasRenderingContext2D, width: number, height: number, gridSize: number) {
     canvas.beginPath();
     // 绘制垂直线
     for (let x = 1; x < width; x++) {
@@ -297,7 +342,7 @@ function drawGridLines(canvas: CanvasRenderingContext2D, width: number, height: 
 }
 
 
-function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineInstance, transform: DOMMatrix, gridSize: number) {
+export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineInstance, transform: DOMMatrix, gridSize: number) {
     if (!canvas) return;
     // 清空区域内容，绘制新背景色和边框
     const rect = instance.rect;
@@ -334,7 +379,7 @@ function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineIns
 }
 
 
-function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance, gridSize: number) {
+export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance, gridSize: number) {
     if (!instance.inventory) return;
 
     const inv = instance.inventory;
@@ -373,6 +418,3 @@ function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance,
         canvas.drawImage(img, pos.x, pos.y, gridSize * 0.8, gridSize * 0.8);
     }
 }
-
-
-export { drawBelt, drawMachine, drawMachineLinesFill, drawGridLines, drawMachinesIcon, drawBeltItems };

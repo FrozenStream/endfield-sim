@@ -21,12 +21,17 @@ export const COLORS = {
   // 预览模式下机器/传送带的填充颜色（半透明蓝色）
   PREVIEW_FILL: 'rgba(100, 100, 255, 0.25)',
 
+  PREVIEW_GREEN: 'rgba(144, 238, 144, 0.4)',
+
   // 预览模式下机器/传送带的边框颜色（半透明蓝色）
   PREVIEW_STROKE: 'rgba(100, 100, 255, 0.75)',
 
   // 重叠提示颜色（橙色）
   OVERLAP_WARNING: 'rgba(255, 165, 0, 0.6)',
   UNILLEGAL_COLOR: 'rgba(255, 0, 0, 0.6)',
+
+  // 单元格斜线填充颜色（透明黄色）
+  CELL_LINES_FILL: 'rgba(255, 255, 0, 0.7)',
 
   // UI界面相关颜色
   UI_DARK_BLUE: '#2c3e50',

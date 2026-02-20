@@ -1,5 +1,5 @@
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
-import { MachineInstance } from "./instance/MachineInstance";
+import { MachineInstance, portInstance } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumInventoryType";
@@ -22,28 +22,34 @@ export class InstanceAttention {
 
     static readonly container = document.getElementById('machine-details-panel')!;
 
-    static set select(instance: MachineInstance | BeltSec | null) {
+    static set select(instance: MachineInstance | portInstance | BeltSec | null) {
         if (!instance) { this.cancel(); return; }
+        if (instance instanceof portInstance && instance.owner !== this.selectingInstance) 
+            this.openAny(instance.owner);
         if (instance instanceof MachineInstance && instance !== this.selectingInstance) {
-            this.clear();
-            switch (instance.currentMode.inventory) {
-                case EnumInventoryType.Storage_1x1_solid:
-                    InstanceAttention.createLayout_1x1(instance);
-                    break;
-                case EnumInventoryType.Storage_2x1_solid:
-                    InstanceAttention.createLayout_2x1(instance);
-                    break;
-                case EnumInventoryType.Storage_6:
-                    InstanceAttention.createLayout_6(instance);
-                    break;
-            }
-            InstanceAttention.selectingInstance = instance;
+            this.openAny(instance);
         }
         else if (instance instanceof BeltInstance) {
         }
     }
 
-    static get select(): MachineInstance | BeltSec | null {
+    private static openAny(instance: MachineInstance) {
+        this.clear();
+        switch (instance.currentMode.inventory) {
+            case EnumInventoryType.Storage_1x1_solid:
+                InstanceAttention.createLayout_1x1(instance);
+                break;
+            case EnumInventoryType.Storage_2x1_solid:
+                InstanceAttention.createLayout_2x1(instance);
+                break;
+            case EnumInventoryType.Storage_6:
+                InstanceAttention.createLayout_6(instance);
+                break;
+        }
+        InstanceAttention.selectingInstance = instance;
+    }
+
+    static get select(): MachineInstance | portInstance | BeltSec | null {
         return InstanceAttention.selectingInstance;
     }
 
@@ -283,11 +289,6 @@ export class InstanceAttention {
             slot.dataset.slotIndex = i.toString();
             slots.push([slot, img, num]);
             slotsContainer.appendChild(slot);
-
-            console.log('inventory0', instance.inventory[0], 'inventory1', instance.inventory[1],
-                'inventory2', instance.inventory[2], 'inventory3', instance.inventory[3],
-                'inventory4', instance.inventory[4], 'inventory5', instance.inventory[5]
-            )
 
             // 为每个槽位添加点击事件
             slot.addEventListener('click', () => {
