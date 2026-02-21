@@ -158,7 +158,7 @@ export class Machine {
     // 存储箱
     public static readonly Storager: Machine = new Machine('storager', '/icon_port/icon_port_storager_1.png', 3, 3,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
                 new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
             ])
@@ -229,7 +229,7 @@ export class Machine {
     // 装备原件机
     public static readonly Winder: Machine = new Machine('winder', '/icon_port/icon_port_winder_1.png', 6, 4,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, winder_In),
                 new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, winder_Out)
             ], winder_Work)
@@ -238,7 +238,7 @@ export class Machine {
     // 灌装机
     public static readonly FillingMachine: Machine = new Machine('fillingmachine', '/icon_port/icon_port_filling_pd_mc_1.png', 6, 4,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, fillingmachine_In_soild),
                 new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, fillingmachine_Out)
             ], fillingmachine_Work)
@@ -247,7 +247,7 @@ export class Machine {
     // 封装机
     public static readonly AssemblyMachine: Machine = new Machine('assemblymachine', '/icon_port/icon_port_tools_asm_mc_1.png', 6, 4,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, assemblymachine_In),
                 new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, assemblymachine_Out)
             ], assemblymachine_Work)
@@ -256,7 +256,7 @@ export class Machine {
     // 研磨机
     public static readonly Thickener: Machine = new Machine('thickener', '/icon_port/icon_port_thickener_1.png', 6, 4,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, thickener_In),
                 new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, thickener_Out)
             ], thickener_Work)
@@ -265,7 +265,7 @@ export class Machine {
     // 反应池
     public static readonly MixPool: Machine = new Machine('mixpool', '/icon_port/icon_port_mix_pool_1.png', 5, 5,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, mixpool_In),
                 new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, mixpool_Out)
             ], mixpool_Work)
@@ -283,7 +283,7 @@ export class Machine {
     // 拆解机
     public static readonly Dismantler: Machine = new Machine('dismantler', '/icon_port/icon_port_dismantler_1.png', 6, 4,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2x1_solid, [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, dismantler_In),
                 new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, dismantler_Out)
             ], dismantler_Work)

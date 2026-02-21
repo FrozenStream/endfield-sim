@@ -39,10 +39,10 @@ export class InstanceAttention {
             case EnumInventoryType.Storage_1x1_solid:
                 InstanceAttention.createLayout_1x1(instance);
                 break;
-            case EnumInventoryType.Storage_2x1_solid:
+            case EnumInventoryType.Storage_2_solid_1_solid:
                 InstanceAttention.createLayout_2x1(instance);
                 break;
-            case EnumInventoryType.Storage_6:
+            case EnumInventoryType.Storage_6_Solid:
                 InstanceAttention.createLayout_6(instance);
                 break;
         }

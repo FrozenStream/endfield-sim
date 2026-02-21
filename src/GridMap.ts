@@ -118,6 +118,7 @@ export class GridMap {
             }
             else {
                 if (occupied instanceof MachineInstance) this._previewing.setEnd(vec, occupied);
+                else if (occupied instanceof portInstance) this._previewing.setEnd(vec, occupied.owner);
                 else this._previewing.setEnd(vec);
             }
         }
@@ -168,6 +169,13 @@ export class GridMap {
             this._previewing.build();
             this.markBeltArea(this._previewing);
             console.log("built", this._previewing, "total:", this._belts.size, "belts");
+
+            // 连接传送带
+            const headbelt = this.beltfindHeadConcatAble(this._previewing);
+            console.log("headbelt", headbelt);
+            if (headbelt) {
+                this.beltConcat(headbelt, this._previewing);
+            }
             this._previewing = null;
             return true;
         }
@@ -233,6 +241,19 @@ export class GridMap {
         if (!belt0.inventory || !belt1.inventory || !belt0.sections || !belt1.sections) return false;
         if (belt0.sections[belt0.sections.length - 1].direc !== belt1.sections[0].direc) return false;
         return true;
+    }
+
+    private beltfindHeadConcatAble(instance: BeltInstance): BeltInstance | null {
+        if (instance.sections === null) return null;
+        const pos: Vector2 = instance.sections[0].position;
+        const direc: number = instance.direc[0];
+
+        const point = pos.sub(Vector2.DIREC[direc]);
+        const by = this.isOccupiedBy(point);
+        if (!(by instanceof BeltSec)) return null;
+        if (by.owner.direc[by.owner.length] === direc) return by.owner;
+
+        return null;
     }
 
     private beltStartCheckSurrounding(start: Vector2): BeltSec | portInstance | null {

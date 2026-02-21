@@ -28,8 +28,7 @@ export class BeltInventory {
 
     private _count: number;
 
-    public static readonly BeltSpeed = 2;
-    public static readonly SecMaxDelay = Config.PhysicsFPS * 2;
+    public static readonly SecMaxDelay = Config.PhysicsFPS * Config.BeltSecond;
 
     public oldCache: ({ itemstack: ItemStack, delay: number } | null)[] = new Array(length);
 
@@ -329,7 +328,7 @@ export class BeltInstance {
 
     public build() {
         if (!this.startPoint) return;
-        this.inventory = new BeltInventory(this.length);
+        if (!this.inventory) this.inventory = new BeltInventory(this.length);
         this.sections = [];
         let point: Vector2 = Vector2.copy(this.startPoint);
         this.sections.push(new BeltSec(this, 0, this.shapeAt(0), point));
