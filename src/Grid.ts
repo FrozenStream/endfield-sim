@@ -1,4 +1,4 @@
-import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill } from "./utils/drawUtil";
+import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
@@ -216,9 +216,10 @@ export class GridCanvas {
 
     private gridMap: GridMap;
     private machinesIconsManager: MachinesIconsManager;
+    private instanceAttention: InstanceAttention;
 
     constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement,
-        gridMap: GridMap, machinesIconsManager: MachinesIconsManager) {
+        gridMap: GridMap, machinesIconsManager: MachinesIconsManager, instanceAttention: InstanceAttention) {
         this.container = container;
         this.gridCanvas = gridCanvas;
         this.overlayCanvas = overlayCanvas;
@@ -228,6 +229,7 @@ export class GridCanvas {
         this.transformMatrix = new DOMMatrix();
         this.gridMap = gridMap;
         this.machinesIconsManager = machinesIconsManager;
+        this.instanceAttention = instanceAttention;
 
         this.setupCanvases();
         this.bindResizeListener();
@@ -303,13 +305,13 @@ export class GridCanvas {
         console.log("occupyCount:", occupyCount);
 
         if (this.gridMap.PreviewMachine) {
-            if (!occupyCount && this.gridMap.build()) { this.machinesIconsManager.cancel(); }
+            if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
         } else if (this.gridMap.PreviewBelt) {
             if (this.gridMap.PreviewBelt.started) {
-                if (!occupyCount && this.gridMap.build()) { this.machinesIconsManager.cancel(); }
+                if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
             } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } else { InstanceAttention.select = this.gridMap.isOccupiedBy(gridPos.floor()); }
+        } else { this.instanceAttention.select = this.gridMap.isOccupiedBy(gridPos.floor()); }
         this.drawGrid();
     }
 
@@ -384,6 +386,19 @@ export class GridCanvas {
                 this.preview();
             }
         }
+        // 添加对'd'键的处理
+        else if (e.key.toLowerCase() === 'd') {
+            e.preventDefault();
+            // 当instanceAttention.select有值时执行动作
+            if (this.instanceAttention.select) {
+                const selectedInstance = this.instanceAttention.select;
+                console.log('delete:', selectedInstance);
+                if (selectedInstance instanceof MachineInstance) {
+                    this.gridMap.destroyInstance(selectedInstance);
+                    this.instanceAttention.cancel();
+                }
+            }
+        }
     };
 
     private rotateAroundCenter(): void {
@@ -423,9 +438,10 @@ export class GridCanvas {
         this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE;
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
-        if (this.gridMap.PreviewMachine) {
-            drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize);
-        }
+        if (this.gridMap.PreviewMachine) { drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize) }
+        // 绘制选中机器
+        if (this.instanceAttention.select instanceof MachineInstance) drawAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
+
         // 绘制传送带
         if (this.gridMap.PreviewBelt) {
             if (this.gridMap.PreviewBelt.started) {

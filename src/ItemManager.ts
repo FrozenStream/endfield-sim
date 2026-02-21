@@ -2,17 +2,20 @@ import { InstanceAttention } from "./AttentionManager";
 import I18n from "./utils/I18n";
 import { Item } from "./proto/Item";
 
-class ItemIconManager {
+export class ItemIconManager {
     private iconCollection: HTMLElement;
+    private attentionManager: InstanceAttention;
 
     public static icons: Map<string, HTMLDivElement> = new Map();
     public static selectedIcon: HTMLElement | null = null;
 
     private i18n: I18n = I18n.instance;
 
-    constructor(collectionId: string) {
+    constructor(collectionId: string, attentionManager: InstanceAttention) {
         this.iconCollection = document.getElementById(collectionId)!;
         this.iconCollection.classList.add('item-manager-container');
+
+        this.attentionManager = attentionManager;
 
         for (const [_, item] of Item.allItems) {
             this.addItem(item);
@@ -61,11 +64,8 @@ class ItemIconManager {
         iconElement.addEventListener('wheel', (event) => {
             // 阻止默认的滚动行为
             event.preventDefault();
-            if (event.deltaY < 0) InstanceAttention.addItemto(item);
-            else InstanceAttention.delItemto(item);
+            if (event.deltaY < 0) this.attentionManager.addItemto(item);
+            else this.attentionManager.delItemto(item);
         });
     }
 }
-
-
-export default ItemIconManager;

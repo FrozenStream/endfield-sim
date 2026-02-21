@@ -1,4 +1,3 @@
-import { InstanceAttention } from "../AttentionManager";
 import { BeltInventory, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
 import type Rect from "./Rect";
@@ -158,11 +157,9 @@ export function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineI
     canvas.strokeRect(startX, startY, width, height);
 
     drawMachinePort(canvas, instance, gridSize);
-
-    if (InstanceAttention.select === instance) drawAttention(canvas, instance, gridSize);
 }
 
-function drawAttention(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
+export function drawAttention(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     if (!instance.rect) return;
 
     const rect = instance.rect.mutiply(gridSize);

@@ -1,6 +1,6 @@
 import { InstanceAttention } from "./AttentionManager";
 import { GridCanvas } from "./Grid";
-import ItemIconManager from "./ItemManager";
+import { ItemIconManager } from "./ItemManager";
 import { MachinesIconsManager as MachineIconsManager } from "./MacineIconManager";
 import { GameLoop } from "./GameLoop";
 import { Config } from "./utils/Config";
@@ -15,8 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化   
     const gridMap = new GridMap(Config.gridWidth, Config.gridHeight);
     const machineIconsManager = new MachineIconsManager('icon-collection', gridMap);
-    const itemIconManager = new ItemIconManager('item-collection');
-    const grid = new GridCanvas(gridWrapper, gridCanvas, overlayCanvas, gridMap, machineIconsManager);
+    // 创建机器详情面板容器
+    const machineDetailsPanel = document.getElementById('machine-details-panel')!;
+    const instanceAttention = new InstanceAttention(machineDetailsPanel);
+    const itemIconManager = new ItemIconManager('item-collection', instanceAttention);
+    const grid = new GridCanvas(gridWrapper, gridCanvas, overlayCanvas, gridMap, machineIconsManager, instanceAttention);
+
+
+
 
     // 创建游戏循环管理器
     const gameLoop = GameLoop.getInstance();
@@ -28,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gameLoop.setUpdateCallback(() => {
         // 物理更新逻辑
         grid.update();
-        InstanceAttention.flash();
+        instanceAttention.flash();
     });
 
     // 设置渲染回调

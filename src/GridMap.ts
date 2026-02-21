@@ -154,7 +154,7 @@ export class GridMap {
         else return null;
     }
 
-    public build(): boolean {
+    public buildInstance(): boolean {
         if (this._previewing === null) return false;
         if (this._previewing instanceof MachineInstance) {
             this._machines.add(this._previewing)
@@ -178,6 +178,22 @@ export class GridMap {
             }
             this._previewing = null;
             return true;
+        }
+        return false;
+    }
+
+    public destroyInstance(instance: MachineInstance | BeltInstance | null) {
+        if (instance === null) return false;
+        if (instance instanceof MachineInstance && this._machines.has(instance)) {
+            this._machines.delete(instance)
+            this.clearMachineArea(instance);
+            console.log("delete", instance, "total:", this._machines.size, "machines");
+            return true;
+        }
+        else if (instance instanceof BeltInstance) {
+            this._belts.delete(instance);
+            this.clearBeltArea(instance);
+            console.log("delete", instance, "total:", this._belts.size, "belts");
         }
         return false;
     }

@@ -7,22 +7,25 @@ import { EnumInventoryType } from "./utils/EnumInventoryType";
 
 
 export class InstanceAttention {
-    private static selectingInstance: MachineInstance | BeltSec | null = null;
+    private selectingInstance: MachineInstance | BeltSec | null = null;
 
-    private static selectingSlot: HTMLDivElement | null = null;
-    private static selectingInventory: ItemStack | null = null;
+    private selectingSlot: HTMLDivElement | null = null;
+    private selectingInventory: ItemStack | null = null;
 
-    private static currentflash: (() => void) | null = null;
+    private currentflash: (() => void) | null = null;
+    private container: HTMLElement;
 
-    public static flash() {
+    constructor(container: HTMLElement) {
+        this.container = container;
+    }
+
+    public flash() {
         if (this.currentflash) {
             this.currentflash();
         }
     }
 
-    static readonly container = document.getElementById('machine-details-panel')!;
-
-    static set select(instance: MachineInstance | portInstance | BeltSec | null) {
+    set select(instance: MachineInstance | portInstance | BeltSec | null) {
         if (!instance) { this.cancel(); return; }
         if (instance instanceof portInstance && instance.owner !== this.selectingInstance) 
             this.openAny(instance.owner);
@@ -33,65 +36,65 @@ export class InstanceAttention {
         }
     }
 
-    private static openAny(instance: MachineInstance) {
+    private openAny(instance: MachineInstance) {
         this.clear();
         switch (instance.currentMode.inventory) {
-            case EnumInventoryType.Storage_1x1_solid:
-                InstanceAttention.createLayout_1x1(instance);
+            case EnumInventoryType.Storage_1_solid_1_solid:
+                this.createLayout_1_solid_1_solid(instance);
                 break;
             case EnumInventoryType.Storage_2_solid_1_solid:
-                InstanceAttention.createLayout_2x1(instance);
+                this.createLayout_2_solid_1_solid(instance);
                 break;
             case EnumInventoryType.Storage_6_Solid:
-                InstanceAttention.createLayout_6(instance);
+                this.createLayout_6_Solid(instance);
                 break;
         }
-        InstanceAttention.selectingInstance = instance;
+        this.selectingInstance = instance;
     }
 
-    static get select(): MachineInstance | portInstance | BeltSec | null {
-        return InstanceAttention.selectingInstance;
+    get select(): MachineInstance | portInstance | BeltSec | null {
+        return this.selectingInstance;
     }
 
-    static cancel() {
-        InstanceAttention.selectingInstance = null;
+    cancel() {
+        this.selectingInstance = null;
         this.clear();
     }
 
-    static clear() {
+    clear() {
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
         }
-        InstanceAttention.selectingSlot = null;
-        InstanceAttention.selectingInventory = null;
+        this.selectingSlot = null;
+        this.selectingInventory = null;
     }
 
 
-    static addItemto(item: Item): void {
-        if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.item !== item) InstanceAttention.selectingInventory.clear();
+    addItemto(item: Item): void {
+        if (!this.selectingInventory) return;
+        if (this.selectingInventory.item !== item) this.selectingInventory.clear();
         const newStack = new ItemStack(item, item.type, 1);
-        InstanceAttention.selectingInventory.merge(newStack);
+        this.selectingInventory.merge(newStack);
 
         // 添加物品后立即刷新显示
-        if (InstanceAttention.currentflash) {
-            InstanceAttention.currentflash();
+        if (this.currentflash) {
+            this.currentflash();
         }
     }
 
 
-    static delItemto(item: Item) {
-        if (!InstanceAttention.selectingInventory) return;
-        if (InstanceAttention.selectingInventory.item !== item) InstanceAttention.selectingInventory.clear();
-        InstanceAttention.selectingInventory.count = Math.max(0, InstanceAttention.selectingInventory.count - 1);
+    delItemto(item: Item) {
+        if (!this.selectingInventory) return;
+        if (this.selectingInventory.item !== item) this.selectingInventory.clear();
+        this.selectingInventory.count = Math.max(0, this.selectingInventory.count - 1);
 
         // 添加物品后立即刷新显示
-        if (InstanceAttention.currentflash) {
-            InstanceAttention.currentflash();
+        if (this.currentflash) {
+            this.currentflash();
         }
     }
 
-    static buildInSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
+    buildInSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
         const inputSlot = document.createElement('div');
         inputSlot.className = 'slot input-slot';
         const plusSign = document.createElement('span');
@@ -132,7 +135,7 @@ export class InstanceAttention {
         return [inputSlot, img, numberDisplay];
     }
 
-    static buildArrayMark(): HTMLDivElement {
+    buildArrayMark(): HTMLDivElement {
         const arrowContainer = document.createElement('div');
         arrowContainer.className = 'arrow-container';
         const arrow = document.createElement('div');
@@ -142,10 +145,9 @@ export class InstanceAttention {
         return arrowContainer;
     }
 
-    static buildOutSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
+    buildOutSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
         const outputSlot = document.createElement('div');
         outputSlot.className = 'slot output-slot';
-        outputSlot.dataset.slot = 'output-1';
         const outputPlusSign = document.createElement('span');
         outputPlusSign.className = 'plus-sign';
         outputPlusSign.textContent = '+';
@@ -186,7 +188,7 @@ export class InstanceAttention {
     }
 
     // 动态创建槽位布局
-    static createLayout_2x1(instance: MachineInstance): void {
+    createLayout_2_solid_1_solid(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
         layout.id = 'belt-slots-layout';
@@ -195,19 +197,19 @@ export class InstanceAttention {
         const inputSlots = document.createElement('div');
         inputSlots.className = 'input-slots';
 
-        const [inputSlot1, img1, num1] = InstanceAttention.buildInSlot_Solid();
-        const [inputSlot2, img2, num2] = InstanceAttention.buildInSlot_Solid();
+        const [inputSlot1, img1, num1] = this.buildInSlot_Solid();
+        const [inputSlot2, img2, num2] = this.buildInSlot_Solid();
         inputSlots.appendChild(inputSlot1);
         inputSlots.appendChild(inputSlot2);
 
         // 创建箭头容器
-        const arrowContainer = InstanceAttention.buildArrayMark();
+        const arrowContainer = this.buildArrayMark();
 
         // 创建输出槽位容器
         const outputSlots = document.createElement('div');
         outputSlots.className = 'output-slots';
 
-        const [outputSlot, img3, num3] = InstanceAttention.buildOutSlot_Solid();
+        const [outputSlot, img3, num3] = this.buildOutSlot_Solid();
         outputSlots.appendChild(outputSlot);
 
         // 组装所有元素
@@ -218,22 +220,22 @@ export class InstanceAttention {
         if (this.container) this.container.appendChild(layout);
 
         // 添加点击事件监听器
-        inputSlot1.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot1, instance.inventory[0]));
-        inputSlot2.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot2, instance.inventory[1]));
-        outputSlot.addEventListener('click', () => InstanceAttention.selectSlot(outputSlot, instance.inventory[2]));
+        inputSlot1.addEventListener('click', () => this.selectSlot(inputSlot1, instance.inventory[0]));
+        inputSlot2.addEventListener('click', () => this.selectSlot(inputSlot2, instance.inventory[1]));
+        outputSlot.addEventListener('click', () => this.selectSlot(outputSlot, instance.inventory[2]));
 
         // 设置刷新函数
-        InstanceAttention.currentflash = () => {
-            InstanceAttention.updateImgAndNumber(instance.inventory[0], img1, num1);
-            InstanceAttention.updateImgAndNumber(instance.inventory[1], img2, num2);
-            InstanceAttention.updateImgAndNumber(instance.inventory[2], img3, num3);
+        this.currentflash = () => {
+            this.updateImgAndNumber(instance.inventory[0], img1, num1);
+            this.updateImgAndNumber(instance.inventory[1], img2, num2);
+            this.updateImgAndNumber(instance.inventory[2], img3, num3);
         }
 
         // 初始化显示
-        InstanceAttention.currentflash();
+        this.currentflash();
     }
 
-    static createLayout_1x1(instance: MachineInstance): void {
+    createLayout_1_solid_1_solid(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
         layout.id = 'belt-slots-layout-single';
@@ -241,14 +243,14 @@ export class InstanceAttention {
         // 创建输入槽位容器
         const inputSlots = document.createElement('div');
         inputSlots.className = 'input-slots';
-        const [inputSlot, img1, num1] = InstanceAttention.buildInSlot_Solid();
+        const [inputSlot, img1, num1] = this.buildInSlot_Solid();
         inputSlots.appendChild(inputSlot);
 
-        const arrowContainer = InstanceAttention.buildArrayMark();
+        const arrowContainer = this.buildArrayMark();
 
         const outputSlots = document.createElement('div');
         outputSlots.className = 'output-slots';
-        const [outputSlot, img2, num2] = InstanceAttention.buildOutSlot_Solid();
+        const [outputSlot, img2, num2] = this.buildOutSlot_Solid();
         outputSlots.appendChild(outputSlot);
 
         // 组装所有元素
@@ -257,17 +259,17 @@ export class InstanceAttention {
         layout.appendChild(outputSlots);
         if (this.container) this.container.appendChild(layout);
 
-        inputSlot.addEventListener('click', () => InstanceAttention.selectSlot(inputSlot, instance.inventory[0]));
+        inputSlot.addEventListener('click', () => this.selectSlot(inputSlot, instance.inventory[0]));
 
-        InstanceAttention.currentflash = () => {
-            InstanceAttention.updateImgAndNumber(instance.inventory[0], img1, num1);
-            InstanceAttention.updateImgAndNumber(instance.inventory[1], img2, num2);
+        this.currentflash = () => {
+            this.updateImgAndNumber(instance.inventory[0], img1, num1);
+            this.updateImgAndNumber(instance.inventory[1], img2, num2);
         }
-        InstanceAttention.currentflash();
+        this.currentflash();
     }
 
     // 动态创建6槽位布局（2列3行排列）
-    static createLayout_6(instance: MachineInstance): void {
+    createLayout_6_Solid(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
         layout.id = 'belt-slots-layout-six';
@@ -285,14 +287,14 @@ export class InstanceAttention {
         // 创建6个槽位（按2列3行顺序排列）
         const slots: [HTMLDivElement, HTMLImageElement, HTMLSpanElement][] = [];
         for (let i = 0; i < 6; i++) {
-            const [slot, img, num] = InstanceAttention.buildInSlot_Solid();
+            const [slot, img, num] = this.buildInSlot_Solid();
             slot.dataset.slotIndex = i.toString();
             slots.push([slot, img, num]);
             slotsContainer.appendChild(slot);
 
             // 为每个槽位添加点击事件
             slot.addEventListener('click', () => {
-                InstanceAttention.selectSlot(slot, instance.inventory[i]);
+                this.selectSlot(slot, instance.inventory[i]);
             });
         }
 
@@ -301,24 +303,24 @@ export class InstanceAttention {
         if (this.container) this.container.appendChild(layout);
 
         // 设置刷新函数
-        InstanceAttention.currentflash = () => {
+        this.currentflash = () => {
             for (let i = 0; i < 6; i++) {
-                InstanceAttention.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
+                this.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
             }
         };
-        InstanceAttention.currentflash();
+        this.currentflash();
     }
 
-    private static selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
-        if (InstanceAttention.selectingSlot) {
-            InstanceAttention.selectingSlot.classList.remove('selected');
+    private selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
+        if (this.selectingSlot) {
+            this.selectingSlot.classList.remove('selected');
         }
-        InstanceAttention.selectingSlot = slot;
-        InstanceAttention.selectingSlot.classList.add('selected');
-        InstanceAttention.selectingInventory = inventory;
+        this.selectingSlot = slot;
+        this.selectingSlot.classList.add('selected');
+        this.selectingInventory = inventory;
     }
 
-    static updateImgAndNumber(itemStack: ItemStack, img: HTMLImageElement, numberElement: HTMLSpanElement) {
+    updateImgAndNumber(itemStack: ItemStack, img: HTMLImageElement, numberElement: HTMLSpanElement) {
         if (itemStack.MaxCount === 0) {
             if (numberElement.style.display !== 'none') numberElement.style.display = 'none';
             if (!itemStack.item) {

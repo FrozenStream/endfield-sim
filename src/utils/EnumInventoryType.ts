@@ -29,7 +29,7 @@ export class EnumInventoryType {
         { type: EnumItemType.LIQUID, noIn: false, noOut: false, max: 500, markOnly: false },
     ]);
 
-    public static readonly Storage_1x1_solid: EnumInventoryType = new EnumInventoryType([
+    public static readonly Storage_1_solid_1_solid: EnumInventoryType = new EnumInventoryType([
         { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
         { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
     ]);
