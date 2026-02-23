@@ -18,8 +18,6 @@ export class Item {
         img.style.objectFit = 'contain';
         this.imgCache = img;
 
-        this.createImageBitmap(imgsrc);
-
         Item.allItems.set(id, this);
     }
 
@@ -37,6 +35,7 @@ export class Item {
 
     // 获取图片资源的方法（优先返回ImageBitmap）
     public getImageResource(): HTMLImageElement | ImageBitmap | null {
+        if (!this.bitmapCache) this.createImageBitmap(this.imgCache.src);
         return this.bitmapCache || this.imgCache;
     }
 

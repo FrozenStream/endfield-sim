@@ -127,9 +127,6 @@ export class Machine {
         img.style.objectFit = 'contain';
         this.imgCache = img;
 
-        // 异步创建ImageBitmap
-        this.createImageBitmap(imgsrc);
-
         Machine.allMachines.set(id, this);
     }
 
@@ -147,6 +144,7 @@ export class Machine {
 
     // 获取图片资源的方法（优先返回ImageBitmap）
     public getImageResource(): HTMLImageElement | ImageBitmap | null {
+        if (!this.bitmapCache) this.createImageBitmap(this.imgCache.src);
         return this.bitmapCache || this.imgCache;
     }
 
