@@ -9,6 +9,7 @@ export function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstanc
     const list = instance.postions();
     for (let i = 0; i < instance.length; i++) {
         const pos: Vector2 = list[i].mul(size);
+        if (Vector2.isOpposite(instance.direc[i], instance.direc[i + 1])) continue;
         const direc = instance.beltDIrec(i);
         if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
         else drawStraightBelt(canvas, direc, pos.x, pos.y, size);

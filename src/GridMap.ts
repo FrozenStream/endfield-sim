@@ -76,6 +76,9 @@ export class GridMap {
             const vecs: ReadonlyArray<Vector2> = this._previewing.postions();
             for (let i = 0; i < this._previewing.length; i++) {
                 const pos = vecs[i].floor();
+                if (Vector2.isOpposite(this._previewing.direc[i], this._previewing.direc[i + 1])) {
+                    list.push(pos); continue;
+                }
                 const direc = this._previewing.beltDIrec(i);
                 const by = this.isOccupiedBy(pos);
                 if (by instanceof MachineInstance) list.push(pos);
