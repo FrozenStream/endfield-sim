@@ -6,11 +6,11 @@ import { EnumInventoryType } from "./utils/EnumInventoryType";
 
 
 
-export class InstanceAttention {
+export class AttentionManager {
     private selectingInstance: MachineInstance | BeltSec | null = null;
 
     private selectingSlot: HTMLDivElement | null = null;
-    private selectingInventory: ItemStack | null = null;
+    private selectingInv: ItemStack | null = null;
 
     private currentflash: (() => void) | null = null;
     private container: HTMLElement;
@@ -61,20 +61,20 @@ export class InstanceAttention {
         this.clear();
     }
 
-    clear() {
+    private clear() {
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
         }
         this.selectingSlot = null;
-        this.selectingInventory = null;
+        this.selectingInv = null;
     }
 
 
     addItemto(item: Item): void {
-        if (!this.selectingInventory) return;
-        if (this.selectingInventory.item !== item) this.selectingInventory.clear();
+        if (!this.selectingInv) return;
+        if (this.selectingInv.item !== item) this.selectingInv.clear();
         const newStack = new ItemStack(item, item.type, 1);
-        this.selectingInventory.merge(newStack);
+        this.selectingInv.merge(newStack);
 
         // 添加物品后立即刷新显示
         if (this.currentflash) {
@@ -84,9 +84,9 @@ export class InstanceAttention {
 
 
     delItemto(item: Item) {
-        if (!this.selectingInventory) return;
-        if (this.selectingInventory.item !== item) this.selectingInventory.clear();
-        this.selectingInventory.count = Math.max(0, this.selectingInventory.count - 1);
+        if (!this.selectingInv) return;
+        if (this.selectingInv.item !== item) this.selectingInv.clear();
+        this.selectingInv.count = Math.max(0, this.selectingInv.count - 1);
 
         // 添加物品后立即刷新显示
         if (this.currentflash) {
@@ -317,7 +317,7 @@ export class InstanceAttention {
         }
         this.selectingSlot = slot;
         this.selectingSlot.classList.add('selected');
-        this.selectingInventory = inventory;
+        this.selectingInv = inventory;
     }
 
     updateImgAndNumber(itemStack: ItemStack, img: HTMLImageElement, numberElement: HTMLSpanElement) {

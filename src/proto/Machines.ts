@@ -165,6 +165,9 @@ export class Machine {
         ]
     );
 
+    // 继电器
+    public static readonly PowerDiffuser: Machine = new Machine('power_diffuser', '/icon_port/icon_port_power_diffuser_1.png', 2, 2);
+
 
     // 精炼炉
     public static readonly Furnance: Machine = new Machine('furnance', '/icon_port/icon_port_furnance_1.png', 3, 3,

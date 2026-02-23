@@ -6,10 +6,10 @@ import Vector2 from "./Vector2";
 const beltWidth: number = 40;
 
 export function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
-    const list = instance.shape();
+    const list = instance.postions();
     for (let i = 0; i < instance.length; i++) {
         const pos: Vector2 = list[i].mul(size);
-        const direc = instance.shapeAt(i);
+        const direc = instance.beltDIrec(i);
         if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
         else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
         drawBeltDirection(canvas, direc, pos.x, pos.y, size);
@@ -384,8 +384,10 @@ export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltIn
 
     if (!sec) return;
 
+    const l = instance.inventory._onCircle ? inv.length + 1 : inv.length;
+
     // 遍历传送带的所有段
-    for (let i = 0; i < inv.length; i++) {
+    for (let i = 0; i < l; i++) {
         const data = inv.getInventory(i);
         const pos = sec[i].position.add(new Vector2(0.1, 0.1));
         if (!data) continue;

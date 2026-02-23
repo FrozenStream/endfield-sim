@@ -2,6 +2,7 @@
     "cannon1": "ta1",
     "cannon2": "ta2",
     "storager": "协议存储箱",
+    "power_diffuser": "继电器",
     "furnance": "精炼炉",
     "grinder": "粉碎机",
     "shaper": "塑形机",
@@ -16,7 +17,6 @@
     "xiraniteoven": "天有烘炉",
     "dismantler": "拆解机",
     "solid_belt": "传送带",
-    
     "item_bottled_food_1": "柑实罐头",
     "item_bottled_food_2": "优质柑实罐头",
     "item_bottled_food_3": "精选柑实罐头",

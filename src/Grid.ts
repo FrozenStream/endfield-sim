@@ -2,8 +2,8 @@ import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIc
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
-import { InstanceAttention } from "./AttentionManager";
-import { BeltSec, type BeltInstance } from "./instance/BeltInstance";
+import { AttentionManager } from "./AttentionManager";
+import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import type { GridMap } from "./GridMap";
 import { MachineInstance, portInstance } from "./instance/MachineInstance";
 
@@ -216,10 +216,10 @@ export class GridCanvas {
 
     private gridMap: GridMap;
     private machinesIconsManager: MachinesIconsManager;
-    private instanceAttention: InstanceAttention;
+    private instanceAttention: AttentionManager;
 
     constructor(container: HTMLElement, gridCanvas: HTMLCanvasElement, overlayCanvas: HTMLCanvasElement,
-        gridMap: GridMap, machinesIconsManager: MachinesIconsManager, instanceAttention: InstanceAttention) {
+        gridMap: GridMap, machinesIconsManager: MachinesIconsManager, instanceAttention: AttentionManager) {
         this.container = container;
         this.gridCanvas = gridCanvas;
         this.overlayCanvas = overlayCanvas;
@@ -397,6 +397,10 @@ export class GridCanvas {
                     this.gridMap.destroyInstance(selectedInstance);
                     this.instanceAttention.cancel();
                 }
+                else if (selectedInstance instanceof BeltInstance) {
+                    this.gridMap.destroyInstance(selectedInstance);
+                    this.instanceAttention.cancel();
+                }
             }
         }
     };
@@ -448,12 +452,12 @@ export class GridCanvas {
                 // 已指定起点，绘制完整传送带
                 drawBelt(this.overlayCtx, this.gridMap.PreviewBelt, this.gridSize);
             } else {
-                if (!this.gridMap.PreviewBelt.vaild && this.gridMap.PreviewBelt.startPoint) {
+                if (!this.gridMap.PreviewBelt.vaild && this.gridMap.PreviewBelt.startPos) {
                     // 起始点不在机器上，绘制警告方格
                     this.overlayCtx.fillStyle = COLORS.UNILLEGAL_COLOR;
                     this.overlayCtx.fillRect(
-                        this.gridMap.PreviewBelt.startPoint.x * this.gridSize,
-                        this.gridMap.PreviewBelt.startPoint.y * this.gridSize,
+                        this.gridMap.PreviewBelt.startPos.x * this.gridSize,
+                        this.gridMap.PreviewBelt.startPos.y * this.gridSize,
                         this.gridSize, this.gridSize
                     );
                 } else if (this.gridMap.PreviewBelt.start) {
@@ -463,11 +467,11 @@ export class GridCanvas {
                         drawRectLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.rect, this.gridSize);
                     else if (this.gridMap.PreviewBelt.start instanceof portInstance) {
                         drawCellLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.position.floor(), this.gridSize, COLORS.CELL_LINES_FILL);
-                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPoint, this.gridSize, COLORS.PREVIEW_GREEN)
+                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPos, this.gridSize, COLORS.PREVIEW_GREEN)
                     }
                     else if (this.gridMap.PreviewBelt.start instanceof BeltSec) {
                         drawCellLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.position, this.gridSize, COLORS.CELL_LINES_FILL);
-                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPoint, this.gridSize, COLORS.PREVIEW_GREEN)
+                        drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPos, this.gridSize, COLORS.PREVIEW_GREEN)
                     }
                 }
             }

@@ -1,17 +1,17 @@
-import { InstanceAttention } from "./AttentionManager";
+import { AttentionManager } from "./AttentionManager";
 import I18n from "./utils/I18n";
 import { Item } from "./proto/Item";
 
 export class ItemIconManager {
     private iconCollection: HTMLElement;
-    private attentionManager: InstanceAttention;
+    private attentionManager: AttentionManager;
 
     public static icons: Map<string, HTMLDivElement> = new Map();
     public static selectedIcon: HTMLElement | null = null;
 
     private i18n: I18n = I18n.instance;
 
-    constructor(collectionId: string, attentionManager: InstanceAttention) {
+    constructor(collectionId: string, attentionManager: AttentionManager) {
         this.iconCollection = document.getElementById(collectionId)!;
         this.iconCollection.classList.add('item-manager-container');
 

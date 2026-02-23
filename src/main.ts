@@ -1,4 +1,4 @@
-import { InstanceAttention } from "./AttentionManager";
+import { AttentionManager } from "./AttentionManager";
 import { GridCanvas } from "./Grid";
 import { ItemIconManager } from "./ItemManager";
 import { MachinesIconsManager as MachineIconsManager } from "./MacineIconManager";
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const machineIconsManager = new MachineIconsManager('icon-collection', gridMap);
     // 创建机器详情面板容器
     const machineDetailsPanel = document.getElementById('machine-details-panel')!;
-    const instanceAttention = new InstanceAttention(machineDetailsPanel);
+    const instanceAttention = new AttentionManager(machineDetailsPanel);
     const itemIconManager = new ItemIconManager('item-collection', instanceAttention);
     const grid = new GridCanvas(gridWrapper, gridCanvas, overlayCanvas, gridMap, machineIconsManager, instanceAttention);
 
