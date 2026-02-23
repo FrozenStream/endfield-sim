@@ -112,6 +112,21 @@ function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean
  * @param m 
  * @returns 该端口动作是否执行成功
  */
+
+export function Loader_In(b: BeltInstance | null, m: MachineInstance): boolean {
+    if (b === null || b?.inventory === null) return false;
+    const tmp = new ItemStack(null, EnumItemType.ANY, 0);
+    return b.inventory.extract(tmp);
+}
+
+export function Unloader_Out(b: BeltInstance | null, m: MachineInstance): boolean {
+    if (b === null || b?.inventory === null) return false;
+    const inv = new ItemStack(m.inventory[0].item, EnumItemType.SOLID, 1);
+    if (inv.isEmpty()) return false;
+    if (b.inventory.insert(inv)) return true;
+    return false;
+}
+
 export function Storager_In(b: BeltInstance | null, m: MachineInstance): boolean {
     if (b === null || b?.inventory === null) return false;
     const tail = b.inventory.getTail();

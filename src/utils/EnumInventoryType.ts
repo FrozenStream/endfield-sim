@@ -21,6 +21,10 @@ export class EnumInventoryType {
 
     public static readonly Storage_None: EnumInventoryType = new EnumInventoryType([]);
 
+    public static readonly Storage_1_markedSolid: EnumInventoryType = new EnumInventoryType([
+        { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 0, markOnly: true },
+    ]);
+
     public static readonly Storage_1_solid: EnumInventoryType = new EnumInventoryType([
         { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
     ]);
@@ -46,7 +50,7 @@ export class EnumInventoryType {
         { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
     ]);
 
-    public static readonly Storage_5_ANY_2_MarkedLiquid: EnumInventoryType = new EnumInventoryType([
+    public static readonly Storage_5_ANY_2_markedLiquid: EnumInventoryType = new EnumInventoryType([
         { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
         { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
         { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },

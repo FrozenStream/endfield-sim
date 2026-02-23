@@ -371,8 +371,8 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
     }
     else return;
 
-    const drawHeight = 0.8 * gridSize;
-    const drawWidth = 0.8 * imgAspectRatio * gridSize;
+    const drawHeight = 0.5 * gridSize;
+    const drawWidth = 0.5 * imgAspectRatio * gridSize;
 
     // 计算居中位置
     const drawX = min_x + (max_x - min_x - drawWidth) / 2;
@@ -382,28 +382,29 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
     canvas.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
     // 根据onPower状态绘制勾或叉
+    if (instance.machine.prividePower >= 0) return;
     const indicatorSize = 12;
     const indicatorX = drawX + drawWidth - indicatorSize / 2;
     const indicatorY = drawY - indicatorSize / 2;
 
     canvas.beginPath();
     canvas.lineWidth = 2;
-    
+
     if (instance.onPower) {
         // 绘制绿色勾
         canvas.strokeStyle = '#00ff00';
-        canvas.moveTo(indicatorX - indicatorSize/3, indicatorY);
-        canvas.lineTo(indicatorX, indicatorY + indicatorSize/3);
-        canvas.lineTo(indicatorX + indicatorSize/2, indicatorY - indicatorSize/6);
+        canvas.moveTo(indicatorX - indicatorSize / 3, indicatorY);
+        canvas.lineTo(indicatorX, indicatorY + indicatorSize / 3);
+        canvas.lineTo(indicatorX + indicatorSize / 2, indicatorY - indicatorSize / 6);
     } else {
         // 绘制红色叉
         canvas.strokeStyle = '#ff0000';
-        canvas.moveTo(indicatorX - indicatorSize/3, indicatorY - indicatorSize/3);
-        canvas.lineTo(indicatorX + indicatorSize/3, indicatorY + indicatorSize/3);
-        canvas.moveTo(indicatorX + indicatorSize/3, indicatorY - indicatorSize/3);
-        canvas.lineTo(indicatorX - indicatorSize/3, indicatorY + indicatorSize/3);
+        canvas.moveTo(indicatorX - indicatorSize / 3, indicatorY - indicatorSize / 3);
+        canvas.lineTo(indicatorX + indicatorSize / 3, indicatorY + indicatorSize / 3);
+        canvas.moveTo(indicatorX + indicatorSize / 3, indicatorY - indicatorSize / 3);
+        canvas.lineTo(indicatorX - indicatorSize / 3, indicatorY + indicatorSize / 3);
     }
-    
+
     canvas.stroke();
     canvas.closePath();
 }

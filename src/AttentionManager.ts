@@ -48,6 +48,9 @@ export class AttentionManager {
             case EnumInventoryType.Storage_6_Solid:
                 this.createLayout_6_Solid(instance);
                 break;
+            case EnumInventoryType.Storage_1_markedSolid:
+                this.createLayout_1_markedSolid(instance);
+                break;
         }
         this.selectingInstance = instance;
     }
@@ -86,6 +89,7 @@ export class AttentionManager {
     delItemto(item: Item) {
         if (!this.selectingInv) return;
         if (this.selectingInv.item !== item) this.selectingInv.clear();
+        if(this.selectingInv.count === 0) this.selectingInv.item = null;
         this.selectingInv.count = Math.max(0, this.selectingInv.count - 1);
 
         // 添加物品后立即刷新显示
@@ -356,6 +360,35 @@ export class AttentionManager {
         this.currentflash();
     }
 
+    // 动态创建标记固体单槽位布局（无传送带，不显示数字）
+    createLayout_1_markedSolid(instance: MachineInstance): void {
+        const layout = document.createElement('div');
+        layout.className = 'marked-solid-layout';
+        layout.style.display = 'flex';
+        layout.style.flexDirection = 'column';
+        layout.style.alignItems = 'center';
+        layout.style.justifyContent = 'center';
+        layout.style.height = '100%';
+        layout.style.padding = '20px';
+
+        // 创建单个槽位
+        const [slot, img, num] = this.buildMarkedSolidSlot();
+        layout.appendChild(slot);
+
+        if (this.container) this.container.appendChild(layout);
+
+        // 添加点击事件监听器
+        slot.addEventListener('click', () => this.selectSlot(slot, instance.inventory[0]));
+
+        // 设置刷新函数 - 只更新图片，不更新数字显示
+        this.currentflash = () => {
+            this.updateMarkedSolidImg(instance.inventory[0], img);
+        };
+
+        // 初始化显示
+        this.currentflash();
+    }
+
     private selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
         if (this.selectingSlot) {
             this.selectingSlot.classList.remove('selected');
@@ -405,6 +438,74 @@ export class AttentionManager {
         } else {
             progressBar.style.width = '0%';
             progressBar.style.backgroundColor = '#4CAF50';
+        }
+    }
+
+    // 构建标记固体槽位（不显示数字）
+    buildMarkedSolidSlot(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
+        const slot = document.createElement('div');
+        slot.className = 'slot marked-solid-slot';
+        slot.style.position = 'relative';
+        slot.style.width = '80px';
+        slot.style.height = '80px';
+        slot.style.border = '2px solid #666';
+        slot.style.borderRadius = '8px';
+        slot.style.display = 'flex';
+        slot.style.alignItems = 'center';
+        slot.style.justifyContent = 'center';
+        slot.style.backgroundColor = '#2a2a2a';
+        slot.style.marginBottom = '15px';
+
+        const plusSign = document.createElement('span');
+        plusSign.className = 'plus-sign';
+        plusSign.textContent = '+';
+        plusSign.style.position = 'absolute';
+        plusSign.style.top = '50%';
+        plusSign.style.left = '50%';
+        plusSign.style.transform = 'translate(-50%, -50%)';
+        plusSign.style.fontSize = '24px';
+        plusSign.style.color = '#888';
+        plusSign.style.pointerEvents = 'none';
+        slot.appendChild(plusSign);
+
+        // 添加覆盖整个槽位的 img 元素，初始 src 为空
+        const img = document.createElement('img');
+        img.className = 'slot-overlay-image';
+        img.src = ''; // 初始为空
+        img.style.position = 'absolute';
+        img.style.top = '0';
+        img.style.left = '0';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.pointerEvents = 'none'; // 确保不会干扰点击事件
+        img.style.borderRadius = '6px';
+        slot.appendChild(img);
+
+        // 数字显示元素（虽然不使用，但保持结构一致）
+        const numberDisplay = document.createElement('span');
+        numberDisplay.className = 'slot-number-display';
+        numberDisplay.textContent = '0';
+        numberDisplay.style.display = 'none'; // 始终隐藏
+        slot.appendChild(numberDisplay);
+
+        return [slot, img, numberDisplay];
+    }
+
+    // 更新标记固体槽位的图片显示（count为0也显示图片）
+    private updateMarkedSolidImg(itemStack: ItemStack, img: HTMLImageElement) {
+        if (!itemStack.item) {
+            // 没有物品时清空图片
+            if (img.src !== '') img.src = '';
+            if (img.style.display !== 'none') img.style.display = 'none';
+        } else {
+            // 有物品时始终显示图片，不管count是多少
+            if (img.src !== itemStack.item.imgCache.src) {
+                img.src = itemStack.item.imgCache.src;
+            }
+            if (img.style.display !== 'block') {
+                img.style.display = 'block';
+            }
         }
     }
 }

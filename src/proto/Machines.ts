@@ -45,7 +45,9 @@ import {
     dismantler_Out,
     Storager_In,
     Storager_Out,
-    planter_In_liquid
+    planter_In_liquid,
+    Loader_In,
+    Unloader_Out
 } from "./Actions";
 
 
@@ -163,6 +165,22 @@ export class Machine {
             ])
         ]
     );
+
+    public static readonly Loader: Machine = new Machine('loader', '/icon_port/icon_port_loader_1.png', 3, 1, 0,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
+                new PortGroup([new Vector2(1, 0)], [Vector2.UP], EnumItemType.SOLID, true, Loader_In),
+            ])
+        ]
+    )
+
+    public static readonly Unloader: Machine = new Machine('unloader', '/icon_port/icon_port_unloader_1.png', 3, 1, 0,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
+                new PortGroup([new Vector2(1, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, Unloader_Out),
+            ])
+        ]
+    )
 
     // 继电器
     public static readonly PowerDiffuser: Machine = new Machine('power_diffuser', '/icon_port/icon_port_power_diffuser_1.png', 2, 2, 5);
