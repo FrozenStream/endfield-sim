@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
-  base: '/endfield-sim/',
+// 根据运行命令动态设置 base：开发时为根目录，打包时为 `/endfield-sim/`
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/endfield-sim/' : '/',
   server: {
     host: true,
     port: 3000,
@@ -19,4 +20,4 @@ export default defineConfig({
   build: {
     sourcemap: true, // 启用源映射以便调试
   }
-});
+}));
