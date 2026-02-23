@@ -77,9 +77,9 @@ export class BeltInventory {
         return this._count === this.length;
     }
 
-    public get(data: { index: number, delay: number }): ItemStack | null {
-        if (!this._inventory[data.index].isEmpty() && this._delay[data.index] === data.delay)
-            return this._inventory[data.index];
+    public get(where: { index: number, delay: number }): ItemStack | null {
+        if (!this._inventory[where.index].isEmpty() && this._delay[where.index] === where.delay)
+            return this._inventory[where.index];
         else
             return null;
     }

@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 设置物理更新回调
     gameLoop.setUpdateCallback(() => {
         // 物理更新逻辑
-        grid.update();
         instanceAttention.flash();
+        grid.update();
     });
 
     // 设置渲染回调

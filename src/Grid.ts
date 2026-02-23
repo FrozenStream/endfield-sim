@@ -1,4 +1,4 @@
-import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention } from "./utils/drawUtil";
+import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
@@ -439,10 +439,21 @@ export class GridCanvas {
         this.applyTransform(this.overlayCtx);
         // 绘制机器
         this.overlayCtx.fillStyle = COLORS.PREVIEW_FILL;
-        this.overlayCtx.strokeStyle = COLORS.PREVIEW_STROKE;
+        this.overlayCtx.strokeStyle = COLORS.BLUE;
         this.overlayCtx.lineWidth = Math.min(16 / this.transformMatrix.a, 4);
         this.overlayCtx.setLineDash([]);
-        if (this.gridMap.PreviewMachine) { drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize) }
+        if (this.gridMap.PreviewMachine) {
+            drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize);
+            if (this.gridMap.PreviewMachine.machine.prividePower > 0) {
+                this.overlayCtx.fillStyle = COLORS.LIGHT_BLUE;
+                const rect = this.gridMap.PreviewMachine.rect?.spread(this.gridMap.PreviewMachine.machine.prividePower);
+                if (rect) {
+                    drawFillRect(this.overlayCtx, rect, this.gridSize);
+                    this.overlayCtx.fillStyle = COLORS.LIGHT_YELLOW;
+                    this.gridMap.effectingMachines(rect).forEach(machine => drawRectLinesFill(this.overlayCtx!, machine.rect, this.gridSize));
+                }
+            }
+        }
         // 绘制选中机器
         if (this.instanceAttention.select instanceof MachineInstance) drawAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
 
@@ -463,8 +474,9 @@ export class GridCanvas {
                 } else if (this.gridMap.PreviewBelt.start) {
                     // 起始点在机器上，绘制选中效果
                     this.overlayCtx.fillStyle = COLORS.LIGHT_WHITE;
-                    if (this.gridMap.PreviewBelt.start instanceof MachineInstance)
+                    if (this.gridMap.PreviewBelt.start instanceof MachineInstance) {
                         drawRectLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.rect, this.gridSize);
+                    }
                     else if (this.gridMap.PreviewBelt.start instanceof portInstance) {
                         drawCellLinesFill(this.overlayCtx, this.gridMap.PreviewBelt.start.position.floor(), this.gridSize, COLORS.CELL_LINES_FILL);
                         drawCellFill(this.overlayCtx, this.gridMap.PreviewBelt.startPos, this.gridSize, COLORS.PREVIEW_GREEN)

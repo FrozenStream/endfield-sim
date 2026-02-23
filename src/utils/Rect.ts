@@ -21,7 +21,7 @@ class Rect {
         return new Vector2(this.min_x + this.w / 2, this.min_y + this.h / 2);
     }
 
-    mutiply(scalar: number): Rect { 
+    mutiply(scalar: number): Rect {
         return new Rect(this.min_x * scalar, this.min_y * scalar, this.w * scalar, this.h * scalar);
     }
 
@@ -31,13 +31,17 @@ class Rect {
         const clampedMinY = Math.max(minY, Math.min(this.min_y, maxY));
         const clampedMaxX = Math.max(minX, Math.min(this.min_x + this.w, maxX));
         const clampedMaxY = Math.max(minY, Math.min(this.min_y + this.h, maxY));
-        
+
         return new Rect(
             clampedMinX,
             clampedMinY,
             clampedMaxX - clampedMinX,
             clampedMaxY - clampedMinY
         );
+    }
+
+    spread(size: number) {
+        return new Rect(this.min_x - size, this.min_y - size, this.w + size * 2, this.h + size * 2);
     }
 }
 

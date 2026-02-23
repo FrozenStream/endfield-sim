@@ -5,12 +5,15 @@ import { Config } from "../utils/Config";
 import type EnumItemType from "../utils/EnumItemType";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
+import type { BeltSec } from "./BeltInstance";
 
 export class portInstance {
     owner: MachineInstance;
     portGroupSrc: PortGroup;
     position: Vector2;
     direction: Vector2;
+
+    connecting: BeltSec | null = null;
 
     constructor(owner: MachineInstance, portGroupSrc: PortGroup, postion: Vector2, direction: Vector2) {
         this.owner = owner;
@@ -57,11 +60,9 @@ export class WorkTimer {
 
 export class MachineInstance {
     public readonly machine: Machine;
+    private _powerCount: number = 0;
     private _position: Vector2 | null = null;
     public rotation: number = 0;
-
-    public currentMode: MachineMode;
-    public timer: WorkTimer = new WorkTimer();
 
     public R: Vector2 = Vector2.RIGHT;
     public D: Vector2 = Vector2.DOWN;
@@ -69,9 +70,12 @@ export class MachineInstance {
     public rect: Rect | null = null;
     public left_top: Vector2 | null = null;
 
-    public inventory: ItemStack[] = [];
-    public portInstances: portInstance[][] | null = null;   // 预览状态不使用
+    public currentMode: MachineMode;
+    public inventory: ItemStack[] = [];                 // 预览状态不使用
+    public portInstances: portInstance[][] | null = null;
     public pollingPointer: number[] | null = null;
+
+    public timer: WorkTimer = new WorkTimer();
     public curInv: Item | string | null = null;
     public curRecipe: any = null;
 
@@ -83,6 +87,19 @@ export class MachineInstance {
     public switchMode(mode: MachineMode) {
         this.currentMode = mode;
         this.build();
+    }
+
+    public powerOn(num: number = 1) {
+        this._powerCount += num;
+    }
+
+    public get onPower(): boolean {
+        return this._powerCount > 0;
+    }
+
+    public powerOff(num: number = 1) {
+        this._powerCount -= num;
+        if (!this.onPower) this.timer.toZero();
     }
 
     public rotate(time: number) {
@@ -142,6 +159,6 @@ export class MachineInstance {
                 }
             }
         }
-        return closest
+        return closest;
     }
 }

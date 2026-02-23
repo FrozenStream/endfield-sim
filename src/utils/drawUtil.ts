@@ -339,6 +339,12 @@ export function drawGridLines(canvas: CanvasRenderingContext2D, width: number, h
     canvas.stroke();
 }
 
+export function drawRect(canvas: CanvasRenderingContext2D, rect: Rect, gridSize: number) {
+    const [startX, startY, width, height] = rect.mutiply(gridSize).toTuple();
+    canvas.strokeRect(startX, startY, width, height);
+    canvas.fillRect(startX, startY, width, height);
+}
+
 
 export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: MachineInstance, transform: DOMMatrix, gridSize: number) {
     if (!canvas) return;
@@ -374,8 +380,33 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
 
     // 绘制机器图片
     canvas.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-}
 
+    // 根据onPower状态绘制勾或叉
+    const indicatorSize = 12;
+    const indicatorX = drawX + drawWidth - indicatorSize / 2;
+    const indicatorY = drawY - indicatorSize / 2;
+
+    canvas.beginPath();
+    canvas.lineWidth = 2;
+    
+    if (instance.onPower) {
+        // 绘制绿色勾
+        canvas.strokeStyle = '#00ff00';
+        canvas.moveTo(indicatorX - indicatorSize/3, indicatorY);
+        canvas.lineTo(indicatorX, indicatorY + indicatorSize/3);
+        canvas.lineTo(indicatorX + indicatorSize/2, indicatorY - indicatorSize/6);
+    } else {
+        // 绘制红色叉
+        canvas.strokeStyle = '#ff0000';
+        canvas.moveTo(indicatorX - indicatorSize/3, indicatorY - indicatorSize/3);
+        canvas.lineTo(indicatorX + indicatorSize/3, indicatorY + indicatorSize/3);
+        canvas.moveTo(indicatorX + indicatorSize/3, indicatorY - indicatorSize/3);
+        canvas.lineTo(indicatorX - indicatorSize/3, indicatorY + indicatorSize/3);
+    }
+    
+    canvas.stroke();
+    canvas.closePath();
+}
 
 export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltInstance, gridSize: number) {
     if (!instance.inventory) return;

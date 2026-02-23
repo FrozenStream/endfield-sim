@@ -187,11 +187,32 @@ export class AttentionManager {
         return [outputSlot, img, numberDisplay];
     }
 
+    // 构建进度条元素
+    buildProgressBar(): HTMLDivElement {
+        const progressBarContainer = document.createElement('div');
+        progressBarContainer.className = 'progress-bar-container';
+        
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        progressBar.style.width = '0%';
+        progressBar.style.height = '6px';
+        progressBar.style.backgroundColor = '#4CAF50';
+        progressBar.style.borderRadius = '3px';
+        // 移除了 transition 属性
+        progressBar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        
+        progressBarContainer.appendChild(progressBar);
+        return progressBarContainer;
+    }
+
     // 动态创建槽位布局
     createLayout_2_solid_1_solid(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
-        layout.id = 'belt-slots-layout';
+
+        // 创建包含槽位和箭头的行
+        const slotsRow = document.createElement('div');
+        slotsRow.className = 'slots-row';
 
         // 创建输入槽位容器
         const inputSlots = document.createElement('div');
@@ -212,10 +233,17 @@ export class AttentionManager {
         const [outputSlot, img3, num3] = this.buildOutSlot_Solid();
         outputSlots.appendChild(outputSlot);
 
+        // 组装槽位行
+        slotsRow.appendChild(inputSlots);
+        slotsRow.appendChild(arrowContainer);
+        slotsRow.appendChild(outputSlots);
+
+        // 创建进度条
+        const progressBar = this.buildProgressBar();
+
         // 组装所有元素
-        layout.appendChild(inputSlots);
-        layout.appendChild(arrowContainer);
-        layout.appendChild(outputSlots);
+        layout.appendChild(slotsRow);
+        layout.appendChild(progressBar);
 
         if (this.container) this.container.appendChild(layout);
 
@@ -229,6 +257,7 @@ export class AttentionManager {
             this.updateImgAndNumber(instance.inventory[0], img1, num1);
             this.updateImgAndNumber(instance.inventory[1], img2, num2);
             this.updateImgAndNumber(instance.inventory[2], img3, num3);
+            this.updateProgressBar(progressBar, instance.timer);
         }
 
         // 初始化显示
@@ -238,7 +267,10 @@ export class AttentionManager {
     createLayout_1_solid_1_solid(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
-        layout.id = 'belt-slots-layout-single';
+
+        // 创建包含槽位和箭头的行
+        const slotsRow = document.createElement('div');
+        slotsRow.className = 'slots-row';
 
         // 创建输入槽位容器
         const inputSlots = document.createElement('div');
@@ -253,10 +285,17 @@ export class AttentionManager {
         const [outputSlot, img2, num2] = this.buildOutSlot_Solid();
         outputSlots.appendChild(outputSlot);
 
+        // 组装槽位行
+        slotsRow.appendChild(inputSlots);
+        slotsRow.appendChild(arrowContainer);
+        slotsRow.appendChild(outputSlots);
+
+        // 创建进度条
+        const progressBar = this.buildProgressBar();
+
         // 组装所有元素
-        layout.appendChild(inputSlots);
-        layout.appendChild(arrowContainer);
-        layout.appendChild(outputSlots);
+        layout.appendChild(slotsRow);
+        layout.appendChild(progressBar);
         if (this.container) this.container.appendChild(layout);
 
         inputSlot.addEventListener('click', () => this.selectSlot(inputSlot, instance.inventory[0]));
@@ -264,6 +303,7 @@ export class AttentionManager {
         this.currentflash = () => {
             this.updateImgAndNumber(instance.inventory[0], img1, num1);
             this.updateImgAndNumber(instance.inventory[1], img2, num2);
+            this.updateProgressBar(progressBar, instance.timer);
         }
         this.currentflash();
     }
@@ -298,8 +338,12 @@ export class AttentionManager {
             });
         }
 
+        // 创建进度条
+        const progressBar = this.buildProgressBar();
+
         // 组装所有元素
         layout.appendChild(slotsContainer);
+        layout.appendChild(progressBar); // 添加进度条
         if (this.container) this.container.appendChild(layout);
 
         // 设置刷新函数
@@ -307,6 +351,7 @@ export class AttentionManager {
             for (let i = 0; i < 6; i++) {
                 this.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
             }
+            this.updateProgressBar(progressBar, instance.timer);
         };
         this.currentflash();
     }
@@ -344,6 +389,22 @@ export class AttentionManager {
                 numberElement.textContent = itemStack.count.toString();
                 numberElement.style.display = 'block';
             }
+        }
+    }
+
+    // 更新进度条显示
+    private updateProgressBar(progressBarContainer: HTMLDivElement, timer: any) {
+        const progressBar = progressBarContainer.querySelector('.progress-bar') as HTMLDivElement;
+        if (!progressBar) return;
+
+        if (timer._isWorking && timer.maxTime > 0) {
+            const progress = Math.min(100, (timer.cur / timer.maxTime) * 100);
+            progressBar.style.width = `${progress}%`;
+            
+            console.log(progress);
+        } else {
+            progressBar.style.width = '0%';
+            progressBar.style.backgroundColor = '#4CAF50';
         }
     }
 }

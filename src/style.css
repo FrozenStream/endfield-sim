@@ -376,13 +376,23 @@ body {
 /* ==================== 传输带槽位布局样式 ==================== */
 .belt-slots-layout {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-around;
     padding: 20px 15px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 2px solid #dee2e6;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     min-height: 100px;
+    width: 100%;
+}
+
+.slots-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+    width: 100%;
 }
 
 .input-slots, .output-slots {
@@ -526,30 +536,68 @@ body {
     }
 }
 
+/* ==================== 进度条样式 ==================== */
+.progress-bar-container {
+    width: 80%;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    margin: 0 auto;
+    align-self: center;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+}
+
+
+/* 6槽位布局特殊样式 */
+.six-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    width: 80%;
+    height: 100%;
+    margin-bottom: 15px;
+    align-self: center;
+}
+
+/* 箭头容器样式 */
 .arrow-container {
     display: flex;
-    align-items: center;
     justify-content: center;
-    padding: 0 10px;
+    align-items: center;
+    margin: 0 10px;
 }
 
 .arrow {
-    font-size: 28px;
-    color: #495057;
+    font-size: 24px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    animation: pulseArrow 2s infinite;
-    /* 添加不可被鼠标选中的样式 */
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    pointer-events: none;
+    color: #6c757d;
+    animation: pulse 2s infinite;
 }
 
-@keyframes pulseArrow {
-    0%, 100% { transform: translateX(0); opacity: 0.7; }
-    50% { transform: translateX(5px); opacity: 1; }
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
 }
 
 /* 物品图标和数量显示样式 */
