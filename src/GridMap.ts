@@ -239,8 +239,11 @@ export class GridMap {
         console.log("tailbelt", tailbelt);
 
         if (headbelt === tailbelt && headbelt) {
-            belt = this._beltConcat(headbelt, belt);
-            this._beltConcat(belt, belt);
+            if (belt === headbelt) this._beltConcat(belt, belt);
+            else {
+                belt = this._beltConcat(headbelt, belt);
+                this._beltConcat(belt, belt);
+            }
         }
         else {
             if (headbelt) belt = this._beltConcat(headbelt, belt);
