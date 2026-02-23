@@ -11,7 +11,7 @@ export class Belt {
         this.type = type;
 
         const img = document.createElement('img');
-        img.src = imgsrc;
+        img.src = `${import.meta.env.BASE_URL}` + imgsrc;
         img.alt = type.toString();
         img.style.width = '70%';
         img.style.height = '70%';

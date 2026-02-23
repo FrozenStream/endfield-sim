@@ -120,7 +120,7 @@ export class Machine {
         this.modes = modes;
 
         const img = document.createElement('img');
-        img.src = imgsrc;
+        img.src = `${import.meta.env.BASE_URL}` + imgsrc;
         img.alt = id;
         img.style.width = '70%';
         img.style.height = '70%';

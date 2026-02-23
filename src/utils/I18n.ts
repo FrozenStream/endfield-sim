@@ -16,7 +16,7 @@ class I18n {
   constructor(srcPath: string) {
     this.resources = new Map<string, LanguageResource>();
     this.currentLanguage = 'zh';
-    this.loadLanguagesFromPath(srcPath);
+    this.loadLanguagesFromPath(`${import.meta.env.BASE_URL}` + srcPath);
   }
 
   /**
