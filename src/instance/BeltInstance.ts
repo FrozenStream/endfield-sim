@@ -120,13 +120,13 @@ export class BeltInventory {
 
     public update() {
         if (this.getTail() !== null && this._onCircle === false) {     // 若尾部有物品，则传送带堵塞
-            if (this._count === this.length) { console.log('Belt full blocked'); return; }    // 若全段阻塞，暂停更新
-            console.log('Belt blocked');
+            if (this._count === this.length && this.get(this.blockTail(0))) { console.log('Belt full blocked'); return; }    // 若全段阻塞，暂停更新
 
             for (let i = this.length - 1; i >= 0; i--) {
                 const tmp = this.blockTail(i);
                 if (this.get(tmp) === null) {
                     // 找到第一个未满节点后退出
+                    console.log('Belt blocked at ', i);
                     for (let j = i + 1; j < this.length; j++) {
                         const tail = this.blockTail(j);
                         if (this._delay[tail.index] === 0) {

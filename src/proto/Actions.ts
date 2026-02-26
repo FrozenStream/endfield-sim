@@ -1,5 +1,6 @@
 import type { BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
+import { Config } from "../utils/Config";
 import EnumItemType from "../utils/EnumItemType";
 import { itemsTostring } from "./Item";
 import { ItemStack } from "./ItemStack";
@@ -17,9 +18,9 @@ function single_out(b: BeltInstance | null, inv: ItemStack) {
     return b.inventory.insert(inv);
 }
 
-
-
 function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
+    if (m.onPower === false && m.machine.prividePower < 0) return false;
+
     if (m.inventory[0].isEmpty()) {
         m.curRecipe = null;
         m.curInv = null;
@@ -47,6 +48,8 @@ function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
 }
 
 function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean {
+    if (m.onPower === false && m.machine.prividePower < 0) return false;
+
     if (m.inventory[0].isEmpty() || m.inventory[1].isEmpty()) {
         m.curRecipe = null;
         m.curInv = null;
@@ -76,6 +79,8 @@ function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean
 }
 
 function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean {
+    if (m.onPower === false && m.machine.prividePower < 0) return false;
+
     if (m.inventory[0].isEmpty()) {
         m.curRecipe = null;
         m.curInv = null;
@@ -112,6 +117,33 @@ function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean
  * @param m 
  * @returns 该端口动作是否执行成功
  */
+
+
+export function belter_In(b: BeltInstance | null, m: MachineInstance): boolean {
+    const inv = m.inventory[0];
+    return single_in(b, inv);
+}
+
+export function belter_Out(b: BeltInstance | null, m: MachineInstance): boolean {
+    const inv = m.inventory[1];
+    return single_out(b, inv);
+}
+
+export function belter_Work(m: MachineInstance): boolean {
+    if (!m.timer.isworking) m.timer.begin(Config.BeltSecond);
+    if (m.inventory[0].isEmpty()) {
+        m.timer.toZero();
+        return false;
+    }
+    else {
+        if (m.timer.update(1)) {
+            m.inventory[1] = m.inventory[0];
+            m.inventory[0] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
+        }
+    }
+    return true;
+}
+
 
 export function Loader_In(b: BeltInstance | null, m: MachineInstance): boolean {
     if (b === null || b?.inventory === null) return false;

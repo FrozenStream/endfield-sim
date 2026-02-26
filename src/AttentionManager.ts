@@ -27,7 +27,7 @@ export class AttentionManager {
 
     set select(instance: MachineInstance | portInstance | BeltSec | null) {
         if (!instance) { this.cancel(); return; }
-        if (instance instanceof portInstance && instance.owner !== this.selectingInstance) 
+        if (instance instanceof portInstance && instance.owner !== this.selectingInstance)
             this.openAny(instance.owner);
         if (instance instanceof MachineInstance && instance !== this.selectingInstance) {
             this.openAny(instance);
@@ -39,6 +39,9 @@ export class AttentionManager {
     private openAny(instance: MachineInstance) {
         this.clear();
         switch (instance.currentMode.inventory) {
+            case EnumInventoryType.Storage_1_solid_1_solid_OneOnly:
+                this.createLayout_1_solid_1_solid(instance);
+                break;
             case EnumInventoryType.Storage_1_solid_1_solid:
                 this.createLayout_1_solid_1_solid(instance);
                 break;
@@ -89,7 +92,7 @@ export class AttentionManager {
     delItemto(item: Item) {
         if (!this.selectingInv) return;
         if (this.selectingInv.item !== item) this.selectingInv.clear();
-        if(this.selectingInv.count === 0) this.selectingInv.item = null;
+        if (this.selectingInv.count === 0) this.selectingInv.item = null;
         this.selectingInv.count = Math.max(0, this.selectingInv.count - 1);
 
         // 添加物品后立即刷新显示
@@ -195,7 +198,7 @@ export class AttentionManager {
     buildProgressBar(): HTMLDivElement {
         const progressBarContainer = document.createElement('div');
         progressBarContainer.className = 'progress-bar-container';
-        
+
         const progressBar = document.createElement('div');
         progressBar.className = 'progress-bar';
         progressBar.style.width = '0%';
@@ -204,7 +207,7 @@ export class AttentionManager {
         progressBar.style.borderRadius = '3px';
         // 移除了 transition 属性
         progressBar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-        
+
         progressBarContainer.appendChild(progressBar);
         return progressBarContainer;
     }
@@ -342,12 +345,8 @@ export class AttentionManager {
             });
         }
 
-        // 创建进度条
-        const progressBar = this.buildProgressBar();
-
         // 组装所有元素
         layout.appendChild(slotsContainer);
-        layout.appendChild(progressBar); // 添加进度条
         if (this.container) this.container.appendChild(layout);
 
         // 设置刷新函数
@@ -355,7 +354,6 @@ export class AttentionManager {
             for (let i = 0; i < 6; i++) {
                 this.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
             }
-            this.updateProgressBar(progressBar, instance.timer);
         };
         this.currentflash();
     }
@@ -433,7 +431,7 @@ export class AttentionManager {
         if (timer._isWorking && timer.maxTime > 0) {
             const progress = Math.min(100, (timer.cur / timer.maxTime) * 100);
             progressBar.style.width = `${progress}%`;
-            
+
             console.log(progress);
         } else {
             progressBar.style.width = '0%';

@@ -427,19 +427,18 @@ export class GridMap {
         if (port.portGroupSrc.isIn) {
             const pos = port.position.sub(port.direction).floor();
             const t = this.isOccupiedBy(pos);
-            if (t instanceof BeltSec) return t;
+            if (t instanceof BeltSec && Vector2.DIREC[t.toDirec].equal(port.direction)) return t;
         }
         else {
             const pos = port.position.add(port.direction).floor();
             const t = this.isOccupiedBy(pos);
-            if (t instanceof BeltSec) return t;
+            if (t instanceof BeltSec && Vector2.DIREC[t.fromDirec].equal(port.direction)) return t;
         }
         return null;
     }
 
     private updateMachine(instance: MachineInstance) {
         if (!instance.portInstances || !instance.pollingPointer) return;
-        if (instance.onPower === false && instance.machine.prividePower < 0) return;
         for (let i = 0; i < instance.portInstances.length; i++) {
             const begin: number = instance.pollingPointer[i];
             const portGroup: portInstance[] = instance.portInstances[i];

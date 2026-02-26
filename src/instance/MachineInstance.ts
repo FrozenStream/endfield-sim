@@ -27,7 +27,11 @@ export class portInstance {
 export class WorkTimer {
     private _isWorking: boolean = false;
     private maxTime: number = 1e9;
-    private cur: number = 0;
+    public cur: number = 0;
+
+    get isworking(): boolean {
+        return this._isWorking;
+    }
 
     begin(maxTime: number) {
         this._isWorking = true;
@@ -152,7 +156,9 @@ export class MachineInstance {
         for (const instanceGroup of this.portInstances) {
             for (const instance of instanceGroup) {
                 if (instance.portGroupSrc.isIn !== isIn || instance.portGroupSrc.itemType !== itemType) continue;
-                const from = instance.position.add(instance.direction);
+
+                let from = instance.position.add(instance.direction);
+                if (isIn) from = instance.position.sub(instance.direction);
                 dist = from.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
                     closest = instance;

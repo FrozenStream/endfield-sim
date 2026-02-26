@@ -47,7 +47,10 @@ import {
     Storager_Out,
     planter_In_liquid,
     Loader_In,
-    Unloader_Out
+    Unloader_Out,
+    belter_In,
+    belter_Out,
+    belter_Work
 } from "./Actions";
 import { imageAble } from "../utils/imageAble";
 
@@ -136,20 +139,20 @@ export class Machine {
     // converger
     public static readonly Converter: Machine = new Machine('converter', '/icon_belt/bg_logistic_log_pipe_converger.png', 1, 1, 0,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out),
-            ])
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, belter_Out),
+            ], belter_Work)
         ]
     )
 
     // spliter
     public static readonly Splitter: Machine = new Machine('splitter', '/icon_belt/bg_logistic_log_pipe_splitter.png', 1, 1, 0,
         [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, true, Storager_Out),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, false, Storager_In)
-            ])
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, false, belter_Out)
+            ], belter_Work)
         ]
     )
 
