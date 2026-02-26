@@ -46,40 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 设置FPS显示回调
     gameLoop.setFPSCallback((fps: number) => {
-        const fpsDisplay = document.getElementById('fps-display');
-        if (fpsDisplay) {
-            fpsDisplay.textContent = `FPS: ${fps}`;
+        const fpsValueElement = document.getElementById('fps-value');
+        if (fpsValueElement) {
+            fpsValueElement.textContent = fps.toString();
         }
     });
 
     // 启动游戏循环
     gameLoop.start();
-
-    // 添加调试控制按钮
-    addDebugControls(gameLoop);
 });
-
-/**
- * 添加调试控制按钮
- */
-function addDebugControls(gameLoop: GameLoop): void {
-    const controlsDiv = document.createElement('div');
-    controlsDiv.style.position = 'fixed';
-    controlsDiv.style.top = '10px';
-    controlsDiv.style.right = '10px';
-    controlsDiv.style.zIndex = '1000';
-    controlsDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    controlsDiv.style.color = 'white';
-    controlsDiv.style.padding = '10px';
-    controlsDiv.style.borderRadius = '5px';
-    controlsDiv.style.fontFamily = 'monospace';
-
-    const fpsDisplay = document.createElement('div');
-    fpsDisplay.id = 'fps-display';
-    fpsDisplay.textContent = 'FPS: 0';
-    fpsDisplay.style.marginBottom = '10px';
-
-    controlsDiv.appendChild(fpsDisplay);
-
-    document.body.appendChild(controlsDiv);
-}

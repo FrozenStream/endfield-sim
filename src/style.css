@@ -42,6 +42,38 @@ body {
     font-weight: 500;
 }
 
+.github-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    text-decoration: none;
+}
+
+
+.github-link svg {
+    width: 20px;
+    height: 20px;
+}
+
+.fps-display {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
 .coordinate-display, .scale-display {
     background: rgba(255, 255, 255, 0.15);
     padding: 6px 12px;
@@ -50,11 +82,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.coordinate-display:hover, .scale-display:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
 
 .container {
     display: flex;
