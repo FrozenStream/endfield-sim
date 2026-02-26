@@ -49,7 +49,7 @@ export class MachinesIconsManager {
         const iconWrapper = document.createElement('div');
         iconWrapper.className = 'machine-wrapper'; // 添加包装容器类名
 
-        const iconElement = this.buildIconElement(machine.imgCache);
+        const iconElement = this.buildIconElement(machine.img.imgCache);
         const nameElement = this.buildNameElement(machine.id);
 
         iconWrapper.appendChild(iconElement);

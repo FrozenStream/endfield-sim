@@ -491,7 +491,7 @@ export class GridMap {
         instance.inventory.update();
     }
 
-    public effectingMachines(rect: Rect): ReadonlySet<MachineInstance> {
+    public rectEffectingMachines(rect: Rect): ReadonlySet<MachineInstance> {
         const set = new Set<MachineInstance>();
         for (let i = rect.min_y; i < rect.min_y + rect.h; i++)
             for (let j = rect.min_x; j < rect.min_x + rect.w; j++) {

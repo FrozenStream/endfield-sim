@@ -450,7 +450,7 @@ export class GridCanvas {
                 if (rect) {
                     drawFillRect(this.overlayCtx, rect, this.gridSize);
                     this.overlayCtx.fillStyle = COLORS.LIGHT_YELLOW;
-                    this.gridMap.effectingMachines(rect).forEach(machine => drawRectLinesFill(this.overlayCtx!, machine.rect, this.gridSize));
+                    this.gridMap.rectEffectingMachines(rect).forEach(machine => drawRectLinesFill(this.overlayCtx!, machine.rect, this.gridSize));
                 }
             }
         }

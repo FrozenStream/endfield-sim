@@ -49,6 +49,7 @@ import {
     Loader_In,
     Unloader_Out
 } from "./Actions";
+import { imageAble } from "../utils/imageAble";
 
 
 export class PortGroup {
@@ -107,8 +108,7 @@ export class MachineMode {
 
 export class Machine {
     id: string;
-    imgCache: HTMLImageElement;
-    bitmapCache: ImageBitmap | null = null;
+    img: imageAble;
 
     width: number;
     height: number;
@@ -118,43 +118,40 @@ export class Machine {
 
     constructor(id: string, imgsrc: string, width: number = 3, height: number = 3, prividePower = -1, modes: MachineMode[] = [MachineMode.dafultMode]) {
         this.id = id;
+        this.img = new imageAble(id, imgsrc);
         this.width = width;
         this.height = height;
         this.prividePower = prividePower;
         this.modes = modes;
 
-        const img = document.createElement('img');
-        img.src = `${import.meta.env.BASE_URL}` + imgsrc;
-        img.alt = id;
-        img.style.width = '70%';
-        img.style.height = '70%';
-        img.style.objectFit = 'contain';
-        this.imgCache = img;
 
         Machine.allMachines.set(id, this);
-    }
-
-    // 创建ImageBitmap的异步方法
-    private async createImageBitmap(imgsrc: string) {
-        try {
-            const response = await fetch(imgsrc);
-            const blob = await response.blob();
-            this.bitmapCache = await createImageBitmap(blob);
-            console.log(`ImageBitmap created for ${this.id}`);
-        } catch (error) {
-            console.error(`Failed to create ImageBitmap for ${this.id}:`, error);
-        }
-    }
-
-    public getImageResource(): HTMLImageElement | ImageBitmap | null {
-        if (!this.bitmapCache) this.createImageBitmap(this.imgCache.src);
-        return this.bitmapCache || this.imgCache;
     }
 
     public static allMachines: Map<string, Machine> = new Map();
 
     // public static readonly Cannon1: Machine = new Machine('cannon1', '/icon_port/icon_port_battle_cannon_1.png');
     // public static readonly Connon2: Machine = new Machine('cannon2', '/icon_port/icon_port_battle_cannon_2.png');
+
+    // converger
+    public static readonly Converter: Machine = new Machine('converter', '/icon_belt/bg_logistic_log_pipe_converger.png', 1, 1, 0,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, true, Storager_In),
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out),
+            ])
+        ]
+    )
+
+    // spliter
+    public static readonly Splitter: Machine = new Machine('splitter', '/icon_belt/bg_logistic_log_pipe_splitter.png', 1, 1, 0,
+        [
+            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, true, Storager_Out),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, false, Storager_In)
+            ])
+        ]
+    )
 
     // 存储箱
     public static readonly Storager: Machine = new Machine('storager', '/icon_port/icon_port_storager_1.png', 3, 3, -1,

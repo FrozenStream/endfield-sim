@@ -152,7 +152,8 @@ export class MachineInstance {
         for (const instanceGroup of this.portInstances) {
             for (const instance of instanceGroup) {
                 if (instance.portGroupSrc.isIn !== isIn || instance.portGroupSrc.itemType !== itemType) continue;
-                dist = instance.position.sub(dst).manhattanDistance();
+                const from = instance.position.add(instance.direction);
+                dist = from.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
                     closest = instance;
                     closest_num = dist;

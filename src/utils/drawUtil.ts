@@ -361,7 +361,7 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
     const max_y = Math.max(LT.y, RB.y);
 
     // 绘制图标
-    const img = instance.machine.getImageResource();
+    const img = instance.machine.img.getImageResource();
     let imgAspectRatio = 1;
     if (img && (img instanceof HTMLImageElement)) {
         imgAspectRatio = img.naturalWidth / img.naturalHeight;
