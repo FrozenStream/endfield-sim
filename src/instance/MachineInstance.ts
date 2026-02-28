@@ -98,7 +98,7 @@ export class MachineInstance {
     }
 
     public get onPower(): boolean {
-        return this._powerCount + this.machine.prividePower >= 0;
+        return this._powerCount + this.machine.powerArea >= 0;
     }
 
     public powerOff(num: number = 1) {

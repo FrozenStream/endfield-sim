@@ -8,6 +8,7 @@ class EnumMachineLevel {
   static readonly ADVANCED: EnumMachineLevel = new EnumMachineLevel('advanced');
   static readonly STORAGE: EnumMachineLevel = new EnumMachineLevel('storage');
   static readonly ELECTRIC: EnumMachineLevel = new EnumMachineLevel('electric');
+  static readonly LOGISTIC: EnumMachineLevel = new EnumMachineLevel('logistic');
 }
 
 

@@ -382,7 +382,7 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
     canvas.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 
     // 根据onPower状态绘制勾或叉
-    if (instance.machine.prividePower >= 0) return;
+    if (instance.machine.powerArea >= 0) return;
     const indicatorSize = 12;
     const indicatorX = drawX + drawWidth - indicatorSize / 2;
     const indicatorY = drawY - indicatorSize / 2;

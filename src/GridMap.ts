@@ -9,6 +9,8 @@ import Vector2 from "./utils/Vector2";
 interface GridCell {
     occupied: boolean;
     by: MachineInstance | portInstance | BeltSec | null;
+    bySoildBelt: BeltSec | null;
+    byLiquidBelt: BeltSec | null;
     power: number;
 }
 
@@ -25,7 +27,7 @@ export class GridMap {
     constructor(width: number, height: number) {
         this.grid = Array.from(
             { length: height },
-            () => Array.from({ length: width }, () => ({ occupied: false, by: null, power: 0 }))
+            () => Array.from({ length: width }, () => ({ occupied: false, by: null, bySoildBelt: null, byLiquidBelt: null, power: 0 }))
         );
         this._width = width;
         this._height = height;
@@ -161,9 +163,9 @@ export class GridMap {
             this._previewing.build();
             this._markMachineArea(this._previewing);
             this._previewing.powerOn(this._countPower(this._previewing.rect!));
-            if (this._previewing.machine.prividePower) {
-                const rect = this._previewing.rect!.spread(this._previewing.machine.prividePower);
-                this._addPower(rect, this._previewing.machine.prividePower);
+            if (this._previewing.machine.powerArea) {
+                const rect = this._previewing.rect!.spread(this._previewing.machine.powerArea);
+                this._addPower(rect, this._previewing.machine.powerArea);
             }
             console.log("built", this._previewing, "total:", this._machines.size, "machines");
             this._previewing = null;
@@ -307,9 +309,9 @@ export class GridMap {
         if (instance instanceof MachineInstance && this._machines.has(instance)) {
             this._machines.delete(instance)
             this._clearMachineArea(instance);
-            if (instance.machine.prividePower) {
-                const rect = instance.rect!.spread(instance.machine.prividePower);
-                this._subPower(rect, instance.machine.prividePower);
+            if (instance.machine.powerArea) {
+                const rect = instance.rect!.spread(instance.machine.powerArea);
+                this._subPower(rect, instance.machine.powerArea);
             }
             console.log("delete", instance, "total:", this._machines.size, "machines");
             return true;
@@ -441,6 +443,7 @@ export class GridMap {
         if (!instance.portInstances || !instance.pollingPointer) return;
         for (let i = 0; i < instance.portInstances.length; i++) {
             const begin: number = instance.pollingPointer[i];
+            console.log('begin pointer', begin);
             const portGroup: portInstance[] = instance.portInstances[i];
             for (let j = 0; j < portGroup.length; j++) {
                 const current: number = (begin + j) % portGroup.length;

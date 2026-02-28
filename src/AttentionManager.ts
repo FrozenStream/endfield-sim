@@ -48,6 +48,9 @@ export class AttentionManager {
             case EnumInventoryType.Storage_2_solid_1_solid:
                 this.createLayout_2_solid_1_solid(instance);
                 break;
+            case EnumInventoryType.Storage_2_solid_2_solid_OneOnly:
+                this.createLayout_2_solid_2_solid_OneOnly(instance);
+                break;
             case EnumInventoryType.Storage_6_Solid:
                 this.createLayout_6_Solid(instance);
                 break;
@@ -387,6 +390,7 @@ export class AttentionManager {
         this.currentflash();
     }
 
+
     private selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
         if (this.selectingSlot) {
             this.selectingSlot.classList.remove('selected');
@@ -505,5 +509,61 @@ export class AttentionManager {
                 img.style.display = 'block';
             }
         }
+    }
+
+    // 动态创建2输入2输出单物品布局（用于连接器等设备）
+    createLayout_2_solid_2_solid_OneOnly(instance: MachineInstance): void {
+        const layout = document.createElement('div');
+        layout.className = 'belt-slots-layout';
+        layout.style.display = 'flex';
+        layout.style.flexDirection = 'column';
+        layout.style.alignItems = 'center';
+        layout.style.justifyContent = 'center';
+        layout.style.height = '100%';
+        layout.style.padding = '20px';
+        layout.style.gap = '20px';
+
+        // 创建上下两行布局
+        const topRow = document.createElement('div');
+        topRow.className = 'input-row';
+        topRow.style.display = 'flex';
+        topRow.style.gap = '15px';
+        topRow.style.alignItems = 'center';
+
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'output-row';
+        bottomRow.style.display = 'flex';
+        bottomRow.style.gap = '15px';
+        bottomRow.style.alignItems = 'center';
+
+        // 创建输入槽位（上方两个）
+        const [inputSlot1, img1, num1] = this.buildInSlot_Solid();
+        const [inputSlot2, img2, num2] = this.buildInSlot_Solid();
+        
+        // 创建输出槽位（下方两个）
+        const [outputSlot1, img3, num3] = this.buildOutSlot_Solid();
+        const [outputSlot2, img4, num4] = this.buildOutSlot_Solid();
+
+        // 组装布局
+        topRow.appendChild(inputSlot1);
+        topRow.appendChild(inputSlot2);
+        bottomRow.appendChild(outputSlot1);
+        bottomRow.appendChild(outputSlot2);
+
+        layout.appendChild(topRow);
+        layout.appendChild(bottomRow);
+
+        if (this.container) this.container.appendChild(layout);
+
+        // 设置刷新函数
+        this.currentflash = () => {
+            this.updateImgAndNumber(instance.inventory[0], img1, num1);
+            this.updateImgAndNumber(instance.inventory[1], img2, num2);
+            this.updateImgAndNumber(instance.inventory[2], img3, num3);
+            this.updateImgAndNumber(instance.inventory[3], img4, num4);
+        };
+
+        // 初始化显示
+        this.currentflash();
     }
 }

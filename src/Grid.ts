@@ -444,9 +444,9 @@ export class GridCanvas {
         this.overlayCtx.setLineDash([]);
         if (this.gridMap.PreviewMachine) {
             drawMachine(this.overlayCtx, this.gridMap.PreviewMachine, this.gridSize);
-            if (this.gridMap.PreviewMachine.machine.prividePower > 0) {
+            if (this.gridMap.PreviewMachine.machine.powerArea > 0) {
                 this.overlayCtx.fillStyle = COLORS.LIGHT_BLUE;
-                const rect = this.gridMap.PreviewMachine.rect?.spread(this.gridMap.PreviewMachine.machine.prividePower);
+                const rect = this.gridMap.PreviewMachine.rect?.spread(this.gridMap.PreviewMachine.machine.powerArea);
                 if (rect) {
                     drawFillRect(this.overlayCtx, rect, this.gridSize);
                     this.overlayCtx.fillStyle = COLORS.LIGHT_YELLOW;

@@ -19,7 +19,7 @@ function single_out(b: BeltInstance | null, inv: ItemStack) {
 }
 
 function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
-    if (m.onPower === false && m.machine.prividePower < 0) return false;
+    if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty()) {
         m.curRecipe = null;
@@ -48,7 +48,7 @@ function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
 }
 
 function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean {
-    if (m.onPower === false && m.machine.prividePower < 0) return false;
+    if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty() || m.inventory[1].isEmpty()) {
         m.curRecipe = null;
@@ -79,7 +79,7 @@ function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean
 }
 
 function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean {
-    if (m.onPower === false && m.machine.prividePower < 0) return false;
+    if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty()) {
         m.curRecipe = null;
