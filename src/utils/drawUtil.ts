@@ -6,11 +6,10 @@ import Vector2 from "./Vector2";
 const beltWidth: number = 40;
 
 export function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
-    const list = instance.postions();
-    for (let i = 0; i < instance.length; i++) {
-        const pos: Vector2 = list[i].mul(size);
-        if (Vector2.isOpposite(instance.direc[i], instance.direc[i + 1])) continue;
-        const direc = instance.beltDIrec(i);
+    if (!instance.sections) return;
+    for (const sec of instance.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
         if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
         else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
         drawBeltDirection(canvas, direc, pos.x, pos.y, size);
@@ -202,18 +201,19 @@ function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInst
     for (const group of instance.currentMode.portGroups) {
         for (let i = 0; i < group.length; i++) {
             const center = Vector2.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
-            let v2 = group.direction[i].rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
-            let v1 = group.direction[i].rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
-            let v3 = group.direction[i].rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
+            const direc = Vector2.DIREC[group.direction[i]];
+            let v2 = direc.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
+            let v1 = direc.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
+            let v3 = direc.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
 
             if (group.isIn) {
-                const offset = group.direction[i].rotateCW(instance.rotation).mul(0.4);
+                const offset = direc.rotateCW(instance.rotation).mul(0.4);
                 v1.subSelf(offset);
                 v2.subSelf(offset);
                 v3.subSelf(offset);
             }
             else {
-                const offset = group.direction[i].rotateCW(instance.rotation).mul(0.3);
+                const offset = direc.rotateCW(instance.rotation).mul(0.3);
                 v1.addSelf(offset);
                 v2.addSelf(offset);
                 v3.addSelf(offset);
@@ -417,10 +417,8 @@ export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltIn
 
     if (!sec) return;
 
-    const l = instance.inventory._onCircle ? inv.length + 1 : inv.length;
-
     // 遍历传送带的所有段
-    for (let i = 0; i < l; i++) {
+    for (let i = 0; i < instance.length; i++) {
         const data = inv.getInventory(i);
         const pos = sec[i].position.add(new Vector2(0.1, 0.1));
         if (!data) continue;

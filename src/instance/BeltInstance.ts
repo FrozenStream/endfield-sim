@@ -6,19 +6,35 @@ import Vector2 from "../utils/Vector2";
 import { MachineInstance, portInstance } from "./MachineInstance";
 
 export class BeltSec {
-    readonly owner: BeltInstance;
-    readonly index: number;
-    readonly direc: number;
-    readonly fromDirec: number;
-    readonly toDirec: number;
-    readonly position: Vector2;
+    owner: BeltInstance;
+    index: number;
+    private _direc: number;
+    private _fromDirec: number;
+    private _toDirec: number;
+    position: Vector2;
     constructor(owner: BeltInstance, index: number, fromDirec: number, toDirec: number, position: Vector2) {
         this.owner = owner;
         this.index = index;
-        this.direc = Vector2.ABtoIndex(fromDirec, toDirec);
-        this.fromDirec = fromDirec;
-        this.toDirec = toDirec;
+        this._direc = Vector2.ABtoIndex(fromDirec, toDirec);
+        this._fromDirec = fromDirec;
+        this._toDirec = toDirec;
         this.position = position;
+    }
+
+    get type(): EnumItemType { return this.owner.ItemType; }
+
+    get direc(): number { return this._direc; }
+    get fromDirec(): number { return this._fromDirec; }
+    get toDirec(): number { return this._toDirec; }
+
+    set fromDirec(fromDirec: number) {
+        this._fromDirec = fromDirec;
+        this._direc = Vector2.ABtoIndex(this._fromDirec, this._toDirec);
+    }
+
+    set toDirec(toDirec: number) {
+        this._toDirec = toDirec;
+        this._direc = Vector2.ABtoIndex(this._fromDirec, this._toDirec);
     }
 }
 
@@ -199,11 +215,11 @@ export class BeltInventory {
         return newInv;
     }
 
-    public static cut(beltInv: BeltInventory, start: number, end: number): BeltInventory {
+    public cut(start: number, end: number): BeltInventory {
         if (start > end) throw new Error("start > end");
-        const newInv = new BeltInventory(end - start, beltInv.type);
+        const newInv = new BeltInventory(end - start, this.type);
 
-        for (let i = 0; i < end - start; i++) newInv.setInventory(i, beltInv.getInventory(start + i));
+        for (let i = 0; i < end - start; i++) newInv.setInventory(i, this.getInventory(start + i));
         newInv.updateCount();
         return newInv;
     }
@@ -239,11 +255,7 @@ export class BeltInstance {
     private _started: boolean = false;
     public start: MachineInstance | BeltSec | portInstance | null = null;
     public startPos: Vector2 | null = null;
-    public end: MachineInstance | null = null;
     public endPoint: Vector2 | null = null;
-
-    // after_built elements
-    public direc: Array<number>;
 
     // data elements
     public sections: BeltSec[] | null = null;
@@ -253,7 +265,10 @@ export class BeltInstance {
 
     constructor(beltType: Belt) {
         this.beltType = beltType;
-        this.direc = [];
+    }
+
+    get ItemType(): EnumItemType {
+        return this.beltType.type;
     }
 
     public get vaild() {
@@ -283,40 +298,30 @@ export class BeltInstance {
 
     public setEnd(end: Vector2, instance?: MachineInstance) {
         if (!this._started || !this.startPos) return;
-        const port = instance?.closestPort(end, true, EnumItemType.SOLID);
-        if (!port) {
-            this.end = null;
-            this.endPoint = end;
-        }
-        else {
-            this.end = instance!;
-            this.endPoint = port.position!.sub(port.direction);
-        }
+        const closestPort = instance?.closestPort(end, true, EnumItemType.SOLID);
+        if (!closestPort) this.endPoint = end;
+        else this.endPoint = closestPort.position.sub(Vector2.DIREC[closestPort.direc]);
 
         let startDirec: number;
         if (this.start instanceof MachineInstance) {
             const start = this.start.closestPort(this.endPoint, false, EnumItemType.SOLID);
             if (start === null) return;
-            startDirec = Vector2.toIndex(start.direction)!;
+            startDirec = start.direc;
             this.startPos = start.position.add(Vector2.DIREC[startDirec]).floor();
         }
         else if (this.start instanceof BeltSec) {
-            if (this.start.position.equal(this.startPos)) {
-                startDirec = this.start.owner.direc[this.start.index];
-                this.startPos = this.start.position;
-            }
-            else {
-                startDirec = this.start.owner.direc[this.start.index + 1];
-                this.startPos = this.start.position.add(Vector2.DIREC[startDirec]);
-            }
+            if (this.start.position.equal(this.startPos)) startDirec = this.start.fromDirec;
+            else startDirec = this.start.toDirec;
         }
         else if (this.start instanceof portInstance) {
-            startDirec = Vector2.toIndex(this.start.direction)!
+            startDirec = this.start.direc;
             this.startPos = this.start.position.add(Vector2.DIREC[startDirec]).floor();
         }
         else throw new Error("start point is null");
 
-        this.direc = [startDirec];
+        this.sections = [];
+        let pos: Vector2 = this.startPos;
+        let direc: number = startDirec;
 
         const relative: Vector2 = this.endPoint.floor().sub(this.startPos);
         const inFaceLength: number = relative.dot(Vector2.DIREC[startDirec]);
@@ -327,91 +332,68 @@ export class BeltInstance {
 
         if (inFaceLength >= 0) {
             // end在面朝方向，前进至垂直
-            for (let i = 0; i < inFaceLength; i++) this.direc.push(startDirec);
-            if (relative.manhattanDistance() !== 0) {
-                if (l >= 0) for (let j = 0; j < l; j++) this.direc.push(dir_a);
-                else for (let j = 0; j < -l; j++) this.direc.push(dir_b);
+            for (let i = 0; i < inFaceLength; i++) {
+                this.sections.push(new BeltSec(this, this.sections.length, direc, startDirec, pos));
+                direc = startDirec;
+                pos = pos.add(Vector2.DIREC[direc]);
+            }
+            // 转向
+            if (l >= 0) for (let j = 0; j < l; j++) {
+                this.sections.push(new BeltSec(this, this.sections.length, direc, dir_a, pos));
+                direc = dir_a;
+                pos = pos.add(Vector2.DIREC[direc]);
+            }
+            else for (let j = 0; j < -l; j++) {
+                this.sections.push(new BeltSec(this, this.sections.length, direc, dir_b, pos));
+                direc = dir_b;
+                pos = pos.add(Vector2.DIREC[direc]);
             }
         }
         else {
             // 若有转向空间
             if (l > 0) {
-                for (let j = 0; j < l; j++) this.direc.push(dir_a);
-                for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
+                for (let j = 0; j < l; j++) {
+                    this.sections.push(new BeltSec(this, this.sections.length, direc, dir_a, pos));
+                    direc = dir_a;
+                    pos = pos.add(Vector2.DIREC[direc]);
+                }
+                for (let j = 0; j < -inFaceLength; j++) {
+                    this.sections.push(new BeltSec(this, this.sections.length, direc, dir_back, pos));
+                    direc = dir_back;
+                    pos = pos.add(Vector2.DIREC[direc]);
+                }
             }
             if (l < 0) {
-                for (let j = 0; j < -l; j++) this.direc.push(dir_b);
-                for (let j = 0; j < -inFaceLength; j++) this.direc.push(dir_back);
+                for (let j = 0; j < -l; j++) {
+                    this.sections.push(new BeltSec(this, this.sections.length, direc, dir_b, pos));
+                    direc = dir_b;
+                    pos = pos.add(Vector2.DIREC[direc]);
+                }
+                for (let j = 0; j < -inFaceLength; j++) {
+                    this.sections.push(new BeltSec(this, this.sections.length, direc, dir_back, pos));
+                    direc = dir_back;
+                    pos = pos.add(Vector2.DIREC[direc]);
+                }
             }
         }
 
-        if (!port) this.direc.push(this.direc[this.direc.length - 1]);
-        else this.direc.push(Vector2.toIndex(port.direction)!);
-        console.debug("belt directions:", this.direc);
+        if (!closestPort)
+            this.sections.push(new BeltSec(this, this.sections.length, direc, direc, pos));
+        else if (!Vector2.isOpposite(direc, closestPort.direc))
+            this.sections.push(new BeltSec(this, this.sections.length, direc, closestPort.direc, pos));
     }
 
     public get length(): number {
-        return this.direc.length - 1;
-    }
-
-    public beltDIrec(index: number): number {
-        if (index >= this.length) throw new Error("index out of range");
-        return Vector2.ABtoIndex(this.direc[index], this.direc[index + 1]);
-    }
-
-    public postions(): ReadonlyArray<Vector2> {
-        if (!this.startPos) return [];
-        const arr: Array<Vector2> = [];
-        let point: Vector2 = Vector2.copy(this.startPos);
-        arr.push(point);
-        for (let i = 1; i < this.length; i++) {
-            point = point.add(Vector2.DIREC[this.direc[i]]);
-            arr.push(point);
-        }
-        return arr;
+        return this.sections ? this.sections.length : -1;
     }
 
     public build() {
-        if (!this.startPos) return;
         if (!this.inventory) this.inventory = new BeltInventory(this.length, this.beltType.type);
-        this.sections = new Array<BeltSec>(this.length);
-        let point: Vector2 = Vector2.copy(this.startPos);
-        this.sections[0] = new BeltSec(this, 0, this.direc[0], this.direc[1], point);
-        for (let i = 1; i < this.length; i++) {
-            point = point.add(Vector2.DIREC[this.direc[i]]);
-            this.sections[i] = new BeltSec(this, i, this.direc[i], this.direc[i + 1], point);
-        }
-    }
-
-    // break this belt instance after index, return the newly instance. the cut index should not be the last one.
-    public breakAfter(index: number): BeltInstance {
-        if (this.sections === null) throw new Error("belt sections is null");
-
-        const newBelt = new BeltInstance(this.beltType);
-        newBelt.direc = this.direc.slice(index + 1);
-        this.direc = this.direc.slice(0, index + 2);
-
-        if (newBelt.length === 0) throw new Error("new belt length is 0");
-
-        return newBelt;
-    }
-
-    public changeEnd(direc: number) {
-        this.direc[this.length + 1] = direc;
-        if (this.sections === null) return;
-        this.sections[this.length] = new BeltSec(
-            this, this.length,
-            this.direc[this.length], this.direc[this.length + 1],
-            this.sections[this.length].position);
-    }
-
-    public changeStart(direc: number) {
-        this.direc[0] = direc;
-        if (this.sections === null) return;
-        this.sections[this.length] = new BeltSec(
-            this, 0,
-            this.direc[0], this.direc[1],
-            this.sections[0].position);
+        if (this.sections)
+            for (let i = 0; i < this.sections.length; i++) {
+                this.sections[i].owner = this;
+                this.sections[i].index = i;
+            }
     }
 
     public static concatCircle(belt: BeltInstance) {
@@ -420,18 +402,14 @@ export class BeltInstance {
 
     public static concat(belt0: BeltInstance, belt1: BeltInstance): BeltInstance {
         console.log("concat belt0 length: " + belt0.length + " belt1 length: " + belt1.length);
-        if (belt0.beltType !== belt1.beltType) throw new Error("Belt type mismatch");
-        if (belt0.direc[belt0.length] !== belt1.direc[0]) throw new Error("Belt direction mismatch");
+        if (belt0.beltType !== belt1.beltType) throw new Error("Belt type mismatch!");
+        if (!belt0.sections || !belt1.sections) throw new Error("Belt is not ready!");
+        if (belt0.sections[belt0.length - 1].toDirec !== belt1.sections[0].fromDirec) throw new Error("Belt direction mismatch");
         const newBelt = new BeltInstance(belt0.beltType);
         newBelt.startPos = belt0.startPos;
 
-        // 连接方向数组，跳过belt1的第一个元素避免重复
-        newBelt.direc = belt0.direc.concat(belt1.direc.slice(1));
-
         // 设置起点和终点
-        newBelt.start = belt0.start;
-        newBelt.end = belt1.end;
-        newBelt.endPoint = belt1.endPoint;
+        newBelt.sections = belt0.sections.concat(belt1.sections);
         newBelt._started = true;
 
         // 合并库存系统
@@ -439,79 +417,60 @@ export class BeltInstance {
             newBelt.inventory = BeltInventory.concat(belt0.inventory, belt1.inventory);
         }
         newBelt.build();
-
         console.log("new belt length:", newBelt.length);
 
         return newBelt;
     }
 
-    public static cutDirec(belt: BeltInstance, closeOne: boolean, index: number, toward: number): [BeltInstance | null, BeltInstance | null] {
-        console.log("cut belt length:", belt.length);
-        if (belt.sections === null) throw new Error("belt sections is null");
+    public cutDirec(isToDirec: boolean, index: number, toward: number): BeltInstance {
+        if (this.sections === null || this.inventory === null) throw new Error("belt sections is null");
+        const newBelt = new BeltInstance(this.beltType);
 
-        // 创建两个新的传送带实例
-        const newBelt0 = new BeltInstance(belt.beltType);
-        const newBelt1 = new BeltInstance(belt.beltType);
+        if (isToDirec) {
+            newBelt.sections = this.sections.slice(index + 1);
+            this.sections = this.sections.slice(0, index + 1);
+            this.sections[this.length - 1].toDirec = toward;
 
-        // 分割方向数组
-        if (closeOne) {
-            newBelt0.direc = [...belt.direc.slice(0, index), toward];
-            newBelt1.direc = belt.direc.slice(index);
+            newBelt.inventory = this.inventory.cut(index + 1, this.inventory.length);
+            this.inventory = this.inventory.cut(0, index + 1);
         }
         else {
-            newBelt0.direc = belt.direc.slice(0, index + 1);
-            newBelt1.direc = [toward, ...belt.direc.slice(index + 1)];
+            newBelt.sections = this.sections.slice(index);
+            this.sections = this.sections.slice(0, index);
+            newBelt.sections[0].fromDirec = toward;
+            newBelt.inventory = this.inventory.cut(index, this.inventory.length);
+            this.inventory = this.inventory.cut(0, index);
         }
 
-        const able0 = newBelt0.length > 0;
-        const able1 = newBelt1.length > 0;
+        // 更新传送带段
+        this.build();
+        newBelt.build();
 
-        // 如果原传送带有库存系统，则分割库存
-        if (belt.inventory) {
-            if (able0) newBelt0.inventory = BeltInventory.cut(belt.inventory, 0, index);
-            if (able1) newBelt1.inventory = BeltInventory.cut(belt.inventory, index, belt.inventory.length);
-        }
+        console.log("cutToward to", toward, "belt length:", this.length, "new belt length:", newBelt.length);
 
-        // 设置新传送带0的属性
-        if (able0) {
-            newBelt0.startPos = belt.startPos;
-            newBelt0.endPoint = belt.sections[index - 1].position;
-        }
-        if (able1) {
-            // 设置新传送带1的属性
-            newBelt1.startPos = belt.sections[index].position;
-            newBelt1.endPoint = belt.endPoint;
-        }
-        // 构建传送带段
-        newBelt0.build();
-        newBelt1.build();
-
-        console.log("cutToward to", toward, "new belt0 length:", newBelt0.length, "new belt1 length:", newBelt1.length);
-
-        return [able0 ? newBelt0 : null, able1 ? newBelt1 : null];
+        return newBelt;
     }
 
-    public static cutCircle(belt: BeltInstance, closerOne: boolean, index: number, toward: number): BeltInstance {
-        console.log("cut belt length:", belt.length);
-        if (belt.sections === null) throw new Error("belt sections is null");
+    public cutCircle(isToDirec: boolean, index: number, toward: number): BeltInstance {
+        console.log("cut belt length:", this.length);
+        if (this.sections === null || this.inventory === null) throw new Error("belt sections is null");
 
         // 分割方向数组
-        if (closerOne)
-            belt.direc = [...belt.direc.slice(index), ...belt.direc.slice(1, index), toward];
-        else
-            belt.direc = [toward, ...belt.direc.slice(index + 1), ...belt.direc.slice(1, index + 1)];
+        if (isToDirec) {
+            this.sections[index].toDirec = toward;
+            this.sections = [...this.sections.slice(index + 1), ...this.sections.slice(0, index + 1)];
+            this.inventory = BeltInventory.cutCircle(this.inventory, index + 1);
+        }
+        else {
+            this.sections[index].fromDirec = toward;
+            this.sections = [...this.sections.slice(index), ...this.sections.slice(0, index)];
+            this.inventory = BeltInventory.cutCircle(this.inventory, index);
+        }
 
-        // 如果原传送带有库存系统，则分割库存
-        if (belt.inventory) belt.inventory = BeltInventory.cutCircle(belt.inventory, index);
+        this.build();
 
-        // 设置新传送带0的属性
-        belt.startPos = belt.sections[index].position;
-        belt.endPoint = belt.sections[(index - 1 + belt.length) % belt.length].position;
-        // 构建传送带段
-        belt.build();
+        console.log("cutCircle to", toward, "new belt length:", this.length);
 
-        console.log("cutCircle to", toward, "new belt length:", belt.length);
-
-        return belt;
+        return this;
     }
 }

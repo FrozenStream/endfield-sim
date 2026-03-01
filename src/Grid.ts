@@ -311,7 +311,7 @@ export class GridCanvas {
                 if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
             } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } else { this.instanceAttention.select = this.gridMap.isOccupiedBy(gridPos.floor()); }
+        } else { this.instanceAttention.select = this.gridMap.getMachine(gridPos.floor()); }
         this.drawGrid();
     }
 

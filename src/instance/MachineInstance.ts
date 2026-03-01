@@ -11,15 +11,15 @@ export class portInstance {
     owner: MachineInstance;
     portGroupSrc: PortGroup;
     position: Vector2;
-    direction: Vector2;
+    direc: number;
 
     connecting: BeltSec | null = null;
 
-    constructor(owner: MachineInstance, portGroupSrc: PortGroup, postion: Vector2, direction: Vector2) {
+    constructor(owner: MachineInstance, portGroupSrc: PortGroup, postion: Vector2, direction: number) {
         this.owner = owner;
         this.portGroupSrc = portGroupSrc;
         this.position = postion;
-        this.direction = direction;
+        this.direc = direction;
     }
 }
 
@@ -154,14 +154,14 @@ export class MachineInstance {
         let closest_num = 1e9;
         let dist;
         for (const instanceGroup of this.portInstances) {
-            for (const instance of instanceGroup) {
-                if (instance.portGroupSrc.isIn !== isIn || instance.portGroupSrc.itemType !== itemType) continue;
+            for (const inst of instanceGroup) {
+                if (inst.portGroupSrc.isIn !== isIn || inst.portGroupSrc.itemType !== itemType) continue;
 
-                let from = instance.position.add(instance.direction);
-                if (isIn) from = instance.position.sub(instance.direction);
+                let from = inst.position.add(Vector2.DIREC[inst.direc]);
+                if (isIn) from = inst.position.sub(Vector2.DIREC[inst.direc]);
                 dist = from.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
-                    closest = instance;
+                    closest = inst;
                     closest_num = dist;
                 }
             }

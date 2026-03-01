@@ -20,4 +20,6 @@ export class Belt {
     }
 
     public static readonly soildBelt: Belt = new Belt("solid_belt", EnumItemType.SOLID, '/icon_belt/image_grid_belt_01.png');
+    public static readonly liquidBelt: Belt = new Belt("liquid_belt", EnumItemType.LIQUID, '/icon_belt/image_log_pipe_01.png');
+
 }

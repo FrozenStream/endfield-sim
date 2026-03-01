@@ -236,12 +236,12 @@ class Vector2 {
         return v % 3 !== 0;
     }
 
-    static toCCW(direction: number): number {
-        return (direction + 3) % 12;
+    static toCCW(direction: number, times: number = 1): number {
+        return (direction + 3 * times) % 12;
     }
 
-    static toCW(direction: number): number {
-        return (direction + 9) % 12;
+    static toCW(direction: number, times: number = 1): number {
+        return (direction + 9 * times) % 12;
     }
 
     static toBACK(direction: number): number {

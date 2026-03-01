@@ -58,13 +58,13 @@ import EnumMachineLevel from "../utils/EnumMachineLevel";
 
 export class PortGroup {
     relpos: Vector2[];
-    direction: Vector2[];
+    direction: number[];
     itemType: EnumItemType;
     isIn: boolean;
     length: number;
     callback: (beltInventory: BeltInstance | null, instance: MachineInstance) => boolean;
 
-    constructor(relpos: Vector2[], direction: Vector2[], itemType: EnumItemType, isIn: boolean, callback: (b: BeltInstance | null, m: MachineInstance) => boolean) {
+    constructor(relpos: Vector2[], direction: number[], itemType: EnumItemType, isIn: boolean, callback: (b: BeltInstance | null, m: MachineInstance) => boolean) {
         this.relpos = relpos;
         this.direction = direction;
         this.itemType = itemType;
@@ -83,7 +83,7 @@ export class PortGroup {
                 instance,
                 this,
                 transfromedRelPos.addSelf(instance.left_top!),
-                this.direction[i].rotateCW(instance.rotation)
+                Vector2.toCW(this.direction[i], instance.rotation)
             ))
         }
         return list;
@@ -145,10 +145,10 @@ export class Machine {
         EnumMachineLevel.LOGISTIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_2_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.LEFT], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.LEFT], EnumItemType.SOLID, false, belter_Out),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP, Vector2.DOWN], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP, Vector2.DOWN], EnumItemType.SOLID, false, belter_Out),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.LEFT_n], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.LEFT_n], EnumItemType.SOLID, false, belter_Out),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP_n, Vector2.DOWN_n], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP_n, Vector2.DOWN_n], EnumItemType.SOLID, false, belter_Out),
             ], belter_Work)
         ]
     )
@@ -157,8 +157,8 @@ export class Machine {
         EnumMachineLevel.LOGISTIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, belter_Out),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, false, belter_Out),
             ], belter_Work)
         ]
     )
@@ -168,8 +168,8 @@ export class Machine {
         EnumMachineLevel.LOGISTIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT], EnumItemType.SOLID, false, belter_Out)
+                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, true, belter_In),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n], EnumItemType.SOLID, false, belter_Out)
             ], belter_Work)
         ]
     )
@@ -179,8 +179,8 @@ export class Machine {
         EnumMachineLevel.STORAGE,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, Storager_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, Storager_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, Storager_Out)
             ])
         ]
     );
@@ -189,7 +189,7 @@ export class Machine {
         EnumMachineLevel.STORAGE,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
-                new PortGroup([new Vector2(1, 0)], [Vector2.UP], EnumItemType.SOLID, true, Loader_In),
+                new PortGroup([new Vector2(1, 0)], [Vector2.UP_n], EnumItemType.SOLID, true, Loader_In),
             ])
         ]
     )
@@ -198,7 +198,7 @@ export class Machine {
         EnumMachineLevel.STORAGE,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
-                new PortGroup([new Vector2(1, 0)], [Vector2.DOWN], EnumItemType.SOLID, false, Unloader_Out),
+                new PortGroup([new Vector2(1, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, false, Unloader_Out),
             ])
         ]
     )
@@ -213,8 +213,8 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, furnance_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, furnance_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, furnance_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, furnance_Out)
             ], furnance_Work)
         ]
     );
@@ -223,8 +223,8 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, grinder_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, grinder_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, grinder_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, grinder_Out)
             ], grinder_Work)
         ]
     );
@@ -233,8 +233,8 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, shaper_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, shaper_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, shaper_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, shaper_Out)
             ], shaper_Work)
         ]
     );
@@ -243,8 +243,8 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, component_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, component_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, component_In),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, component_Out)
             ], component_Work)
         ]
     );
@@ -253,13 +253,13 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, planter_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, planter_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, planter_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, planter_Out)
             ], planter_Work),
             new MachineMode(MachineMode.liquidMode, EnumInventoryType.Storage_2x1_liquid_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, planter_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, planter_Out),
-                new PortGroup([new Vector2(0, 2)], [Vector2.LEFT], EnumItemType.LIQUID, true, planter_In_liquid)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, planter_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, planter_Out),
+                new PortGroup([new Vector2(0, 2)], [Vector2.LEFT_n], EnumItemType.LIQUID, true, planter_In_liquid)
             ], planter_Work)
         ]
     );
@@ -268,8 +268,8 @@ export class Machine {
         EnumMachineLevel.BASIC,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, seedcollector_In),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, seedcollector_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, seedcollector_In),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, seedcollector_Out)
             ], seedcollector_Work)
         ]
     );
@@ -279,8 +279,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, winder_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, winder_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, winder_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, winder_Out)
             ], winder_Work)
         ]
     );
@@ -289,8 +289,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, fillingmachine_In_soild),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, fillingmachine_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, fillingmachine_In_soild),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, fillingmachine_Out)
             ], fillingmachine_Work)
         ]
     );
@@ -299,8 +299,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, assemblymachine_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, assemblymachine_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, assemblymachine_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, assemblymachine_Out)
             ], assemblymachine_Work)
         ]
     );
@@ -309,8 +309,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, thickener_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, thickener_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, thickener_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, thickener_Out)
             ], thickener_Work)
         ]
     );
@@ -319,8 +319,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, mixpool_In),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, mixpool_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, mixpool_In),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, mixpool_Out)
             ], mixpool_Work)
         ]
     );
@@ -329,8 +329,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, xiraniteoven_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, xiraniteoven_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, xiraniteoven_In_soild),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, xiraniteoven_Out)
             ], xiraniteoven_Work)
         ]
     );
@@ -339,8 +339,8 @@ export class Machine {
         EnumMachineLevel.ADVANCED,
         [
             new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, true, dismantler_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN, Vector2.DOWN], EnumItemType.SOLID, false, dismantler_Out)
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, dismantler_In),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, dismantler_Out)
             ], dismantler_Work)
         ]
     );
