@@ -1,5 +1,5 @@
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
-import { MachineInstance, portInstance } from "./instance/MachineInstance";
+import { MachineInstance, portInstance, WorkTimer } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumInventoryType";
@@ -7,7 +7,7 @@ import { EnumInventoryType } from "./utils/EnumInventoryType";
 
 
 export class AttentionManager {
-    private selectingInstance: MachineInstance | BeltSec | null = null;
+    private selecting: MachineInstance | BeltSec | null = null;
 
     private selectingSlot: HTMLDivElement | null = null;
     private selectingInv: ItemStack | null = null;
@@ -27,9 +27,7 @@ export class AttentionManager {
 
     set select(instance: MachineInstance | portInstance | BeltSec | null) {
         if (!instance) { this.cancel(); return; }
-        if (instance instanceof portInstance && instance.owner !== this.selectingInstance)
-            this.openAny(instance.owner);
-        if (instance instanceof MachineInstance && instance !== this.selectingInstance) {
+        if (instance instanceof MachineInstance && instance !== this.selecting) {
             this.openAny(instance);
         }
         else if (instance instanceof BeltInstance) {
@@ -58,15 +56,15 @@ export class AttentionManager {
                 this.createLayout_1_markedSolid(instance);
                 break;
         }
-        this.selectingInstance = instance;
+        this.selecting = instance;
     }
 
     get select(): MachineInstance | portInstance | BeltSec | null {
-        return this.selectingInstance;
+        return this.selecting;
     }
 
     cancel() {
-        this.selectingInstance = null;
+        this.selecting = null;
         this.clear();
     }
 
@@ -428,7 +426,7 @@ export class AttentionManager {
     }
 
     // 更新进度条显示
-    private updateProgressBar(progressBarContainer: HTMLDivElement, timer: any) {
+    private updateProgressBar(progressBarContainer: HTMLDivElement, timer: WorkTimer) {
         const progressBar = progressBarContainer.querySelector('.progress-bar') as HTMLDivElement;
         if (!progressBar) return;
 

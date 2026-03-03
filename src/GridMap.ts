@@ -1,4 +1,4 @@
-import { MachineInstance, portInstance } from "./instance/MachineInstance";
+import { MachineInstance, portGroupInstance, portInstance } from "./instance/MachineInstance";
 import { Belt } from "./proto/Belt";
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import { Machine } from "./proto/Machines";
@@ -168,7 +168,7 @@ export class GridMap {
     }
 
     private _buildMachine(inst: MachineInstance) {
-        this._machines.add(inst)
+        this._machines.add(inst);
         inst.build();
         this._markMachineArea(inst);
         inst.powerOn(this._countPower(inst.rect!));
@@ -334,8 +334,8 @@ export class GridMap {
                 this.grid[rect.min_y + i][rect.min_x + j].machine = instance;
             }
         }
-        for (const portGroup of instance.portInstances!)
-            for (const port of portGroup) {
+        for (const group of instance.portGroupInsts!)
+            for (const port of group.ports) {
                 const pos = port.position.floor();
                 this.grid[pos.y][pos.x].port = port;
                 console.log('mark', pos)
@@ -353,20 +353,36 @@ export class GridMap {
 
     private _markBeltArea(instance: BeltInstance) {
         if (!instance.sections) return false;
-        for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position;
-            if (instance.ItemType === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = sec;
-            if (instance.ItemType === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = sec;
-        };
+        for (const sec of instance.sections) this._markBeltSec(sec);
     }
 
     private _clearBeltArea(instance: BeltInstance) {
         if (!instance.sections) return;
-        for (const section of instance.sections) {
-            const pos = section.position;
-            if (instance.ItemType === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = null;
-            if (instance.ItemType === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = null;
-        }
+        for (const sec of instance.sections) this._clearBeltSec(sec);
+    }
+
+    private _markBeltSec(sec: BeltSec) {
+        const pos: Vector2 = sec.position;
+        const port = this._havePortConnecting(sec);
+        if (port) port.owner.insert(port);
+        if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = sec;
+        if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = sec;
+    }
+
+    private _clearBeltSec(sec: BeltSec) {
+        const pos = sec.position;
+        const port = this._havePortConnecting(sec);
+        if (port) port.owner.remove(port);
+        if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = null;
+        if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = null;
+    }
+
+    private _havePortConnecting(sec: BeltSec): portInstance | null {
+        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
+        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) return port_out;
+        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
+        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) return port_in;
+        return null;
     }
 
 
@@ -402,31 +418,22 @@ export class GridMap {
         return null;
     }
 
-    public portConnecting(port: portInstance, type: EnumItemType): BeltSec | null {
-        if (port.portGroupSrc.isIn) {
-            const pos = port.position.sub(Vector2.DIREC[port.direc]).floor();
-            const t = this.getBeltSec(pos, type);
-            if (t && Vector2.DIREC[t.toDirec].equal(Vector2.DIREC[port.direc])) return t;
-        }
-        else {
-            const pos = port.position.add(Vector2.DIREC[port.direc]).floor();
-            const t = this.getBeltSec(pos, type);
-            if (t && Vector2.DIREC[t.fromDirec].equal(Vector2.DIREC[port.direc])) return t;
-        }
-        return null;
-    }
-
     private updateMachine(instance: MachineInstance) {
-        if (!instance.portInstances || !instance.pollingPointer) return;
-        for (let i = 0; i < instance.portInstances.length; i++) {
-            const begin: number = instance.pollingPointer[i];
-            const portGroup: portInstance[] = instance.portInstances[i];
-            for (let j = 0; j < portGroup.length; j++) {
-                const current: number = (begin + j) % portGroup.length;
-                const connecting = this.portConnecting(portGroup[current], portGroup[current].portGroupSrc.itemType);
+        if (!instance.portGroupInsts) return;
+        for (let i = 0; i < instance.portGroupInsts.length; i++) {
+            const portGroup: portGroupInstance = instance.portGroupInsts[i];
+            const begin = portGroup.point;
+            const list = portGroup.pollingList;
+            for (let j = 0; j < list.length; j++) {
+                const current = (begin + j) % list.length;
+                const cur_port = list[current];
+                const belt_pos = cur_port.isIn ?
+                    cur_port.position.sub(Vector2.DIREC[cur_port.direc]).floorSelf() :
+                    cur_port.position.add(Vector2.DIREC[cur_port.direc]).floorSelf();
+                const connecting = this.getBeltSec(belt_pos, cur_port.type)!;
                 // 若该端口成功动作，则将轮询初始指针拨到下一个端口
-                if (connecting && portGroup[current].portGroupSrc.callback(connecting.owner, instance))
-                    instance.pollingPointer[i] = (current + 1) % portGroup.length;
+                if (connecting && cur_port.portGroupSrc.callback(connecting.owner, instance))
+                    portGroup.point = (current + 1) % list.length;
             }
         }
         instance.currentMode.working(instance);

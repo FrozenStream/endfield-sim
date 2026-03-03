@@ -5,33 +5,63 @@ import { Config } from "../utils/Config";
 import type EnumItemType from "../utils/EnumItemType";
 import Rect from "../utils/Rect";
 import Vector2 from "../utils/Vector2";
-import type { BeltSec } from "./BeltInstance";
+
+export class portGroupInstance {
+    owner: MachineInstance;
+    src: PortGroup;
+    ports: portInstance[];
+    pollingList: portInstance[];
+    point: number;
+
+
+    constructor(owner: MachineInstance, portGroupSrc: PortGroup) {
+        this.owner = owner;
+        this.src = portGroupSrc;
+        this.ports = portGroupSrc.buildInstances(this, owner);
+        this.pollingList = [];
+        this.point = 0;
+    }
+
+    insert(port: portInstance) {
+        if (this.pollingList.length === 0) this.pollingList = [port];
+        else {
+            this.remove(port);
+            // 插入倒数第二个
+            this.pollingList = [...this.pollingList.slice(0, -1), port, ...this.pollingList.slice(-1)];
+        }
+    }
+
+    remove(port: portInstance) {
+        const newList = this.pollingList.filter(p => p !== port);
+        this.pollingList = newList;
+    }
+}
 
 export class portInstance {
-    owner: MachineInstance;
-    portGroupSrc: PortGroup;
+    owner: portGroupInstance;
+    id: number;
     position: Vector2;
     direc: number;
 
-    connecting: BeltSec | null = null;
-
-    constructor(owner: MachineInstance, portGroupSrc: PortGroup, postion: Vector2, direction: number) {
+    constructor(owner: portGroupInstance, id: number, postion: Vector2, direction: number) {
         this.owner = owner;
-        this.portGroupSrc = portGroupSrc;
+        this.id = id;
         this.position = postion;
         this.direc = direction;
     }
+
+    get portGroupSrc(): PortGroup { return this.owner.src; }
+
+    get type(): EnumItemType { return this.owner.src.itemType; }
+
+    get isIn(): boolean { return this.owner.src.isIn; }
 }
 
 
 export class WorkTimer {
-    private _isWorking: boolean = false;
-    private maxTime: number = 1e9;
-    public cur: number = 0;
-
-    get isworking(): boolean {
-        return this._isWorking;
-    }
+    _isWorking: boolean = false;
+    maxTime: number = 1e9;
+    cur: number = 0;
 
     begin(maxTime: number) {
         this._isWorking = true;
@@ -61,6 +91,47 @@ export class WorkTimer {
     }
 }
 
+class WorkUnit {
+    input: Item | string;
+    isWorking: boolean = false;
+    maxTime: number = 1e9;
+    cur: number = 0;
+
+    constructor(input: Item | string) {
+        this.input = input;
+    }
+
+    begin(maxTime: number) {
+        this.isWorking = true;
+        this.maxTime = maxTime * Config.PhysicsFPS;
+        this.cur = 0;
+    }
+
+    reset() {
+        this.isWorking = false;
+        this.maxTime = 1e9;
+        this.cur = 0;
+    }
+
+    update(deltaTime: number): boolean {
+        if (!this.isWorking) return false;
+        if (this.maxTime <= 0) return false;
+        this.cur += deltaTime;
+        if (this.cur >= this.maxTime) {
+            this.cur = 0;
+            return true;
+        }
+        return false;
+    }
+
+    toZero() { this.cur = 0; }
+}
+
+class WorkSchedule {
+    units: WorkUnit[] = [];
+    recipe: any = null;
+}
+
 
 export class MachineInstance {
     public readonly machine: Machine;
@@ -76,8 +147,7 @@ export class MachineInstance {
 
     public currentMode: MachineMode;
     public inventory: ItemStack[] = [];                 // 预览状态不使用
-    public portInstances: portInstance[][] | null = null;
-    public pollingPointer: number[] | null = null;
+    public portGroupInsts: portGroupInstance[] | null = null;
 
     public timer: WorkTimer = new WorkTimer();
     public curInv: Item | string | null = null;
@@ -142,26 +212,24 @@ export class MachineInstance {
 
     public build() {
         this.inventory = this.currentMode.inventory.buildItemStack();
-        this.portInstances = this.currentMode.portGroups.map(portGroup => portGroup.buildInstances(this));
-        this.pollingPointer = this.currentMode.portGroups.map(_ => 0);
+        this.portGroupInsts = this.currentMode.portGroups.map(portGroup => new portGroupInstance(this, portGroup));
         this.curInv = null;
         this.curRecipe = null;
     }
 
     public closestPort(dst: Vector2, isIn: boolean, itemType: EnumItemType): portInstance | null {
-        if (!this.portInstances) return null;
+        if (!this.portGroupInsts) return null;
         let closest: portInstance | null = null;
         let closest_num = 1e9;
         let dist;
-        for (const instanceGroup of this.portInstances) {
-            for (const inst of instanceGroup) {
-                if (inst.portGroupSrc.isIn !== isIn || inst.portGroupSrc.itemType !== itemType) continue;
-
-                let from = inst.position.add(Vector2.DIREC[inst.direc]);
-                if (isIn) from = inst.position.sub(Vector2.DIREC[inst.direc]);
+        for (const group of this.portGroupInsts) {
+            if (group.src.isIn !== isIn || group.src.itemType !== itemType) continue;
+            for (const port of group.ports) {
+                let from = port.position.add(Vector2.DIREC[port.direc]);
+                if (isIn) from = port.position.sub(Vector2.DIREC[port.direc]);
                 dist = from.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
-                    closest = inst;
+                    closest = port;
                     closest_num = dist;
                 }
             }

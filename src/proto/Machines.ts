@@ -1,5 +1,5 @@
 import type { BeltInstance } from "../instance/BeltInstance";
-import { portInstance, type MachineInstance } from "../instance/MachineInstance";
+import { portGroupInstance, portInstance, type MachineInstance } from "../instance/MachineInstance";
 import EnumItemType from "../utils/EnumItemType";
 import { EnumInventoryType } from "../utils/EnumInventoryType";
 import Vector2 from "../utils/Vector2";
@@ -75,13 +75,13 @@ export class PortGroup {
         if (this.length !== direction.length) throw new Error("length not equal");
     }
 
-    buildInstances(instance: MachineInstance): portInstance[] {
+    buildInstances(src: portGroupInstance, instance: MachineInstance): portInstance[] {
         const list: portInstance[] = []
         for (let i = 0; i < this.relpos.length; i++) {
             const transfromedRelPos = Vector2.linear(instance.R, this.relpos[i].x + 0.5, instance.D, this.relpos[i].y + 0.5);
             list.push(new portInstance(
-                instance,
-                this,
+                src,
+                list.length,
                 transfromedRelPos.addSelf(instance.left_top!),
                 Vector2.toCW(this.direction[i], instance.rotation)
             ))
@@ -96,6 +96,7 @@ export class MachineMode {
     readonly inventory: EnumInventoryType;
     readonly portGroups: PortGroup[];
 
+    readonly recipe: any;
     working: (instance: MachineInstance) => boolean;
     constructor(id: string, storage: EnumInventoryType, ports: PortGroup[], working: (instance: MachineInstance) => boolean = (_: MachineInstance) => true) {
         this.id = id;
@@ -109,6 +110,7 @@ export class MachineMode {
 
     public static readonly dafultMode: MachineMode = new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_None, []);
 }
+
 
 export class Machine {
     id: string;
@@ -345,4 +347,3 @@ export class Machine {
         ]
     );
 }
-

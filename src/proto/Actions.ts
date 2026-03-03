@@ -130,7 +130,7 @@ export function belter_Out(b: BeltInstance | null, m: MachineInstance): boolean 
 }
 
 export function belter_Work(m: MachineInstance): boolean {
-    if (!m.timer.isworking) m.timer.begin(Config.BeltSecond);
+    if (!m.timer._isWorking) m.timer.begin(Config.BeltSecond);
     if (m.inventory[0].isEmpty()) {
         m.timer.toZero();
         return false;

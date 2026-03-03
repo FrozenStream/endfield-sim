@@ -248,7 +248,6 @@ export class BeltInventory {
 
 export class BeltInstance {
     public readonly beltType: Belt;
-    public static readonly imgCache: HTMLImageElement;
 
     // On_building elements
     private _vaild: boolean = true;
@@ -388,6 +387,11 @@ export class BeltInstance {
     }
 
     public build() {
+        this._vaild = true;
+        this._started = false;
+        this.start = null;
+        this.startPos = null;
+        this.endPoint = null;
         if (!this.inventory) this.inventory = new BeltInventory(this.length, this.beltType.type);
         if (this.sections)
             for (let i = 0; i < this.sections.length; i++) {
