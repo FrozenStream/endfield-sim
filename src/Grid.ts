@@ -307,12 +307,14 @@ export class GridCanvas {
 
         if (this.gridMap.PreviewMachine) {
             if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
-        } else if (this.gridMap.PreviewBelt) {
+        } 
+        else if (this.gridMap.PreviewBelt) {
             if (this.gridMap.PreviewBelt.started) {
                 if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
             } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } else {
+        } 
+        else {
             const pos = gridPos.floor();
             const li = [
                 this.gridMap.getMachine(pos),

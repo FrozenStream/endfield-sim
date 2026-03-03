@@ -243,8 +243,8 @@ export class GridMap {
 
     public buildInstance(): boolean {
         if (this._previewing === null) return false;
-        if (this._previewing instanceof MachineInstance) this._buildMachine(this._previewing);
-        else if (this._previewing instanceof BeltInstance) this._buildBelt(this._previewing);
+        if (this._previewing instanceof MachineInstance) return this._buildMachine(this._previewing);
+        else if (this._previewing instanceof BeltInstance) return this._buildBelt(this._previewing);
         return false;
     }
 
@@ -363,28 +363,23 @@ export class GridMap {
 
     private _markBeltSec(sec: BeltSec) {
         const pos: Vector2 = sec.position;
-        const port = this._havePortConnecting(sec);
-        if (port) port.owner.insert(port);
+        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
+        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.owner.insert(port_out);
+        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
+        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.owner.insert(port_in);
         if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = sec;
         if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = sec;
     }
 
     private _clearBeltSec(sec: BeltSec) {
         const pos = sec.position;
-        const port = this._havePortConnecting(sec);
-        if (port) port.owner.remove(port);
+        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
+        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.owner.remove(port_out);
+        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
+        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.owner.remove(port_in);
         if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = null;
         if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = null;
     }
-
-    private _havePortConnecting(sec: BeltSec): portInstance | null {
-        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
-        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) return port_out;
-        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
-        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) return port_in;
-        return null;
-    }
-
 
     private _beltCutCircleDirec(sec: BeltSec, isToDirec: boolean, toward: number): BeltInstance {
         sec.owner.cutCircle(isToDirec, sec.index, toward);
