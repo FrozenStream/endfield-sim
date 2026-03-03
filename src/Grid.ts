@@ -1,4 +1,4 @@
-import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect } from "./utils/drawUtil";
+import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect, drawBeltAttention } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
@@ -6,6 +6,7 @@ import { AttentionManager } from "./AttentionManager";
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import type { GridMap } from "./GridMap";
 import { MachineInstance, portInstance } from "./instance/MachineInstance";
+import EnumItemType from "./utils/EnumItemType";
 
 /**
  * 优化后的事件管理器类
@@ -311,7 +312,20 @@ export class GridCanvas {
                 if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
             } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } else { this.instanceAttention.select = this.gridMap.getMachine(gridPos.floor()); }
+        } else {
+            const pos = gridPos.floor();
+            const li = [
+                this.gridMap.getMachine(pos),
+                this.gridMap.getPort(pos),
+                this.gridMap.getBeltSec(pos, EnumItemType.SOLID),
+                this.gridMap.getBeltSec(pos, EnumItemType.LIQUID)
+            ].filter(x => x !== null);
+
+            if (this.instanceAttention.position?.equal(pos)) this.instanceAttention.count += 1;
+            else this.instanceAttention.count = 0;
+            if (li.length === 0) this.instanceAttention.cancel();
+            else this.instanceAttention.select = li[this.instanceAttention.count % li.length]
+        }
         this.drawGrid();
     }
 
@@ -397,8 +411,8 @@ export class GridCanvas {
                     this.gridMap.destroyInstance(selectedInstance);
                     this.instanceAttention.cancel();
                 }
-                else if (selectedInstance instanceof BeltInstance) {
-                    this.gridMap.destroyInstance(selectedInstance);
+                else if (selectedInstance instanceof BeltSec) {
+                    this.gridMap.destroyInstance(selectedInstance.owner);
                     this.instanceAttention.cancel();
                 }
             }
@@ -455,7 +469,10 @@ export class GridCanvas {
             }
         }
         // 绘制选中机器
-        if (this.instanceAttention.select instanceof MachineInstance) drawAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
+        if (this.instanceAttention.select instanceof MachineInstance) 
+            drawAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
+        if (this.instanceAttention.select instanceof BeltSec) 
+            drawBeltAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
 
         // 绘制传送带
         if (this.gridMap.PreviewBelt) {

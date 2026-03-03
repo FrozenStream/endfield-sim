@@ -1,5 +1,6 @@
-import { BeltInventory, type BeltInstance } from "../instance/BeltInstance";
+import { BeltInventory, BeltSec, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
+import { COLORS } from "./colors";
 import type Rect from "./Rect";
 import Vector2 from "./Vector2";
 
@@ -193,6 +194,16 @@ export function drawAttention(canvas: CanvasRenderingContext2D, instance: Machin
     canvas.restore();
 }
 
+export function drawBeltAttention(canvas: CanvasRenderingContext2D, instance: BeltSec, gridSize: number) {
+    canvas.fillStyle = COLORS.BLUE;
+    const belt = instance.owner;
+    if (!belt.sections) return;
+    for (const sec of belt.sections) {
+        const vec = sec.position;
+        canvas.rect(vec.x * gridSize, vec.y * gridSize, gridSize, gridSize);
+    }
+    canvas.fill();
+}
 
 function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     canvas.beginPath();

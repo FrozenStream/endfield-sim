@@ -3,11 +3,14 @@ import { MachineInstance, portInstance, WorkTimer } from "./instance/MachineInst
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
 import { EnumInventoryType } from "./utils/EnumInventoryType";
+import type Vector2 from "./utils/Vector2";
 
 
 
 export class AttentionManager {
-    private selecting: MachineInstance | BeltSec | null = null;
+    private selecting: MachineInstance | portInstance | BeltSec | null = null;
+    position: Vector2 | null = null;
+    count: number = 0;
 
     private selectingSlot: HTMLDivElement | null = null;
     private selectingInv: ItemStack | null = null;
@@ -26,12 +29,15 @@ export class AttentionManager {
     }
 
     set select(instance: MachineInstance | portInstance | BeltSec | null) {
+        console.log('select', instance);
         if (!instance) { this.cancel(); return; }
         if (instance instanceof MachineInstance && instance !== this.selecting) {
             this.openAny(instance);
         }
-        else if (instance instanceof BeltInstance) {
+        else if (instance instanceof BeltSec) {
+            this.clear();
         }
+        this.selecting = instance;
     }
 
     private openAny(instance: MachineInstance) {
@@ -56,7 +62,6 @@ export class AttentionManager {
                 this.createLayout_1_markedSolid(instance);
                 break;
         }
-        this.selecting = instance;
     }
 
     get select(): MachineInstance | portInstance | BeltSec | null {
@@ -537,7 +542,7 @@ export class AttentionManager {
         // 创建输入槽位（上方两个）
         const [inputSlot1, img1, num1] = this.buildInSlot_Solid();
         const [inputSlot2, img2, num2] = this.buildInSlot_Solid();
-        
+
         // 创建输出槽位（下方两个）
         const [outputSlot1, img3, num3] = this.buildOutSlot_Solid();
         const [outputSlot2, img4, num4] = this.buildOutSlot_Solid();
