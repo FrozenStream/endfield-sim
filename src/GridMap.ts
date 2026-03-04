@@ -1,10 +1,10 @@
 import { MachineInstance, portGroupInstance, portInstance } from "./instance/MachineInstance";
 import { Belt } from "./proto/Belt";
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
-import { Machine } from "./proto/Machines";
 import type Rect from "./utils/Rect";
 import Vector2 from "./utils/Vector2";
 import EnumItemType from "./utils/EnumItemType";
+import type { Machine } from "./proto/Machines";
 
 
 interface GridCell {

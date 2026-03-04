@@ -1,59 +1,20 @@
 import type { BeltInstance } from "../instance/BeltInstance";
 import { portGroupInstance, portInstance, type MachineInstance } from "../instance/MachineInstance";
 import EnumItemType from "../utils/EnumItemType";
-import { EnumInventoryType } from "../utils/EnumInventoryType";
 import Vector2 from "../utils/Vector2";
 import {
-    furnance_Work,
-    furnance_In,
-    furnance_Out,
-    grinder_Work,
-    grinder_In,
-    grinder_Out,
-    shaper_Work,
-    shaper_In,
-    shaper_Out,
-    component_Work,
-    component_In,
-    component_Out,
-    planter_Work,
-    planter_In_soild,
-    planter_Out,
-    seedcollector_Work,
-    seedcollector_In,
-    seedcollector_Out,
-    winder_Work,
-    winder_In,
-    winder_Out,
-    fillingmachine_Work,
-    fillingmachine_In_soild,
-    fillingmachine_Out,
-    assemblymachine_Work,
-    assemblymachine_In,
-    assemblymachine_Out,
-    thickener_Work,
-    thickener_In,
-    thickener_Out,
-    mixpool_Work,
-    mixpool_In,
-    mixpool_Out,
-    xiraniteoven_Work,
-    xiraniteoven_In_soild,
-    xiraniteoven_Out,
-    dismantler_Work,
-    dismantler_In,
-    dismantler_Out,
-    Storager_In,
-    Storager_Out,
-    planter_In_liquid,
-    Loader_In,
-    Unloader_Out,
-    belter_In,
-    belter_Out,
-    belter_Work
+    belter_Work,
+    single_in,
+    single_out,
+    basic_work,
+    advance_work_2x1,
+    advance_work_1x2
 } from "./Actions";
 import { imageAble } from "../utils/imageAble";
 import EnumMachineLevel from "../utils/EnumMachineLevel";
+import { Recipes } from "./Recipe";
+import { Config } from "../utils/Config";
+import { ItemStack } from "./ItemStack";
 
 
 export class PortGroup {
@@ -91,28 +52,34 @@ export class PortGroup {
 
 }
 
+interface InventoryConfig {
+    type: EnumItemType;
+    noIn: boolean;
+    noOut: boolean;
+    max: number;
+    markOnly: boolean;
+}
+
 export class MachineMode {
     readonly id: string;
-    readonly inventory: EnumInventoryType;
+    readonly inventory: InventoryConfig[];
     readonly portGroups: PortGroup[];
 
     readonly recipe: any;
     working: (instance: MachineInstance) => boolean;
-    constructor(id: string, storage: EnumInventoryType, ports: PortGroup[], working: (instance: MachineInstance) => boolean = (_: MachineInstance) => true) {
+    constructor(id: string, storage: InventoryConfig[], ports: PortGroup[], recipe: any, working: (instance: MachineInstance) => boolean) {
         this.id = id;
         this.inventory = storage;
         this.portGroups = ports;
+        this.recipe = recipe;
         this.working = working;
     }
 
     public static readonly soildMode: string = 'soildMode';
     public static readonly liquidMode: string = 'liquidMode';
-
-    public static readonly dafultMode: MachineMode = new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_None, []);
 }
 
-
-export class Machine {
+export interface Machine {
     id: string;
     img: imageAble;
 
@@ -121,229 +88,1007 @@ export class Machine {
     powerArea: number;
     levelType: EnumMachineLevel;
 
-    modes: MachineMode[] = [];
+    modes: MachineMode[];
+}
 
-    constructor(id: string, imgsrc: string, width: number = 3, height: number = 3, powerArea = -1, levelType: EnumMachineLevel, modes: MachineMode[] = [MachineMode.dafultMode]) {
-        this.id = id;
-        this.img = new imageAble(id, imgsrc);
-        this.width = width;
-        this.height = height;
-        this.powerArea = powerArea;
-        this.levelType = levelType;
-        this.modes = modes;
+class Furnance implements Machine {
+    id = 'furnance';
+    img = new imageAble(this.id, '/icon_port/icon_port_furnance_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup(
+                    [new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Furnance.in
+                ),
+                new PortGroup(
+                    [new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Furnance.out
+                )
+            ],
+            Recipes.furnance_recipe, Furnance.work
+        )
+    ]
 
-        Machine.allMachines.set(id, this);
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
     }
 
-    public static allMachines: Map<string, Machine> = new Map();
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
 
-    // public static readonly Cannon1: Machine = new Machine('cannon1', '/icon_port/icon_port_battle_cannon_1.png');
-    // public static readonly Connon2: Machine = new Machine('cannon2', '/icon_port/icon_port_battle_cannon_2.png');
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id, this);
+    }
+}
+
+class Grinder implements Machine {
+    id = 'grinder';
+    img = new imageAble(this.id, '/icon_port/icon_port_grinder_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Grinder.in
+                ),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Grinder.out
+                )
+            ],
+            Recipes.grinder_recipe, Grinder.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Shaper implements Machine {
+    id = 'shaper';
+    img = new imageAble(this.id, '/icon_port/icon_port_shaper_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Shaper.in
+                ),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Shaper.out
+                )
+            ],
+            Recipes.shaper_recipes, Shaper.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Component implements Machine {
+    id = 'component';
+    img = new imageAble(this.id, '/icon_port/icon_port_cmpt_mc_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Component.in
+                ),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Component.out
+                )
+            ],
+            Recipes.component_recipe, Component.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Planter implements Machine {
+    id = 'planter';
+    img = new imageAble(this.id, '/icon_port/icon_port_planter_1.png');
+    width = 5;
+    height = 5;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Planter.in_soild
+                ),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Planter.out
+                )
+            ],
+            Recipes.planter_recipe_soild, Planter.work
+        ),
+        new MachineMode(MachineMode.liquidMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Planter.in_soild
+                ),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Planter.out
+                ),
+                new PortGroup([new Vector2(0, 2)],
+                    [Vector2.LEFT_n],
+                    EnumItemType.LIQUID, true, Planter.in_liquid
+                )
+            ],
+            Recipes.planter_recipe_liquid, Planter.work
+        )
+    ]
+
+    static in_soild(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static in_liquid(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Seedcollector implements Machine {
+    id = 'seedcollector';
+    img = new imageAble(this.id, '/icon_port/icon_port_seedcol_1.png');
+    width = 5;
+    height = 5;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Seedcollector.in
+                ),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Seedcollector.out
+                )
+            ],
+            Recipes.seed_collector_recipe, Seedcollector.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Winder implements Machine {
+    id = 'winder';
+    img = new imageAble(this.id, '/icon_port/icon_port_winder_1.png');
+    width = 6;
+    height = 4;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Winder.in
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Winder.out
+                )
+            ],
+            Recipes.winder_recipe, Winder.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class FillingMachine implements Machine {
+    id = 'fillingmachine';
+    img = new imageAble(this.id, '/icon_port/icon_port_filling_pd_mc_1.png');
+    width = 6;
+    height = 4;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, FillingMachine.in_soild
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, FillingMachine.out
+                )
+            ],
+            Recipes.filling_machine_recipe_basic, FillingMachine.work
+        ),
+        new MachineMode(MachineMode.liquidMode,
+            [
+                { type: EnumItemType.LIQUID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, FillingMachine.in_soild
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, FillingMachine.out
+                )
+            ],
+            Recipes.filling_machine_recipe_liquid, FillingMachine.work
+        )
+    ]
+
+    static in_soild(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class AssemblyMachine implements Machine {
+    id = 'assemblymachine';
+    img = new imageAble(this.id, '/icon_port/icon_port_tools_asm_mc_1.png');
+    width = 6;
+    height = 4;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, AssemblyMachine.in
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, AssemblyMachine.out
+                )
+            ],
+            Recipes.assembly_machine_recipe, AssemblyMachine.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Thickener implements Machine {
+    id = 'thickener';
+    img = new imageAble(this.id, '/icon_port/icon_port_thickener_1.png');
+    width = 6;
+    height = 4;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Thickener.in
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Thickener.out
+                )
+            ],
+            Recipes.thickener_recipe, Thickener.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class MixPool implements Machine {
+    id = 'mixpool';
+    img = new imageAble(this.id, '/icon_port/icon_port_mix_pool_1.png');
+    width = 5;
+    height = 5;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, MixPool.in
+                ),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, MixPool.out
+                )
+            ],
+            Recipes.mix_pool_recipe, MixPool.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class XiraniteOven implements Machine {
+    id = 'xiraniteoven';
+    img = new imageAble(this.id, '/icon_port/icon_port_xiranite_oven_1.png');
+    width = 5;
+    height = 5;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, XiraniteOven.in_soild
+                ),
+                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, XiraniteOven.out
+                )
+            ],
+            Recipes.xiranite_oven_recipe, XiraniteOven.work
+        )
+    ]
+
+    static in_soild(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_2x1(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Dismantler implements Machine {
+    id = 'dismantler';
+    img = new imageAble(this.id, '/icon_port/icon_port_dismantler_1.png');
+    width = 6;
+    height = 4;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Dismantler.in
+                ),
+                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Dismantler.out
+                )
+            ],
+            Recipes.dismantler_recipe, Dismantler.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return advance_work_1x2(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Converter implements Machine {
+    id = 'converter';
+    img = new imageAble(this.id, '/icon_belt/bg_logistic_log_converger.png');
+    width = 1;
+    height = 1;
+    powerArea = 0;
+    levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n],
+                    EnumItemType.SOLID, true, Converter.in
+                ),
+                new PortGroup([new Vector2(0, 0)],
+                    [Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Converter.out
+                ),
+            ],
+            null, Converter.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        if (!m.timer._isWorking) m.timer.begin(Config.BeltSecond);
+        if (m.inventory[0].isEmpty()) {
+            m.timer.toZero();
+            return false;
+        }
+        else {
+            if (m.timer.update(1)) {
+                m.inventory[1] = m.inventory[0];
+                m.inventory[0] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
+            }
+        }
+        return true;
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Splitter implements Machine {
+    id = 'splitter';
+    img = new imageAble(this.id, '/icon_belt/bg_logistic_log_splitter.png');
+    width = 1;
+    height = 1;
+    powerArea = 0;
+    levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0)],
+                    [Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Splitter.in
+                ),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n],
+                    EnumItemType.SOLID, false, Splitter.out
+                )
+            ],
+            null, Splitter.work
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        if (!m.timer._isWorking) m.timer.begin(Config.BeltSecond);
+        if (m.inventory[0].isEmpty()) {
+            m.timer.toZero();
+            return false;
+        }
+        else {
+            if (m.timer.update(1)) {
+                m.inventory[1] = m.inventory[0];
+                m.inventory[0] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
+            }
+        }
+        return true;
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Storager implements Machine {
+    id = 'storager';
+    img = new imageAble(this.id, '/icon_port/icon_port_storager_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Storager.in
+                ),
+                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Storager.out
+                )
+            ],
+            null, (_) => true
+        )
+    ]
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        if (b === null || b?.inventory === null) return false;
+        const tail = b.inventory.getTail();
+        if (tail === null) return false;
+        for (const inv of m.inventory)
+            if (!inv.isEmpty() && !inv.isFull() && inv.item === tail.item && b.inventory.extract(inv)) { return true; }
+        for (const inv of m.inventory)
+            if (!inv.isFull() && b.inventory.extract(inv)) return true;
+        return false;
+    }
+
+    static out(b: BeltInstance | null, m: MachineInstance): boolean {
+        if (b === null || b?.inventory === null) return false;
+        for (const inv of m.inventory) {
+            if (inv.isEmpty()) continue;
+            if (b.inventory.insert(inv)) return true;
+        }
+        return false;
+    }
 
 
-    //connecter
-    public static readonly Connector: Machine = new Machine('connector', '/icon_belt/bg_logistic_log_connector.png', 1, 1, 0,
-        EnumMachineLevel.LOGISTIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_2_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.LEFT_n], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.LEFT_n], EnumItemType.SOLID, false, belter_Out),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP_n, Vector2.DOWN_n], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)], [Vector2.UP_n, Vector2.DOWN_n], EnumItemType.SOLID, false, belter_Out),
-            ], belter_Work)
-        ]
-    )
-    // converger
-    public static readonly Converter: Machine = new Machine('converter', '/icon_belt/bg_logistic_log_converger.png', 1, 1, 0,
-        EnumMachineLevel.LOGISTIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, false, belter_Out),
-            ], belter_Work)
-        ]
-    )
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
 
-    // spliter
-    public static readonly Splitter: Machine = new Machine('splitter', '/icon_belt/bg_logistic_log_splitter.png', 1, 1, 0,
-        EnumMachineLevel.LOGISTIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid_OneOnly, [
-                new PortGroup([new Vector2(0, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, true, belter_In),
-                new PortGroup([new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0)], [Vector2.RIGHT_n, Vector2.DOWN_n, Vector2.LEFT_n], EnumItemType.SOLID, false, belter_Out)
-            ], belter_Work)
-        ]
-    )
+class Loader implements Machine {
+    id = 'loader';
+    img = new imageAble(this.id, '/icon_port/icon_port_loader_1.png');
+    width = 3;
+    height = 1;
+    powerArea = 0;
+    levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
 
-    // 存储箱
-    public static readonly Storager: Machine = new Machine('storager', '/icon_port/icon_port_storager_1.png', 3, 3, -1,
-        EnumMachineLevel.STORAGE,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_6_Solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, Storager_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, Storager_Out)
-            ])
-        ]
-    );
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(1, 0)],
+                    [Vector2.UP_n],
+                    EnumItemType.SOLID, true, Loader.in
+                ),
+            ],
+            null, (_) => true
+        )
+    ]
 
-    public static readonly Loader: Machine = new Machine('loader', '/icon_port/icon_port_loader_1.png', 3, 1, 0,
-        EnumMachineLevel.STORAGE,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
-                new PortGroup([new Vector2(1, 0)], [Vector2.UP_n], EnumItemType.SOLID, true, Loader_In),
-            ])
-        ]
-    )
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
 
-    public static readonly Unloader: Machine = new Machine('unloader', '/icon_port/icon_port_unloader_1.png', 3, 1, 0,
-        EnumMachineLevel.STORAGE,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_markedSolid, [
-                new PortGroup([new Vector2(1, 0)], [Vector2.DOWN_n], EnumItemType.SOLID, false, Unloader_Out),
-            ])
-        ]
-    )
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
 
-    // 继电器
-    public static readonly PowerDiffuser: Machine = new Machine('power_diffuser', '/icon_port/icon_port_power_diffuser_1.png', 2, 2, 5, EnumMachineLevel.ELECTRIC,
-    );
+class Unloader implements Machine {
+    id = 'unloader';
+    img = new imageAble(this.id, '/icon_port/icon_port_unloader_1.png');
+    width = 3;
+    height = 1;
+    powerArea = 0;
+    levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(1, 0)],
+                    [Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Unloader.out
+                ),
+            ],
+            null, (_) => true
+        )
+    ]
+
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class PowerDiffuser implements Machine {
+    id = 'power_diffuser';
+    img = new imageAble(this.id, '/icon_port/icon_port_power_diffuser_1.png');
+    width = 2;
+    height = 2;
+    powerArea = 5;
+    levelType: EnumMachineLevel = EnumMachineLevel.ELECTRIC;
+
+    modes = [new MachineMode(MachineMode.soildMode, [], [], null, (_) => true)]
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
+
+class Connector implements Machine {
+    id = 'connector';
+    img = new imageAble(this.id, '/icon_belt/bg_logistic_log_connector.png');
+    width = 1;
+    height = 1;
+    powerArea = 0;
+    levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
+
+    modes = [
+        new MachineMode(MachineMode.soildMode,
+            [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 1, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 1, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 1, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 1, markOnly: false },
+            ],
+            [
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.RIGHT_n, Vector2.LEFT_n],
+                    EnumItemType.SOLID, true, Connector.in_horizontal
+                ),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.RIGHT_n, Vector2.LEFT_n],
+                    EnumItemType.SOLID, false, Connector.out_horizontal
+                ),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.UP_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, true, Connector.in_vertical
+                ),
+                new PortGroup([new Vector2(0, 0), new Vector2(0, 0)],
+                    [Vector2.UP_n, Vector2.DOWN_n],
+                    EnumItemType.SOLID, false, Connector.out_vertical
+                ),
+            ],
+            null, belter_Work
+        )
+    ]
+
+    static in_horizontal(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[0];
+        return single_in(b, inv);
+    }
+
+    static out_horizontal(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static in_vertical(b: BeltInstance | null, m: MachineInstance): boolean {
+        const inv = m.inventory[2];
+        return single_in(b, inv);
+    }
+
+    static out_vertical(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[3];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        return basic_work(m, m.currentMode.recipe);
+    }
+
+    constructor() {
+        MachineSet.allMachines.set(this.id,this);
+    }
+}
 
 
-    // 精炼炉
-    public static readonly Furnance: Machine = new Machine('furnance', '/icon_port/icon_port_furnance_1.png', 3, 3, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, furnance_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, furnance_Out)
-            ], furnance_Work)
-        ]
-    );
-    // 粉碎机
-    public static readonly Grinder: Machine = new Machine('grinder', '/icon_port/icon_port_grinder_1.png', 3, 3, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, grinder_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, grinder_Out)
-            ], grinder_Work)
-        ]
-    );
-    // 塑形机
-    public static readonly Shaper: Machine = new Machine('shaper', '/icon_port/icon_port_shaper_1.png', 3, 3, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, shaper_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, shaper_Out)
-            ], shaper_Work)
-        ]
-    );
-    // 配件机
-    public static readonly Component: Machine = new Machine('component', '/icon_port/icon_port_cmpt_mc_1.png', 3, 3, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, component_In),
-                new PortGroup([new Vector2(0, 2), new Vector2(1, 2), new Vector2(2, 2)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, component_Out)
-            ], component_Work)
-        ]
-    );
-    // 种植机
-    public static readonly Planter: Machine = new Machine('planter', '/icon_port/icon_port_planter_1.png', 5, 5, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, planter_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, planter_Out)
-            ], planter_Work),
-            new MachineMode(MachineMode.liquidMode, EnumInventoryType.Storage_2x1_liquid_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, planter_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, planter_Out),
-                new PortGroup([new Vector2(0, 2)], [Vector2.LEFT_n], EnumItemType.LIQUID, true, planter_In_liquid)
-            ], planter_Work)
-        ]
-    );
-    // 采种机
-    public static readonly Seedcollector: Machine = new Machine('seedcollector', '/icon_port/icon_port_seedcol_1.png', 5, 5, -1,
-        EnumMachineLevel.BASIC,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, seedcollector_In),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, seedcollector_Out)
-            ], seedcollector_Work)
-        ]
-    );
+export class MachineSet {
+    static allMachines: Map<string, Machine> = new Map<string, Machine>();
 
-    // 装备原件机
-    public static readonly Winder: Machine = new Machine('winder', '/icon_port/icon_port_winder_1.png', 6, 4, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, winder_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, winder_Out)
-            ], winder_Work)
-        ]
-    );
-    // 灌装机
-    public static readonly FillingMachine: Machine = new Machine('fillingmachine', '/icon_port/icon_port_filling_pd_mc_1.png', 6, 4, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, fillingmachine_In_soild),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, fillingmachine_Out)
-            ], fillingmachine_Work)
-        ]
-    );
-    // 封装机
-    public static readonly AssemblyMachine: Machine = new Machine('assemblymachine', '/icon_port/icon_port_tools_asm_mc_1.png', 6, 4, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, assemblymachine_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, assemblymachine_Out)
-            ], assemblymachine_Work)
-        ]
-    );
-    // 研磨机
-    public static readonly Thickener: Machine = new Machine('thickener', '/icon_port/icon_port_thickener_1.png', 6, 4, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, thickener_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, thickener_Out)
-            ], thickener_Work)
-        ]
-    );
-    // 反应池
-    public static readonly MixPool: Machine = new Machine('mixpool', '/icon_port/icon_port_mix_pool_1.png', 5, 5, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, mixpool_In),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, mixpool_Out)
-            ], mixpool_Work)
-        ]
-    );
-    // 天有烘炉
-    public static readonly XiraniteOven: Machine = new Machine('xiraniteoven', '/icon_port/icon_port_xiranite_oven_1.png', 5, 5, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_1_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, xiraniteoven_In_soild),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, xiraniteoven_Out)
-            ], xiraniteoven_Work)
-        ]
-    );
-    // 拆解机
-    public static readonly Dismantler: Machine = new Machine('dismantler', '/icon_port/icon_port_dismantler_1.png', 6, 4, -1,
-        EnumMachineLevel.ADVANCED,
-        [
-            new MachineMode(MachineMode.soildMode, EnumInventoryType.Storage_2_solid_1_solid, [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0), new Vector2(5, 0)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, true, dismantler_In),
-                new PortGroup([new Vector2(0, 3), new Vector2(1, 3), new Vector2(2, 3), new Vector2(3, 3), new Vector2(4, 3), new Vector2(5, 3)], [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n], EnumItemType.SOLID, false, dismantler_Out)
-            ], dismantler_Work)
-        ]
-    );
+    static readonly Connector: Machine = new Connector();
+    static readonly Converter: Machine = new Converter();
+    static readonly Splitter: Machine = new Splitter();
+    static readonly Storager: Machine = new Storager();
+    static readonly Loader: Machine = new Loader();
+    static readonly Unloader: Machine = new Unloader();
+    static readonly PowerDiffuser: Machine = new PowerDiffuser();
+    static readonly Furnance: Machine = new Furnance();
+    static readonly Grinder: Machine = new Grinder();
+    static readonly Shaper: Machine = new Shaper();
+    static readonly Component: Machine = new Component();
+    static readonly Planter: Machine = new Planter();
+    static readonly Seedcollector: Machine = new Seedcollector();
+    static readonly Winder: Machine = new Winder();
+    static readonly FillingMachine: Machine = new FillingMachine();
+    static readonly AssemblyMachine: Machine = new AssemblyMachine();
+    static readonly Thickener: Machine = new Thickener();
+    static readonly MixPool: Machine = new MixPool();
+    static readonly XiraniteOven: Machine = new XiraniteOven();
+    static readonly Dismantler: Machine = new Dismantler();
 }

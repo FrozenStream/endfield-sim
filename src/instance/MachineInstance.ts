@@ -1,5 +1,5 @@
 import type { Item } from "../proto/Item";
-import type { ItemStack } from "../proto/ItemStack";
+import { ItemStack } from "../proto/ItemStack";
 import type { Machine, MachineMode, PortGroup } from "../proto/Machines";
 import { Config } from "../utils/Config";
 import type EnumItemType from "../utils/EnumItemType";
@@ -211,7 +211,7 @@ export class MachineInstance {
 
 
     public build() {
-        this.inventory = this.currentMode.inventory.buildItemStack();
+        this.inventory = this.currentMode.inventory.map(config => new ItemStack(null, config.type, 0, config.max));
         this.portGroupInsts = this.currentMode.portGroups.map(portGroup => new portGroupInstance(this, portGroup));
         this.curInv = null;
         this.curRecipe = null;

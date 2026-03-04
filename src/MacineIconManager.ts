@@ -1,7 +1,7 @@
 import { Belt } from "./proto/Belt";
 import I18n from "./utils/I18n";
-import { Machine } from "./proto/Machines";
 import type { GridMap } from "./GridMap";
+import { MachineSet, type Machine } from "./proto/Machines";
 
 export class MachinesIconsManager {
     private iconCollection: HTMLElement;
@@ -16,7 +16,7 @@ export class MachinesIconsManager {
         this.iconCollection = document.getElementById(collectionId)!;
         this.gridMap = gridMap;
         this.addBeltIcon(Belt.soildBelt);
-        for (const [_, machine] of Machine.allMachines) {
+        for (const [_, machine] of MachineSet.allMachines) {
             this.addMachineIcon(machine);
         }
     }
@@ -65,7 +65,7 @@ export class MachinesIconsManager {
                 this.cancel();
                 return;
             }
-            this.select(machine, iconElement);
+            this.selectMachine(machine, iconElement);
         });
     }
 
@@ -90,7 +90,7 @@ export class MachinesIconsManager {
                 this.cancel();
                 return;
             }
-            this.select(belt, iconElement);
+            this.selectBelt(belt, iconElement);
         });
     }
 
@@ -101,12 +101,20 @@ export class MachinesIconsManager {
         this.selectedIcon = null;
     }
 
-    public select(type: Machine | Belt, icon: HTMLDivElement) {
+    private selectMachine(type: Machine, icon: HTMLDivElement) {
         if (this.selectedIcon) this.selectedIcon.classList.remove('machine-selected');
         // 更新选中的图标引用
         this.selectedIcon = icon;
-        if (type instanceof Machine) this.gridMap.PreviewMachine = type;
-        if (type instanceof Belt) this.gridMap.PreviewBelt = type;
+        this.gridMap.PreviewMachine = type;
+        // 添加selected类到当前选中的图标
+        this.selectedIcon.classList.add('machine-selected');
+    }
+
+    private selectBelt(type: Belt, icon: HTMLDivElement) {
+        if (this.selectedIcon) this.selectedIcon.classList.remove('machine-selected');
+        // 更新选中的图标引用
+        this.selectedIcon = icon;
+        this.gridMap.PreviewBelt = type;
         // 添加selected类到当前选中的图标
         this.selectedIcon.classList.add('machine-selected');
     }

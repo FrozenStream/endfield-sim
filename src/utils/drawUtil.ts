@@ -160,6 +160,42 @@ export function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineI
     drawMachinePort(canvas, instance, gridSize);
 }
 
+function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
+    canvas.beginPath();
+    const LT: Vector2 = instance.left_top!;
+
+    for (const group of instance.currentMode.portGroups) {
+        for (let i = 0; i < group.length; i++) {
+            const center = Vector2.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
+            const direc = Vector2.DIREC[group.direction[i]];
+            let v2 = direc.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
+            let v1 = direc.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
+            let v3 = direc.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
+
+            if (group.isIn) {
+                const offset = direc.rotateCW(instance.rotation).mul(0.4);
+                v1.subSelf(offset);
+                v2.subSelf(offset);
+                v3.subSelf(offset);
+            }
+            else {
+                const offset = direc.rotateCW(instance.rotation).mul(0.3);
+                v1.addSelf(offset);
+                v2.addSelf(offset);
+                v3.addSelf(offset);
+            }
+            v1.mulSelf(gridSize);
+            v2.mulSelf(gridSize);
+            v3.mulSelf(gridSize);
+
+            canvas.moveTo(v1.x, v1.y);
+            canvas.lineTo(v2.x, v2.y);
+            canvas.lineTo(v3.x, v3.y);
+        }
+    }
+    canvas.stroke();
+}
+
 export function drawAttention(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     if (!instance.rect) return;
 
@@ -205,41 +241,6 @@ export function drawBeltAttention(canvas: CanvasRenderingContext2D, instance: Be
     canvas.fill();
 }
 
-function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
-    canvas.beginPath();
-    const LT: Vector2 = instance.left_top!;
-
-    for (const group of instance.currentMode.portGroups) {
-        for (let i = 0; i < group.length; i++) {
-            const center = Vector2.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
-            const direc = Vector2.DIREC[group.direction[i]];
-            let v2 = direc.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
-            let v1 = direc.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
-            let v3 = direc.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
-
-            if (group.isIn) {
-                const offset = direc.rotateCW(instance.rotation).mul(0.4);
-                v1.subSelf(offset);
-                v2.subSelf(offset);
-                v3.subSelf(offset);
-            }
-            else {
-                const offset = direc.rotateCW(instance.rotation).mul(0.3);
-                v1.addSelf(offset);
-                v2.addSelf(offset);
-                v3.addSelf(offset);
-            }
-            v1.mulSelf(gridSize);
-            v2.mulSelf(gridSize);
-            v3.mulSelf(gridSize);
-
-            canvas.moveTo(v1.x, v1.y);
-            canvas.lineTo(v2.x, v2.y);
-            canvas.lineTo(v3.x, v3.y);
-        }
-    }
-    canvas.stroke();
-}
 
 
 export function drawRectLinesFill(canvas: CanvasRenderingContext2D, rect: Rect | null, gridSize: number) {

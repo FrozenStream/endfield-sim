@@ -8,17 +8,17 @@ import { MachineMode } from "./Machines";
 import { Recipes, type BasicRecipe, type AdvanceRecipe2x1, type AdvanceRecipe1x2 } from "./Recipe";
 
 
-function single_in(b: BeltInstance | null, inv: ItemStack) {
+export function single_in(b: BeltInstance | null, inv: ItemStack) {
     if (b === null || b?.inventory === null) return false;
     return b.inventory.extract(inv);
 }
 
-function single_out(b: BeltInstance | null, inv: ItemStack) {
+export function single_out(b: BeltInstance | null, inv: ItemStack) {
     if (b === null || b?.inventory === null) return false;
     return b.inventory.insert(inv);
 }
 
-function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
+export function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
     if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty()) {
@@ -47,7 +47,7 @@ function basic_work(m: MachineInstance, recipe: BasicRecipe): boolean {
     return true;
 }
 
-function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean {
+export function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean {
     if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty() || m.inventory[1].isEmpty()) {
@@ -78,7 +78,7 @@ function advance_work_2x1(m: MachineInstance, recipe: AdvanceRecipe2x1): boolean
     return true;
 }
 
-function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean {
+export function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): boolean {
     if (m.onPower === false && m.machine.powerArea < 0) return false;
 
     if (m.inventory[0].isEmpty()) {
@@ -144,7 +144,6 @@ export function belter_Work(m: MachineInstance): boolean {
     return true;
 }
 
-
 export function Loader_In(b: BeltInstance | null, m: MachineInstance): boolean {
     if (b === null || b?.inventory === null) return false;
     const tmp = new ItemStack(null, EnumItemType.ANY, 0);
@@ -179,36 +178,9 @@ export function Storager_Out(b: BeltInstance | null, m: MachineInstance): boolea
     return false;
 }
 
-export function furnance_In(b: BeltInstance | null, m: MachineInstance): boolean {
-    const inv = m.inventory[0];
-    return single_in(b, inv);
-}
 
-export function furnance_Out(b: BeltInstance | null, m: MachineInstance): boolean {
-    const inv = m.inventory[1];
-    return single_out(b, inv);
-}
 
-export function furnance_Work(m: MachineInstance): boolean {
-    const recipe = Recipes.furnance_recipe;
-    return basic_work(m, recipe);
-}
 
-// 粉碎机接口
-export function grinder_In(b: BeltInstance | null, m: MachineInstance): boolean {
-    const inv = m.inventory[0];
-    return single_in(b, inv);
-}
-
-export function grinder_Out(b: BeltInstance | null, m: MachineInstance): boolean {
-    const inv = m.inventory[1];
-    return single_out(b, inv);
-}
-
-export function grinder_Work(m: MachineInstance): boolean {
-    const recipe = Recipes.grinder_recipe;
-    return basic_work(m, recipe);
-}
 
 // 塑形机接口
 export function shaper_In(b: BeltInstance | null, m: MachineInstance): boolean {
