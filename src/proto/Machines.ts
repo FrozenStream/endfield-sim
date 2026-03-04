@@ -136,7 +136,7 @@ class Furnance implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id, this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -183,7 +183,7 @@ class Grinder implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -230,7 +230,7 @@ class Shaper implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -277,7 +277,7 @@ class Component implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -350,7 +350,7 @@ class Planter implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -397,7 +397,7 @@ class Seedcollector implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -444,7 +444,7 @@ class Winder implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -508,7 +508,7 @@ class FillingMachine implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -555,7 +555,7 @@ class AssemblyMachine implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -602,7 +602,7 @@ class Thickener implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -649,7 +649,7 @@ class MixPool implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -696,7 +696,7 @@ class XiraniteOven implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -743,7 +743,7 @@ class Dismantler implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -801,7 +801,7 @@ class Converter implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -859,7 +859,7 @@ class Splitter implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -913,7 +913,7 @@ class Storager implements Machine {
 
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -947,7 +947,7 @@ class Loader implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -981,7 +981,7 @@ class Unloader implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -996,7 +996,7 @@ class PowerDiffuser implements Machine {
     modes = [new MachineMode(MachineMode.soildMode, [], [], null, (_) => true)]
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
@@ -1063,14 +1063,13 @@ class Connector implements Machine {
     }
 
     constructor() {
-        MachineSet.allMachines.set(this.id,this);
+        allMachines.set(this.id,this);
     }
 }
 
+export const allMachines: Map<string, Machine> = new Map<string, Machine>();
 
 export class MachineSet {
-    static allMachines: Map<string, Machine> = new Map<string, Machine>();
-
     static readonly Connector: Machine = new Connector();
     static readonly Converter: Machine = new Converter();
     static readonly Splitter: Machine = new Splitter();

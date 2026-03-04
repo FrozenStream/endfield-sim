@@ -1,7 +1,7 @@
 import { Belt } from "./proto/Belt";
 import I18n from "./utils/I18n";
 import type { GridMap } from "./GridMap";
-import { MachineSet, type Machine } from "./proto/Machines";
+import { allMachines, type Machine } from "./proto/Machines";
 
 export class MachinesIconsManager {
     private iconCollection: HTMLElement;
@@ -16,7 +16,7 @@ export class MachinesIconsManager {
         this.iconCollection = document.getElementById(collectionId)!;
         this.gridMap = gridMap;
         this.addBeltIcon(Belt.soildBelt);
-        for (const [_, machine] of MachineSet.allMachines) {
+        for (const [_, machine] of allMachines) {
             this.addMachineIcon(machine);
         }
     }
