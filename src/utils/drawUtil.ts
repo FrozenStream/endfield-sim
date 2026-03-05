@@ -524,9 +524,8 @@ export function drawBeltAttention(canvas: CanvasRenderingContext2D, instance: Be
     if (!belt.sections) return;
     for (const sec of belt.sections) {
         const vec = sec.position;
-        canvas.rect(vec.x * gridSize, vec.y * gridSize, gridSize, gridSize);
+        canvas.fillRect(vec.x * gridSize, vec.y * gridSize, gridSize, gridSize);
     }
-    canvas.fill();
 }
 
 export function drawRectLinesFill(canvas: CanvasRenderingContext2D, rect: Rect | null, gridSize: number) {

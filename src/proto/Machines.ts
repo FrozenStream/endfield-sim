@@ -13,7 +13,6 @@ import {
 import { imageAble } from "../utils/imageAble";
 import EnumMachineLevel from "../utils/EnumMachineLevel";
 import { Recipes } from "./Recipe";
-import { Config } from "../utils/Config";
 import { ItemStack } from "./ItemStack";
 import { Item, itemsTostring } from "./Item";
 

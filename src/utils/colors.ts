@@ -25,7 +25,7 @@ export const COLORS = {
 
   // 预览模式下机器/传送带的边框颜色（半透明蓝色）
   LIGHT_BLUE: 'rgba(135, 135, 210, 0.2)',
-  BLUE: 'rgba(100, 100, 255, 0.75)',
+  BLUE: 'rgba(100, 100, 250, 0.3)',
 
   // 重叠提示颜色（橙色）
   OVERLAP_WARNING: 'rgba(255, 165, 0, 0.6)',
