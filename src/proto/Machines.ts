@@ -1,5 +1,5 @@
 import type { BeltInstance } from "../instance/BeltInstance";
-import { portGroupInstance, portInstance, type MachineInstance } from "../instance/MachineInstance";
+import { portGroupInstance, portInstance, WorkTimer, type MachineInstance } from "../instance/MachineInstance";
 import EnumItemType from "../utils/EnumItemType";
 import Vector2 from "../utils/Vector2";
 import {
@@ -15,6 +15,7 @@ import EnumMachineLevel from "../utils/EnumMachineLevel";
 import { Recipes } from "./Recipe";
 import { Config } from "../utils/Config";
 import { ItemStack } from "./ItemStack";
+import { Item, itemsTostring } from "./Item";
 
 
 export class PortGroup {
@@ -52,7 +53,7 @@ export class PortGroup {
 
 }
 
-interface InventoryConfig {
+export interface InventoryConfig {
     type: EnumItemType;
     noIn: boolean;
     noOut: boolean;
@@ -61,22 +62,17 @@ interface InventoryConfig {
 }
 
 export class MachineMode {
-    readonly id: string;
     readonly inventory: InventoryConfig[];
     readonly portGroups: PortGroup[];
 
-    readonly recipe: any;
+    readonly recipe: Map<any, any>;
     working: (instance: MachineInstance) => boolean;
-    constructor(id: string, storage: InventoryConfig[], ports: PortGroup[], recipe: any, working: (instance: MachineInstance) => boolean) {
-        this.id = id;
+    constructor(storage: InventoryConfig[], ports: PortGroup[], recipe: any, working: (instance: MachineInstance) => boolean) {
         this.inventory = storage;
         this.portGroups = ports;
         this.recipe = recipe;
         this.working = working;
     }
-
-    public static readonly soildMode: string = 'soildMode';
-    public static readonly liquidMode: string = 'liquidMode';
 }
 
 export interface Machine {
@@ -100,7 +96,7 @@ class Furnance implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -149,7 +145,7 @@ class Grinder implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -183,7 +179,7 @@ class Grinder implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -196,7 +192,7 @@ class Shaper implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -230,7 +226,7 @@ class Shaper implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -243,7 +239,7 @@ class Component implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -277,7 +273,7 @@ class Component implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -290,7 +286,7 @@ class Planter implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -307,7 +303,7 @@ class Planter implements Machine {
             ],
             Recipes.planter_recipe_soild, Planter.work
         ),
-        new MachineMode(MachineMode.liquidMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -350,7 +346,7 @@ class Planter implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -363,7 +359,7 @@ class Seedcollector implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -397,7 +393,7 @@ class Seedcollector implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -410,8 +406,9 @@ class Winder implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
@@ -444,7 +441,7 @@ class Winder implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -457,8 +454,9 @@ class FillingMachine implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
@@ -474,9 +472,10 @@ class FillingMachine implements Machine {
             ],
             Recipes.filling_machine_recipe_basic, FillingMachine.work
         ),
-        new MachineMode(MachineMode.liquidMode,
+        new MachineMode(
             [
                 { type: EnumItemType.LIQUID, noIn: false, noOut: true, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
             [
@@ -508,7 +507,7 @@ class FillingMachine implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -521,8 +520,9 @@ class AssemblyMachine implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
@@ -555,7 +555,7 @@ class AssemblyMachine implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -568,8 +568,9 @@ class Thickener implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
@@ -602,7 +603,7 @@ class Thickener implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -615,20 +616,31 @@ class MixPool implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
-                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
-                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.ANY, noIn: false, noOut: false, max: 50, markOnly: false },
             ],
             [
-                new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0), new Vector2(3, 0), new Vector2(4, 0)],
-                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                new PortGroup([new Vector2(1, 0), new Vector2(3, 0)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n],
                     EnumItemType.SOLID, true, MixPool.in
                 ),
-                new PortGroup([new Vector2(0, 4), new Vector2(1, 4), new Vector2(2, 4), new Vector2(3, 4), new Vector2(4, 4)],
-                    [Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n, Vector2.DOWN_n],
+                new PortGroup([new Vector2(1, 4), new Vector2(3, 4)],
+                    [Vector2.DOWN_n, Vector2.DOWN_n],
                     EnumItemType.SOLID, false, MixPool.out
-                )
+                ),
+                new PortGroup([new Vector2(0, 1), new Vector2(0, 3)],
+                    [Vector2.RIGHT_n, Vector2.RIGHT_n],
+                    EnumItemType.LIQUID, true, MixPool.in
+                ),
+                new PortGroup([new Vector2(4, 1), new Vector2(4, 3)],
+                    [Vector2.RIGHT_n, Vector2.RIGHT_n],
+                    EnumItemType.LIQUID, false, MixPool.in
+                ),
             ],
             Recipes.mix_pool_recipe, MixPool.work
         )
@@ -644,12 +656,58 @@ class MixPool implements Machine {
         return single_out(b, inv);
     }
 
+    static readonly timer1: number[] = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+    static readonly timer2: number[] = [1, 2, 3, 4, 2, 3, 4, 3, 4, 4];
+
     static work(m: MachineInstance): boolean {
-        return advance_work_2x1(m, m.currentMode.recipe);
+        const recipe = m.currentMode.recipe;
+        if (m.onPower === false && m.machine.powerArea < 0) return false;
+        if (m.tmp_timers.length === 0) m.tmp_timers = Array.from({ length: 10 }, () => new WorkTimer());
+        for (let i = 0; i < m.tmp_timers.length; i++) {   // 每个计时器独立计算库存
+            const timer = m.tmp_timers[i];
+            const stack1 = m.inventory[MixPool.timer1[i]];
+            const stack2 = m.inventory[MixPool.timer2[i]];
+            if (stack1.isEmpty() || stack2.isEmpty()) continue;
+            const inv: string = itemsTostring([stack1.item, stack2.item]);
+
+            if (inv !== timer.input) {
+                if (recipe.has(inv)) {
+                    const r = recipe.get(inv)!;
+                    timer.begin(inv, r.out, r.count, r.time);
+                }
+                else timer.reset();
+            }
+
+            if (timer.isWorking && (timer.out instanceof Item) && timer.count &&
+                stack1.count >= timer.count[0] && stack2.count >= timer.count[1]) {
+                const item = m.inventory[timer._outID].item;    // 若预定出口被占用
+                if (item && item !== timer.out) {
+                    for (let k = 0; k < m.inventory.length; k++) {
+                        const item = m.inventory[k].item;
+                        if (item === null || item === timer.out) { timer._outID = k; break; }
+                    }
+                }
+                if (item && item !== timer.out) { timer.toZero(); continue; }   // 找不到新出口，重置
+
+                const outItem = timer.out as Item;
+                if (timer.update(1)) {
+                    const newStack = new ItemStack(outItem, EnumItemType.ANY, timer.count[2]);
+                    const outStack1 = new ItemStack(null, EnumItemType.ANY, 0);
+                    const outStack2 = new ItemStack(null, EnumItemType.ANY, 0);
+                    m.inventory[timer._outID].merge(newStack);
+                    stack1.split(outStack1, timer.count[0]);
+                    stack2.split(outStack2, timer.count[1]);
+                }
+            }
+            else timer.toZero();
+        }
+
+
+        return true;
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -662,8 +720,9 @@ class XiraniteOven implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
+                { type: EnumItemType.LIQUID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
             ],
@@ -696,7 +755,7 @@ class XiraniteOven implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -709,7 +768,7 @@ class Dismantler implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.ADVANCED;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -743,7 +802,7 @@ class Dismantler implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -756,7 +815,7 @@ class Converter implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -771,7 +830,7 @@ class Converter implements Machine {
                     EnumItemType.SOLID, false, Converter.out
                 ),
             ],
-            null, Converter.work
+            null, belter_Work
         )
     ]
 
@@ -785,23 +844,8 @@ class Converter implements Machine {
         return single_out(b, inv);
     }
 
-    static work(m: MachineInstance): boolean {
-        if (!m.timer._isWorking) m.timer.begin(Config.BeltSecond);
-        if (m.inventory[0].isEmpty()) {
-            m.timer.toZero();
-            return false;
-        }
-        else {
-            if (m.timer.update(1)) {
-                m.inventory[1] = m.inventory[0];
-                m.inventory[0] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
-            }
-        }
-        return true;
-    }
-
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -814,7 +858,7 @@ class Splitter implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
@@ -829,7 +873,7 @@ class Splitter implements Machine {
                     EnumItemType.SOLID, false, Splitter.out
                 )
             ],
-            null, Splitter.work
+            null, belter_Work
         )
     ]
 
@@ -843,23 +887,8 @@ class Splitter implements Machine {
         return single_out(b, inv);
     }
 
-    static work(m: MachineInstance): boolean {
-        if (!m.timer._isWorking) m.timer.begin(Config.BeltSecond);
-        if (m.inventory[0].isEmpty()) {
-            m.timer.toZero();
-            return false;
-        }
-        else {
-            if (m.timer.update(1)) {
-                m.inventory[1] = m.inventory[0];
-                m.inventory[0] = new ItemStack(null, EnumItemType.SOLID, 0, 1);
-            }
-        }
-        return true;
-    }
-
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -872,10 +901,14 @@ class Storager implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
-                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
-                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: false, noOut: false, max: 50, markOnly: false },
             ],
             [
                 new PortGroup([new Vector2(0, 0), new Vector2(1, 0), new Vector2(2, 0)],
@@ -911,9 +944,8 @@ class Storager implements Machine {
         return false;
     }
 
-
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -926,11 +958,8 @@ class Loader implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
-            [
-                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
-                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
-            ],
+        new MachineMode(
+            [],
             [
                 new PortGroup([new Vector2(1, 0)],
                     [Vector2.UP_n],
@@ -947,7 +976,7 @@ class Loader implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -960,10 +989,9 @@ class Unloader implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.STORAGE;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
-                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 50, markOnly: false },
-                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 50, markOnly: false },
+                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 0, markOnly: true },
             ],
             [
                 new PortGroup([new Vector2(1, 0)],
@@ -981,7 +1009,7 @@ class Unloader implements Machine {
     }
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -993,10 +1021,10 @@ class PowerDiffuser implements Machine {
     powerArea = 5;
     levelType: EnumMachineLevel = EnumMachineLevel.ELECTRIC;
 
-    modes = [new MachineMode(MachineMode.soildMode, [], [], null, (_) => true)]
+    modes = [new MachineMode([], [], null, (_) => true)]
 
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
     }
 }
 
@@ -1009,7 +1037,7 @@ class Connector implements Machine {
     levelType: EnumMachineLevel = EnumMachineLevel.LOGISTIC;
 
     modes = [
-        new MachineMode(MachineMode.soildMode,
+        new MachineMode(
             [
                 { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 1, markOnly: false },
                 { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 1, markOnly: false },
@@ -1058,12 +1086,38 @@ class Connector implements Machine {
         return single_out(b, inv);
     }
 
-    static work(m: MachineInstance): boolean {
-        return basic_work(m, m.currentMode.recipe);
-    }
-
     constructor() {
-        allMachines.set(this.id,this);
+        allMachines.set(this.id, this);
+    }
+}
+
+
+class Pump implements Machine {
+    id = 'pump';
+    img = new imageAble(this.id, '/icon_port/icon_port_pump_1.png');
+    width = 3;
+    height = 3;
+    powerArea = -1;
+    levelType: EnumMachineLevel = EnumMachineLevel.BASIC;
+
+    modes = [
+        new MachineMode(
+            [
+                { type: EnumItemType.LIQUID, noIn: false, noOut: false, max: 50, markOnly: false }
+            ],
+            [
+                new PortGroup(
+                    [new Vector2(0, 1)],
+                    [Vector2.LEFT_n],
+                    EnumItemType.LIQUID, true, Pump.in
+                ),
+            ],
+            null, (_) => true
+        )
+    ];
+
+    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+        return true;
     }
 }
 

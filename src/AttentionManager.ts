@@ -1,8 +1,8 @@
-import { BeltInstance, BeltSec } from "./instance/BeltInstance";
+import { BeltSec } from "./instance/BeltInstance";
 import { MachineInstance, portInstance, WorkTimer } from "./instance/MachineInstance";
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
-import { EnumInventoryType } from "./utils/EnumInventoryType";
+import type { InventoryConfig } from "./proto/Machines";
 import type Vector2 from "./utils/Vector2";
 
 
@@ -15,7 +15,7 @@ export class AttentionManager {
     private selectingSlot: HTMLDivElement | null = null;
     private selectingInv: ItemStack | null = null;
 
-    private currentflash: (() => void) | null = null;
+    private currentflash: (() => void)[] = [];
     private container: HTMLElement;
 
     constructor(container: HTMLElement) {
@@ -23,45 +23,20 @@ export class AttentionManager {
     }
 
     public flash() {
-        if (this.currentflash) {
-            this.currentflash();
-        }
+        this.currentflash.forEach(func => func());
     }
 
     set select(instance: MachineInstance | portInstance | BeltSec | null) {
         console.log('select', instance);
         if (!instance) { this.cancel(); return; }
         if (instance instanceof MachineInstance && instance !== this.selecting) {
-            this.openAny(instance);
+            this.clear();
+            this.createLayout(instance);
         }
         else if (instance instanceof BeltSec) {
             this.clear();
         }
         this.selecting = instance;
-    }
-
-    private openAny(instance: MachineInstance) {
-        this.clear();
-        switch (instance.currentMode.inventory) {
-            case EnumInventoryType.Storage_1_solid_1_solid_OneOnly:
-                this.createLayout_1_solid_1_solid(instance);
-                break;
-            case EnumInventoryType.Storage_1_solid_1_solid:
-                this.createLayout_1_solid_1_solid(instance);
-                break;
-            case EnumInventoryType.Storage_2_solid_1_solid:
-                this.createLayout_2_solid_1_solid(instance);
-                break;
-            case EnumInventoryType.Storage_2_solid_2_solid_OneOnly:
-                this.createLayout_2_solid_2_solid_OneOnly(instance);
-                break;
-            case EnumInventoryType.Storage_6_Solid:
-                this.createLayout_6_Solid(instance);
-                break;
-            case EnumInventoryType.Storage_1_markedSolid:
-                this.createLayout_1_markedSolid(instance);
-                break;
-        }
     }
 
     get select(): MachineInstance | portInstance | BeltSec | null {
@@ -88,10 +63,7 @@ export class AttentionManager {
         const newStack = new ItemStack(item, item.type, 1);
         this.selectingInv.merge(newStack);
 
-        // 添加物品后立即刷新显示
-        if (this.currentflash) {
-            this.currentflash();
-        }
+        this.flash();
     }
 
 
@@ -101,15 +73,47 @@ export class AttentionManager {
         if (this.selectingInv.count === 0) this.selectingInv.item = null;
         this.selectingInv.count = Math.max(0, this.selectingInv.count - 1);
 
-        // 添加物品后立即刷新显示
-        if (this.currentflash) {
-            this.currentflash();
-        }
+        this.flash();
     }
 
-    buildInSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
+    buildSlot(config: InventoryConfig): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
         const inputSlot = document.createElement('div');
-        inputSlot.className = 'slot input-slot';
+        // 根据类型和noIn/noOut设置不同的类名和颜色
+        let baseClass = 'slot';
+        
+        // 根据类型添加类名
+        switch(config.type.toString()) {
+            case 'solid':
+                baseClass += ' solid-slot';
+                break;
+            case 'liquid':
+                baseClass += ' liquid-slot';
+                break;
+            case 'any':
+                baseClass += ' any-slot';
+                break;
+            default:
+                baseClass += ' default-slot';
+                break;
+        }
+        
+        // 根据noIn和noOut添加状态类名
+        if (config.noIn && config.noOut) {
+            // 既不能输入也不能输出：禁用状态
+            baseClass += ' disabled-slot';
+        } else if (config.noIn && !config.noOut) {
+            // 不能输入但可以输出：只出
+            baseClass += ' output-only-slot';
+        } else if (!config.noIn && config.noOut) {
+            // 可以输入但不能输出：只入
+            baseClass += ' input-only-slot';
+        } else {
+            // 既可以输入也可以输出：普通状态
+            baseClass += ' input-output-slot';
+        }
+        
+        inputSlot.className = baseClass;
+        
         const plusSign = document.createElement('span');
         plusSign.className = 'plus-sign';
         plusSign.textContent = '+';
@@ -148,59 +152,6 @@ export class AttentionManager {
         return [inputSlot, img, numberDisplay];
     }
 
-    buildArrayMark(): HTMLDivElement {
-        const arrowContainer = document.createElement('div');
-        arrowContainer.className = 'arrow-container';
-        const arrow = document.createElement('div');
-        arrow.className = 'arrow';
-        arrow.textContent = '→';
-        arrowContainer.appendChild(arrow);
-        return arrowContainer;
-    }
-
-    buildOutSlot_Solid(): [HTMLDivElement, HTMLImageElement, HTMLSpanElement] {
-        const outputSlot = document.createElement('div');
-        outputSlot.className = 'slot output-slot';
-        const outputPlusSign = document.createElement('span');
-        outputPlusSign.className = 'plus-sign';
-        outputPlusSign.textContent = '+';
-        outputSlot.appendChild(outputPlusSign);
-
-        // 添加覆盖整个方格的 img 元素，初始 src 为空
-        const img = document.createElement('img');
-        img.className = 'slot-overlay-image';
-        img.src = ''; // 初始为空
-        img.style.position = 'absolute';
-        img.style.top = '0';
-        img.style.left = '0';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        img.style.pointerEvents = 'none'; // 确保不会干扰点击事件
-        outputSlot.appendChild(img);
-
-        // 添加右下角数字显示元素
-        const numberDisplay = document.createElement('span');
-        numberDisplay.className = 'slot-number-display';
-        numberDisplay.textContent = '0';
-        numberDisplay.style.position = 'absolute';
-        numberDisplay.style.bottom = '2px';
-        numberDisplay.style.right = '2px';
-        numberDisplay.style.fontSize = '12px';
-        numberDisplay.style.fontWeight = 'bold';
-        numberDisplay.style.color = '#ffffff';
-        numberDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-        numberDisplay.style.padding = '1px 4px';
-        numberDisplay.style.borderRadius = '3px';
-        numberDisplay.style.pointerEvents = 'none';
-        numberDisplay.style.zIndex = '10';
-        numberDisplay.style.display = 'none'; // 初始隐藏
-        outputSlot.appendChild(numberDisplay);
-
-        return [outputSlot, img, numberDisplay];
-    }
-
-    // 构建进度条元素
     buildProgressBar(): HTMLDivElement {
         const progressBarContainer = document.createElement('div');
         progressBarContainer.className = 'progress-bar-container';
@@ -218,8 +169,7 @@ export class AttentionManager {
         return progressBarContainer;
     }
 
-    // 动态创建槽位布局
-    createLayout_2_solid_1_solid(instance: MachineInstance): void {
+    createLayout(instance: MachineInstance): void {
         const layout = document.createElement('div');
         layout.className = 'belt-slots-layout';
 
@@ -227,172 +177,21 @@ export class AttentionManager {
         const slotsRow = document.createElement('div');
         slotsRow.className = 'slots-row';
 
-        // 创建输入槽位容器
-        const inputSlots = document.createElement('div');
-        inputSlots.className = 'input-slots';
+        const invConfigs: InventoryConfig[] = instance.currentMode.inventory;
 
-        const [inputSlot1, img1, num1] = this.buildInSlot_Solid();
-        const [inputSlot2, img2, num2] = this.buildInSlot_Solid();
-        inputSlots.appendChild(inputSlot1);
-        inputSlots.appendChild(inputSlot2);
-
-        // 创建箭头容器
-        const arrowContainer = this.buildArrayMark();
-
-        // 创建输出槽位容器
-        const outputSlots = document.createElement('div');
-        outputSlots.className = 'output-slots';
-
-        const [outputSlot, img3, num3] = this.buildOutSlot_Solid();
-        outputSlots.appendChild(outputSlot);
-
-        // 组装槽位行
-        slotsRow.appendChild(inputSlots);
-        slotsRow.appendChild(arrowContainer);
-        slotsRow.appendChild(outputSlots);
-
-        // 创建进度条
-        const progressBar = this.buildProgressBar();
-
-        // 组装所有元素
+        const functions: (() => void)[] = [];
+        for (let i = 0; i < invConfigs.length; i++) {
+            const [slot, img, num] = this.buildSlot(invConfigs[i]);
+            slotsRow.appendChild(slot);
+            if (!invConfigs[i].noIn) slot.addEventListener('click', () => this.selectSlot(slot, instance.inventory[i]));
+            functions.push(() => this.updateImgAndNumber(instance.inventory[i], img, num));
+        }
         layout.appendChild(slotsRow);
-        layout.appendChild(progressBar);
-
         if (this.container) this.container.appendChild(layout);
 
-        // 添加点击事件监听器
-        inputSlot1.addEventListener('click', () => this.selectSlot(inputSlot1, instance.inventory[0]));
-        inputSlot2.addEventListener('click', () => this.selectSlot(inputSlot2, instance.inventory[1]));
-        outputSlot.addEventListener('click', () => this.selectSlot(outputSlot, instance.inventory[2]));
-
-        // 设置刷新函数
-        this.currentflash = () => {
-            this.updateImgAndNumber(instance.inventory[0], img1, num1);
-            this.updateImgAndNumber(instance.inventory[1], img2, num2);
-            this.updateImgAndNumber(instance.inventory[2], img3, num3);
-            this.updateProgressBar(progressBar, instance.timer);
-        }
-
-        // 初始化显示
-        this.currentflash();
+        this.currentflash = functions;
+        this.flash();
     }
-
-    createLayout_1_solid_1_solid(instance: MachineInstance): void {
-        const layout = document.createElement('div');
-        layout.className = 'belt-slots-layout';
-
-        // 创建包含槽位和箭头的行
-        const slotsRow = document.createElement('div');
-        slotsRow.className = 'slots-row';
-
-        // 创建输入槽位容器
-        const inputSlots = document.createElement('div');
-        inputSlots.className = 'input-slots';
-        const [inputSlot, img1, num1] = this.buildInSlot_Solid();
-        inputSlots.appendChild(inputSlot);
-
-        const arrowContainer = this.buildArrayMark();
-
-        const outputSlots = document.createElement('div');
-        outputSlots.className = 'output-slots';
-        const [outputSlot, img2, num2] = this.buildOutSlot_Solid();
-        outputSlots.appendChild(outputSlot);
-
-        // 组装槽位行
-        slotsRow.appendChild(inputSlots);
-        slotsRow.appendChild(arrowContainer);
-        slotsRow.appendChild(outputSlots);
-
-        // 创建进度条
-        const progressBar = this.buildProgressBar();
-
-        // 组装所有元素
-        layout.appendChild(slotsRow);
-        layout.appendChild(progressBar);
-        if (this.container) this.container.appendChild(layout);
-
-        inputSlot.addEventListener('click', () => this.selectSlot(inputSlot, instance.inventory[0]));
-
-        this.currentflash = () => {
-            this.updateImgAndNumber(instance.inventory[0], img1, num1);
-            this.updateImgAndNumber(instance.inventory[1], img2, num2);
-            this.updateProgressBar(progressBar, instance.timer);
-        }
-        this.currentflash();
-    }
-
-    // 动态创建6槽位布局（2列3行排列）
-    createLayout_6_Solid(instance: MachineInstance): void {
-        const layout = document.createElement('div');
-        layout.className = 'belt-slots-layout';
-        layout.id = 'belt-slots-layout-six';
-
-        // 创建2列3行的槽位容器
-        const slotsContainer = document.createElement('div');
-        slotsContainer.className = 'six-slots-grid';
-        slotsContainer.style.display = 'grid';
-        slotsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        slotsContainer.style.gridTemplateRows = 'repeat(3, 1fr)';
-        slotsContainer.style.gap = '8px';
-        slotsContainer.style.width = '100%';
-        slotsContainer.style.height = '100%';
-
-        // 创建6个槽位（按2列3行顺序排列）
-        const slots: [HTMLDivElement, HTMLImageElement, HTMLSpanElement][] = [];
-        for (let i = 0; i < 6; i++) {
-            const [slot, img, num] = this.buildInSlot_Solid();
-            slot.dataset.slotIndex = i.toString();
-            slots.push([slot, img, num]);
-            slotsContainer.appendChild(slot);
-
-            // 为每个槽位添加点击事件
-            slot.addEventListener('click', () => {
-                this.selectSlot(slot, instance.inventory[i]);
-            });
-        }
-
-        // 组装所有元素
-        layout.appendChild(slotsContainer);
-        if (this.container) this.container.appendChild(layout);
-
-        // 设置刷新函数
-        this.currentflash = () => {
-            for (let i = 0; i < 6; i++) {
-                this.updateImgAndNumber(instance.inventory[i], slots[i][1], slots[i][2]);
-            }
-        };
-        this.currentflash();
-    }
-
-    // 动态创建标记固体单槽位布局（无传送带，不显示数字）
-    createLayout_1_markedSolid(instance: MachineInstance): void {
-        const layout = document.createElement('div');
-        layout.className = 'marked-solid-layout';
-        layout.style.display = 'flex';
-        layout.style.flexDirection = 'column';
-        layout.style.alignItems = 'center';
-        layout.style.justifyContent = 'center';
-        layout.style.height = '100%';
-        layout.style.padding = '20px';
-
-        // 创建单个槽位
-        const [slot, img, num] = this.buildMarkedSolidSlot();
-        layout.appendChild(slot);
-
-        if (this.container) this.container.appendChild(layout);
-
-        // 添加点击事件监听器
-        slot.addEventListener('click', () => this.selectSlot(slot, instance.inventory[0]));
-
-        // 设置刷新函数 - 只更新图片，不更新数字显示
-        this.currentflash = () => {
-            this.updateMarkedSolidImg(instance.inventory[0], img);
-        };
-
-        // 初始化显示
-        this.currentflash();
-    }
-
 
     private selectSlot(slot: HTMLDivElement, inventory: ItemStack) {
         if (this.selectingSlot) {
@@ -435,8 +234,8 @@ export class AttentionManager {
         const progressBar = progressBarContainer.querySelector('.progress-bar') as HTMLDivElement;
         if (!progressBar) return;
 
-        if (timer._isWorking && timer.maxTime > 0) {
-            const progress = Math.min(100, (timer.cur / timer.maxTime) * 100);
+        if (timer.isWorking && timer.maxTime > 0) {
+            const progress = Math.min(100, (timer.curTime / timer.maxTime) * 100);
             progressBar.style.width = `${progress}%`;
 
             console.log(progress);
@@ -512,61 +311,5 @@ export class AttentionManager {
                 img.style.display = 'block';
             }
         }
-    }
-
-    // 动态创建2输入2输出单物品布局（用于连接器等设备）
-    createLayout_2_solid_2_solid_OneOnly(instance: MachineInstance): void {
-        const layout = document.createElement('div');
-        layout.className = 'belt-slots-layout';
-        layout.style.display = 'flex';
-        layout.style.flexDirection = 'column';
-        layout.style.alignItems = 'center';
-        layout.style.justifyContent = 'center';
-        layout.style.height = '100%';
-        layout.style.padding = '20px';
-        layout.style.gap = '20px';
-
-        // 创建上下两行布局
-        const topRow = document.createElement('div');
-        topRow.className = 'input-row';
-        topRow.style.display = 'flex';
-        topRow.style.gap = '15px';
-        topRow.style.alignItems = 'center';
-
-        const bottomRow = document.createElement('div');
-        bottomRow.className = 'output-row';
-        bottomRow.style.display = 'flex';
-        bottomRow.style.gap = '15px';
-        bottomRow.style.alignItems = 'center';
-
-        // 创建输入槽位（上方两个）
-        const [inputSlot1, img1, num1] = this.buildInSlot_Solid();
-        const [inputSlot2, img2, num2] = this.buildInSlot_Solid();
-
-        // 创建输出槽位（下方两个）
-        const [outputSlot1, img3, num3] = this.buildOutSlot_Solid();
-        const [outputSlot2, img4, num4] = this.buildOutSlot_Solid();
-
-        // 组装布局
-        topRow.appendChild(inputSlot1);
-        topRow.appendChild(inputSlot2);
-        bottomRow.appendChild(outputSlot1);
-        bottomRow.appendChild(outputSlot2);
-
-        layout.appendChild(topRow);
-        layout.appendChild(bottomRow);
-
-        if (this.container) this.container.appendChild(layout);
-
-        // 设置刷新函数
-        this.currentflash = () => {
-            this.updateImgAndNumber(instance.inventory[0], img1, num1);
-            this.updateImgAndNumber(instance.inventory[1], img2, num2);
-            this.updateImgAndNumber(instance.inventory[2], img3, num3);
-            this.updateImgAndNumber(instance.inventory[3], img4, num4);
-        };
-
-        // 初始化显示
-        this.currentflash();
     }
 }

@@ -59,77 +59,43 @@ export class portInstance {
 
 
 export class WorkTimer {
-    _isWorking: boolean = false;
-    maxTime: number = 1e9;
-    cur: number = 0;
+    input: Item | string | null = null;
+    out: Item | Item[] | null = null;
+    count: number[] | null = null;
+    isWorking: boolean = false;
+    maxTime: number = 0;
+    curTime: number = 0;
 
-    begin(maxTime: number) {
-        this._isWorking = true;
+    _outID: number = 0;
+
+    begin(input: Item | string | null, out: Item | Item[] | null, count: number[] | null, maxTime: number) {
+        this.input = input;
+        this.out = out;
+        this.count = count;
+        this.isWorking = true;
         this.maxTime = maxTime * Config.PhysicsFPS;
-        this.cur = 0;
+        this.curTime = 0;
     }
 
     reset() {
-        this._isWorking = false;
-        this.maxTime = 1e9;
-        this.cur = 0;
+        this.input = null;
+        this.isWorking = false;
+        this.curTime = 0;
     }
 
     update(deltaTime: number): boolean {
-        if (!this._isWorking) return false;
-        if (this.maxTime <= 0) return false;
-        this.cur += deltaTime;
-        if (this.cur >= this.maxTime) {
-            this.cur = 0;
+        if (!this.isWorking) return false;
+        this.curTime += deltaTime;
+        if (this.curTime >= this.maxTime) {
+            this.curTime = 0;
             return true;
         }
         return false;
     }
 
     toZero() {
-        this.cur = 0;
+        this.curTime = 0;
     }
-}
-
-class WorkUnit {
-    input: Item | string;
-    isWorking: boolean = false;
-    maxTime: number = 1e9;
-    cur: number = 0;
-
-    constructor(input: Item | string) {
-        this.input = input;
-    }
-
-    begin(maxTime: number) {
-        this.isWorking = true;
-        this.maxTime = maxTime * Config.PhysicsFPS;
-        this.cur = 0;
-    }
-
-    reset() {
-        this.isWorking = false;
-        this.maxTime = 1e9;
-        this.cur = 0;
-    }
-
-    update(deltaTime: number): boolean {
-        if (!this.isWorking) return false;
-        if (this.maxTime <= 0) return false;
-        this.cur += deltaTime;
-        if (this.cur >= this.maxTime) {
-            this.cur = 0;
-            return true;
-        }
-        return false;
-    }
-
-    toZero() { this.cur = 0; }
-}
-
-class WorkSchedule {
-    units: WorkUnit[] = [];
-    recipe: any = null;
 }
 
 
@@ -150,8 +116,7 @@ export class MachineInstance {
     public portGroupInsts: portGroupInstance[] | null = null;
 
     public timer: WorkTimer = new WorkTimer();
-    public curInv: Item | string | null = null;
-    public curRecipe: any = null;
+    public tmp_timers: WorkTimer[] = [];
 
     constructor(machine: Machine) {
         this.machine = machine;
@@ -213,8 +178,6 @@ export class MachineInstance {
     public build() {
         this.inventory = this.currentMode.inventory.map(config => new ItemStack(null, config.type, 0, config.max));
         this.portGroupInsts = this.currentMode.portGroups.map(portGroup => new portGroupInstance(this, portGroup));
-        this.curInv = null;
-        this.curRecipe = null;
     }
 
     public closestPort(dst: Vector2, isIn: boolean, itemType: EnumItemType): portInstance | null {

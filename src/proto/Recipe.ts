@@ -1,9 +1,12 @@
 import { Item, itemsTostring } from "./Item";
 
+export type BasicResult = { out: Item, count: [number, number], time: number };
+export type Advance2x1Result = { out: Item, count: [number, number, number], time: number };
+export type Advance1x2Result = { out: [Item, Item], count: [number, number, number], time: number };
 
-export type BasicRecipe = Map<Item, { out: Item, count: [number, number], time: number }>;
-export type AdvanceRecipe2x1 = Map<String, { out: Item, count: [number, number, number], time: number }>;
-export type AdvanceRecipe1x2 = Map<Item, { out: [Item, Item], count: [number, number, number], time: number }>;
+export type BasicRecipe = Map<Item, BasicResult>;
+export type AdvanceRecipe2x1 = Map<String, Advance2x1Result>;
+export type AdvanceRecipe1x2 = Map<Item, Advance1x2Result>;
 
 
 export class Recipes {

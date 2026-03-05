@@ -241,8 +241,6 @@ export function drawBeltAttention(canvas: CanvasRenderingContext2D, instance: Be
     canvas.fill();
 }
 
-
-
 export function drawRectLinesFill(canvas: CanvasRenderingContext2D, rect: Rect | null, gridSize: number) {
     if (!rect) return;
     const [x, y, w, h] = rect.mutiply(gridSize).toTuple();

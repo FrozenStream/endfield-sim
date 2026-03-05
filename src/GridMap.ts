@@ -169,12 +169,19 @@ export class GridMap {
 
     private _buildMachine(inst: MachineInstance) {
         this._machines.add(inst);
-        inst.build();
-        this._markMachineArea(inst);
-        inst.powerOn(this._countPower(inst.rect!));
+        inst.build();                   // 创建容器
+        this._markMachineArea(inst);    // 标记区域
+        inst.powerOn(this._countPower(inst.rect!));     // 处理电力
         if (inst.machine.powerArea) {
             const rect = inst.rect!.spread(inst.machine.powerArea);
             this._addPower(rect, inst.machine.powerArea);
+        }
+        for (const group of inst.portGroupInsts!) {     //初始化端口连接
+            for (const port of group.ports) {
+                const pos = port.isIn ? port.position.sub(Vector2.DIREC[port.direc]) : port.position.add(Vector2.DIREC[port.direc]);
+                const sec = this.getBeltSec(pos.floorSelf(), port.type);
+                if (sec) port.owner.insert(port);
+            }
         }
         console.log("built", this._previewing, "total:", this._machines.size, "machines");
         this._previewing = null;

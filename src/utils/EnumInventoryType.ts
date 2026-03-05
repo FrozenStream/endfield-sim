@@ -1,13 +1,7 @@
 import { ItemStack } from "../proto/ItemStack";
+import type { InventoryConfig } from "../proto/Machines";
 import EnumItemType from "./EnumItemType";
 
-export interface InventoryConfig {
-    type: EnumItemType;
-    noIn: boolean;
-    noOut: boolean;
-    max: number;
-    markOnly: boolean;
-}
 
 export class EnumInventoryType {
     public readonly configs: InventoryConfig[];
