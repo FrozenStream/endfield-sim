@@ -50,7 +50,7 @@ export class BeltInventory {
     public _onCircle = false;
     private _count: number;
 
-    public static readonly SecMaxDelay = Config.PhysicsFPS * Config.BeltSecond;
+    public readonly SecMaxDelay;
 
     constructor(length: number, type: EnumItemType) {
         this.length = length;
@@ -61,6 +61,9 @@ export class BeltInventory {
         this._inventory = new Array(length + 1);
         this._delay = new Array(length + 1).fill(0);
         for (let i = 0; i <= length; i++) this._inventory[i] = new ItemStack(null, type, 0, 1);
+
+        if (type === EnumItemType.SOLID) this.SecMaxDelay = Config.PhysicsFPS * Config.SolidBeltSecond;
+        else this.SecMaxDelay = Config.PhysicsFPS * Config.LiquidBeltSecond;
 
         console.log("BeltInventory.length", this.length);
     }
@@ -73,7 +76,7 @@ export class BeltInventory {
         if (this._pointerDelay === 0) {
             return {
                 index: this.point(index),
-                delay: BeltInventory.SecMaxDelay - 1
+                delay: this.SecMaxDelay - 1
             }
         }
         else return {
@@ -122,7 +125,7 @@ export class BeltInventory {
         else if (!this._inventory[b].isEmpty() && this._delay[b] < this._pointerDelay) {
             return {
                 itemstack: this._inventory[b],
-                delay: BeltInventory.SecMaxDelay - this._pointerDelay + this._delay[b]
+                delay: this.SecMaxDelay - this._pointerDelay + this._delay[b]
             };
         }
         else return null;
@@ -148,7 +151,7 @@ export class BeltInventory {
                         if (this._delay[tail.index] === 0) {
                             const before = this.blockHead(j).index;
                             this._inventory[before].moveIn(this._inventory[tail.index]);
-                            this._delay[before] = BeltInventory.SecMaxDelay - 1;
+                            this._delay[before] = this.SecMaxDelay - 1;
                         }
                         else {
                             this._delay[tail.index] -= 1;
@@ -160,7 +163,7 @@ export class BeltInventory {
         }
 
         if (this._pointerDelay === 0) {
-            this._pointerDelay = BeltInventory.SecMaxDelay - 1;
+            this._pointerDelay = this.SecMaxDelay - 1;
             this._pointer = (this._pointer - 1 + this._inventory.length) % this._inventory.length;
         }
         else this._pointerDelay -= 1;
@@ -168,7 +171,7 @@ export class BeltInventory {
 
     public insertable() {
         const next = this.point(1);
-        if (!this._inventory[next].isEmpty() && BeltInventory.SecMaxDelay + this._delay[next] - this._pointerDelay < BeltInventory.SecMaxDelay) return false;
+        if (!this._inventory[next].isEmpty() && this.SecMaxDelay + this._delay[next] - this._pointerDelay < this.SecMaxDelay) return false;
         if (!this._inventory[this._pointer].isEmpty() && this._delay[this._pointer] >= this._pointerDelay) return false;
         return true;
     }

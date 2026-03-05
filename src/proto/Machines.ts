@@ -971,8 +971,9 @@ class Loader implements Machine {
     ]
 
     static in(b: BeltInstance | null, m: MachineInstance): boolean {
-        const inv = m.inventory[0];
-        return single_in(b, inv);
+        if (b === null || b?.inventory === null) return false;
+        const tmp = new ItemStack(null, EnumItemType.ANY, 0);
+        return b.inventory.extract(tmp);
     }
 
     constructor() {
@@ -991,7 +992,7 @@ class Unloader implements Machine {
     modes = [
         new MachineMode(
             [
-                { type: EnumItemType.SOLID, noIn: true, noOut: false, max: 0, markOnly: true },
+                { type: EnumItemType.SOLID, noIn: false, noOut: true, max: 0, markOnly: true },
             ],
             [
                 new PortGroup([new Vector2(1, 0)],
@@ -1003,9 +1004,12 @@ class Unloader implements Machine {
         )
     ]
 
-    static out(b: BeltInstance | null, m: MachineInstance) {
-        const inv = m.inventory[1];
-        return single_out(b, inv);
+    static out(b: BeltInstance | null, m: MachineInstance): boolean {
+        if (b === null || b?.inventory === null) return false;
+        const inv = new ItemStack(m.inventory[0].item, EnumItemType.SOLID, 1);
+        if (inv.isEmpty()) return false;
+        if (b.inventory.insert(inv)) return true;
+        return false;
     }
 
     constructor() {
@@ -1091,7 +1095,6 @@ class Connector implements Machine {
     }
 }
 
-
 class Pump implements Machine {
     id = 'pump';
     img = new imageAble(this.id, '/icon_port/icon_port_pump_1.png');
@@ -1103,21 +1106,46 @@ class Pump implements Machine {
     modes = [
         new MachineMode(
             [
-                { type: EnumItemType.LIQUID, noIn: false, noOut: false, max: 50, markOnly: false }
+                { type: EnumItemType.LIQUID, noIn: false, noOut: true, max: 0, markOnly: true },
+                { type: EnumItemType.LIQUID, noIn: true, noOut: false, max: 50, markOnly: false }
             ],
             [
                 new PortGroup(
-                    [new Vector2(0, 1)],
-                    [Vector2.LEFT_n],
-                    EnumItemType.LIQUID, true, Pump.in
+                    [new Vector2(2, 1)],
+                    [Vector2.RIGHT_n],
+                    EnumItemType.LIQUID, false, Pump.out
                 ),
             ],
-            null, (_) => true
+            null, Pump.work
         )
     ];
 
-    static in(b: BeltInstance | null, m: MachineInstance): boolean {
+    static out(b: BeltInstance | null, m: MachineInstance) {
+        const inv = m.inventory[1];
+        return single_out(b, inv);
+    }
+
+    static work(m: MachineInstance): boolean {
+        if (m.onPower === false && m.machine.powerArea < 0) return false;
+
+        const item = m.inventory[0].item;
+        if (m.inventory[1].item && item !== m.inventory[1].item) {
+            m.inventory[1].clear();
+            m.timer.toZero();
+            return true;
+        }
+
+        if (!m.timer.isWorking) m.timer.begin(null, null, null, 2);
+
+        if (m.timer.update(1)) {
+            const newStack = new ItemStack(item, EnumItemType.LIQUID, 2);
+            m.inventory[1].merge(newStack);
+        }
         return true;
+    }
+
+    constructor() {
+        allMachines.set(this.id, this);
     }
 }
 
@@ -1144,4 +1172,5 @@ export class MachineSet {
     static readonly MixPool: Machine = new MixPool();
     static readonly XiraniteOven: Machine = new XiraniteOven();
     static readonly Dismantler: Machine = new Dismantler();
+    static readonly Pump: Machine = new Pump();
 }

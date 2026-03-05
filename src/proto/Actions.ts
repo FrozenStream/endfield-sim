@@ -114,7 +114,7 @@ export function advance_work_1x2(m: MachineInstance, recipe: AdvanceRecipe1x2): 
  */
 
 export function belter_Work(m: MachineInstance): boolean {
-    if (!m.timer.isWorking) m.timer.begin(null, null, null, Config.BeltSecond);
+    if (!m.timer.isWorking) m.timer.begin(null, null, null, Config.SolidBeltSecond);
     if (m.inventory[0].isEmpty()) {
         m.timer.toZero();
         return false;

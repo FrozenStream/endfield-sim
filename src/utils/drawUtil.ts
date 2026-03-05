@@ -730,12 +730,12 @@ export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltIn
                 v1 = Vector2.DIREC[(sec[i].direc + 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
                 v2 = Vector2.DIREC[(sec[i].direc - 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
             }
-            const offset = data.delay / BeltInventory.SecMaxDelay - 0.5;
+            const offset = data.delay / inv.SecMaxDelay - 0.5;
             if (offset > 0) pos.addSelf(v2.mul(offset));
             else pos.addSelf(v1.mul(offset));
         }
         else {
-            const offset = Vector2.DIREC[sec[i].direc].mul(data.delay / BeltInventory.SecMaxDelay - 0.5);
+            const offset = Vector2.DIREC[sec[i].direc].mul(data.delay / inv.SecMaxDelay - 0.5);
             pos.addSelf(offset);
         }
         pos.mulSelf(gridSize);
