@@ -109,7 +109,6 @@ export class GridMap {
             if (by === null) continue;
             if (by.fromDirec !== secs[i].fromDirec && by.toDirec !== secs[i].toDirec
                 && Vector2.isDiagonal(by.direc) && Vector2.isDiagonal(secs[i].direc)) list.push(pos);
-
         }
         return list;
     }
@@ -281,7 +280,7 @@ export class GridMap {
 
         const point = pos.sub(Vector2.DIREC[direc]);
         const by = this.getBeltSec(point, inst.ItemType);
-        if (by && by.index === by.owner.length - 1 && by.toDirec === direc) return by.owner;
+        if (by && by.type === inst.ItemType && by.index === by.owner.length - 1 && by.toDirec === direc) return by.owner;
 
         return null;
     }
@@ -294,7 +293,7 @@ export class GridMap {
 
         const point = pos.add(Vector2.DIREC[direc]);
         const by = this.getBeltSec(point, inst.ItemType);
-        if (by && by.index === 0 && by.fromDirec === direc) return by.owner;
+        if (by && by.type === inst.ItemType && by.index === 0 && by.fromDirec === direc) return by.owner;
 
         return null;
     }
@@ -410,7 +409,7 @@ export class GridMap {
         for (const direction of directions) {
             const point = start.add(Vector2.DIREC[direction]);
             const by = this.getPort(point);
-            if (by && Vector2.DIREC[by.direc].add(by.position).floorSelf().equal(start.floor())) return by;
+            if (by && by.type === type && Vector2.DIREC[by.direc].add(by.position).floorSelf().equal(start.floor())) return by;
         }
         for (const direction of directions) {
             const point = start.add(Vector2.DIREC[direction]);

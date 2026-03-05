@@ -35,6 +35,15 @@ export const COLORS = {
   CELL_LINES_FILL: 'rgba(255, 255, 0, 0.7)',
   LIGHT_YELLOW: 'rgba(255, 255, 0, 0.4)',
 
+  BeltOrange: 'rgba(255, 165, 0, 0.7)',
+  BeltOrange_previewing: 'rgba(255, 165, 0, 0.4)',
+
+  BeltWaterBlue: 'rgba(0, 191, 255, 0.7)',
+  BeltWaterBlue_previewing: 'rgba(0, 0, 255, 0.4)',
+
+  BeltMarkWhite: 'rgba(255, 255, 255, 0.7)',
+  BeltMarkWhite_previewing: 'rgba(255, 255, 255, 0.4)',
+
   // UI界面相关颜色
   UI_DARK_BLUE: '#2c3e50',
   UI_LIGHT_GRAY: '#ecf0f1',

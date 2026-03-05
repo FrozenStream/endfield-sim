@@ -16,6 +16,7 @@ export class MachinesIconsManager {
         this.iconCollection = document.getElementById(collectionId)!;
         this.gridMap = gridMap;
         this.addBeltIcon(Belt.soildBelt);
+        this.addBeltIcon(Belt.liquidBelt);
         for (const [_, machine] of allMachines) {
             this.addMachineIcon(machine);
         }

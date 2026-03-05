@@ -1,4 +1,4 @@
-import { drawBelt, drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect, drawBeltAttention } from "./utils/drawUtil";
+import { drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect, drawBeltAttention, drawBelt, drawBelts } from "./utils/drawUtil";
 import Vector2 from "./utils/Vector2";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
@@ -307,13 +307,13 @@ export class GridCanvas {
 
         if (this.gridMap.PreviewMachine) {
             if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
-        } 
+        }
         else if (this.gridMap.PreviewBelt) {
             if (this.gridMap.PreviewBelt.started) {
                 if (!occupyCount && this.gridMap.buildInstance()) { this.machinesIconsManager.cancel(); }
             } else { this.gridMap.PreviewBelt.lockStart(); }
 
-        } 
+        }
         else {
             const pos = gridPos.floor();
             const li = [
@@ -471,16 +471,16 @@ export class GridCanvas {
             }
         }
         // 绘制选中机器
-        if (this.instanceAttention.select instanceof MachineInstance) 
+        if (this.instanceAttention.select instanceof MachineInstance)
             drawAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
-        if (this.instanceAttention.select instanceof BeltSec) 
+        if (this.instanceAttention.select instanceof BeltSec)
             drawBeltAttention(this.overlayCtx, this.instanceAttention.select, this.gridSize);
 
         // 绘制传送带
         if (this.gridMap.PreviewBelt) {
             if (this.gridMap.PreviewBelt.started) {
                 // 已指定起点，绘制完整传送带
-                drawBelt(this.overlayCtx, this.gridMap.PreviewBelt, this.gridSize);
+                drawBelt(this.overlayCtx, this.gridMap.PreviewBelt, this.gridSize, true);
             } else {
                 if (!this.gridMap.PreviewBelt.vaild && this.gridMap.PreviewBelt.startPos) {
                     // 起始点不在机器上，绘制警告方格
@@ -563,8 +563,7 @@ export class GridCanvas {
             drawMachine(this.gridCtx!, machineInstance, this.gridSize));
 
         // 绘制传送带
-        this.gridMap.allBelts.forEach((beltInstance) =>
-            drawBelt(this.gridCtx!, beltInstance, this.gridSize));
+        drawBelts(this.gridCtx, this.gridMap.allBelts, this.gridSize, false);
 
         // 回退transform，避免图片方向错误
         this.gridCtx.restore();

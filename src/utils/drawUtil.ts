@@ -1,48 +1,271 @@
 import { BeltInventory, BeltSec, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
 import { COLORS } from "./colors";
+import EnumItemType from "./EnumItemType";
 import type Rect from "./Rect";
 import Vector2 from "./Vector2";
 
-const beltWidth: number = 40;
+const SoildBeltWidth: number = 40;
+const LiquidBeltWidth: number = 20;
 
-export function drawBelt(canvas: CanvasRenderingContext2D, instance: BeltInstance, size: number) {
-    if (!instance.sections) return;
-    for (const sec of instance.sections) {
-        const pos: Vector2 = sec.position.mul(size);
-        const direc = sec.direc;
-        if (Vector2.isDiagonal(direc)) drawCurvedBelt(canvas, direc, pos.x, pos.y, size);
-        else drawStraightBelt(canvas, direc, pos.x, pos.y, size);
-        drawBeltDirection(canvas, direc, pos.x, pos.y, size);
+
+export function drawBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltInstance>, size: number, isPreview: boolean) {
+    const set_1 = new Set<BeltInstance>();
+    const set_2 = new Set<BeltInstance>();
+
+    for (const instance of insts) {
+        if (instance.ItemType === EnumItemType.SOLID) set_1.add(instance);
+        if (instance.ItemType === EnumItemType.LIQUID) set_2.add(instance);
     }
+
+    drawSoildBelts(ctx, set_1, size, isPreview);
+    drawLiquidBelts(ctx, set_2, size, isPreview);
 }
 
-function drawStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
-    const edge: number = (size - beltWidth) / 2;
-    const oedge = (size + beltWidth) / 2;
+export function drawBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: number, isPreview: boolean) {
+    ctx.setLineDash([]);
+    if (isPreview) {
+        ctx.fillStyle = COLORS.PREVIEW_FILL;
+        ctx.strokeStyle = COLORS.BLUE;
+    }
+    else {
+        ctx.fillStyle = COLORS.MACHINE_FILL;
+        ctx.strokeStyle = COLORS.MACHINE_STROKE;
+    }
+
+    if (inst.ItemType === EnumItemType.SOLID) drawSoildBelt(ctx, inst, size, isPreview);
+    if (inst.ItemType === EnumItemType.LIQUID) drawLiquidBelt(ctx, inst, size, isPreview);
+}
+
+function drawSoildBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltInstance>, size: number, isPreview: boolean) {
+    ctx.setLineDash([]);
+    if (isPreview) {
+        ctx.fillStyle = COLORS.PREVIEW_FILL;
+        ctx.strokeStyle = COLORS.BLUE;
+    }
+    else {
+        ctx.fillStyle = COLORS.MACHINE_FILL;
+        ctx.strokeStyle = COLORS.MACHINE_STROKE;
+    }
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+            else drawStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        }
+    }
+    ctx.stroke();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltOrange_previewing;
+    else ctx.fillStyle = COLORS.BeltOrange;
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+            else fillStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        }
+    }
+    ctx.fill();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltMarkWhite_previewing;
+    else ctx.fillStyle = COLORS.BeltMarkWhite;
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            fillBeltDirection(ctx, direc, pos.x, pos.y, size);
+        }
+    }
+    ctx.fill();
+}
+
+function drawSoildBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: number, isPreview: boolean) {
+    ctx.setLineDash([]);
+    if (isPreview) {
+        ctx.fillStyle = COLORS.PREVIEW_FILL;
+        ctx.strokeStyle = COLORS.BLUE;
+    }
+    else {
+        ctx.fillStyle = COLORS.MACHINE_FILL;
+        ctx.strokeStyle = COLORS.MACHINE_STROKE;
+    }
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        else drawStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+    }
+    ctx.stroke();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltOrange_previewing;
+    else ctx.fillStyle = COLORS.BeltOrange;
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        else fillStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+    }
+    ctx.fill();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltMarkWhite_previewing;
+    else ctx.fillStyle = COLORS.BeltMarkWhite;
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        fillBeltDirection(ctx, direc, pos.x, pos.y, size);
+    }
+    ctx.fill();
+}
+
+function drawLiquidBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltInstance>, size: number, isPreview: boolean) {
+    ctx.setLineDash([]);
+    if (isPreview) {
+        ctx.fillStyle = COLORS.PREVIEW_FILL;
+        ctx.strokeStyle = COLORS.BLUE;
+    }
+    else {
+        ctx.fillStyle = COLORS.MACHINE_FILL;
+        ctx.strokeStyle = COLORS.MACHINE_STROKE;
+    }
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+            else drawStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        }
+    }
+    ctx.stroke();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltWaterBlue_previewing;
+    else ctx.fillStyle = COLORS.BeltWaterBlue;
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+            else fillStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        }
+    }
+    ctx.fill();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltMarkWhite_previewing;
+    else ctx.fillStyle = COLORS.BeltMarkWhite;
+    ctx.beginPath();
+    for (const instance of insts) {
+        if (!instance.sections) return;
+        for (const sec of instance.sections) {
+            const pos: Vector2 = sec.position.mul(size);
+            const direc = sec.direc;
+            fillBeltDirection(ctx, direc, pos.x, pos.y, size);
+        }
+    }
+    ctx.fill();
+}
+
+function drawLiquidBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: number, isPreview: boolean) {
+    ctx.setLineDash([]);
+    if (isPreview) {
+        ctx.fillStyle = COLORS.PREVIEW_FILL;
+        ctx.strokeStyle = COLORS.BLUE;
+    }
+    else {
+        ctx.fillStyle = COLORS.MACHINE_FILL;
+        ctx.strokeStyle = COLORS.MACHINE_STROKE;
+    }
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        else drawStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+    }
+    ctx.stroke();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltWaterBlue_previewing;
+    else ctx.fillStyle = COLORS.BeltWaterBlue;
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        else fillStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+    }
+    ctx.fill();
+
+    if (isPreview) ctx.fillStyle = COLORS.BeltMarkWhite_previewing;
+    else ctx.fillStyle = COLORS.BeltMarkWhite;
+    ctx.beginPath();
+    if (!inst.sections) return;
+    for (const sec of inst.sections) {
+        const pos: Vector2 = sec.position.mul(size);
+        const direc = sec.direc;
+        fillBeltDirection(ctx, direc, pos.x, pos.y, size);
+    }
+    ctx.fill();
+}
+
+function drawStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number, beltwidth: number) {
+    const edge: number = (size - beltwidth) / 2;
+    const oedge = (size + beltwidth) / 2;
     if (direc === 0 || direc === 6) {
-        canvas.beginPath();
         canvas.moveTo(x, y + edge);
         canvas.lineTo(x + size, y + edge);
 
         canvas.moveTo(x, y + oedge);
         canvas.lineTo(x + size, y + oedge);
-        canvas.stroke();
     }
     else if (direc === 3 || direc === 9) {
-        canvas.beginPath();
         canvas.moveTo(x + edge, y);
         canvas.lineTo(x + edge, y + size);
 
         canvas.moveTo(x + oedge, y);
         canvas.lineTo(x + oedge, y + size);
-        canvas.stroke();
     }
 }
 
-function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
-    const edge: number = (size - beltWidth) / 2;
-    const oedge = (size + beltWidth) / 2;
+function fillStraightBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number, beltwidth: number) {
+    const edge: number = (size - beltwidth) / 2;
+    const oedge = (size + beltwidth) / 2;
+    if (direc === 0 || direc === 6) {
+        canvas.moveTo(x, y + edge);
+        canvas.lineTo(x + size, y + edge);
+        canvas.lineTo(x + size, y + oedge);
+        canvas.lineTo(x, y + oedge);
+        canvas.closePath();
+    }
+    else if (direc === 3 || direc === 9) {
+        canvas.moveTo(x + edge, y);
+        canvas.lineTo(x + edge, y + size);
+        canvas.lineTo(x + oedge, y + size);
+        canvas.lineTo(x + oedge, y);
+        canvas.closePath();
+    }
+}
+
+function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number, beltwidth: number) {
+    const edge: number = (size - beltwidth) / 2;
+    const oedge = (size + beltwidth) / 2;
     let type: number = 0;
     if (direc === 1 || direc === 8) type = 0;
     else if (direc === 5 || direc === 10) type = 1;
@@ -51,7 +274,6 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
     else type = 114514;
     switch (type) {
         case 0:
-            canvas.beginPath();
             canvas.moveTo(x, y + edge);
             canvas.lineTo(x + edge, y + edge);
             canvas.lineTo(x + edge, y);
@@ -59,19 +281,17 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
             canvas.moveTo(x + oedge, y);
             canvas.lineTo(x + oedge, y + edge);
             canvas.arc(
-                x + edge, y + edge, beltWidth,
+                x + edge, y + edge, beltwidth,
                 0, Math.PI / 2,
                 false
             );
             canvas.lineTo(x, y + oedge);
-            canvas.stroke();
             break;
         case 1:
-            canvas.beginPath();
             canvas.moveTo(x + size, y + oedge);
             canvas.lineTo(x + oedge, y + oedge);
             canvas.arc(
-                x + oedge, y + edge, beltWidth,
+                x + oedge, y + edge, beltwidth,
                 Math.PI / 2, Math.PI,
                 false
             );
@@ -80,14 +300,12 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
             canvas.moveTo(x + oedge, y);
             canvas.lineTo(x + oedge, y + edge);
             canvas.lineTo(x + size, y + edge);
-            canvas.stroke();
             break;
         case 2:
-            canvas.beginPath();
             canvas.moveTo(x, y + edge);
             canvas.lineTo(x + edge, y + edge);
             canvas.arc(
-                x + edge, y + oedge, beltWidth,
+                x + edge, y + oedge, beltwidth,
                 Math.PI * 3 / 2, 0,
                 false
             );
@@ -96,10 +314,8 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
             canvas.moveTo(x, y + oedge);
             canvas.lineTo(x + edge, y + oedge);
             canvas.lineTo(x + edge, y + size);
-            canvas.stroke();
             break;
         case 3:
-            canvas.beginPath();
             canvas.moveTo(x + oedge, y + size);
             canvas.lineTo(x + oedge, y + oedge);
             canvas.lineTo(x + size, y + oedge);
@@ -107,18 +323,90 @@ function drawCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
             canvas.moveTo(x + edge, y + size);
             canvas.lineTo(x + edge, y + oedge);
             canvas.arc(
-                x + oedge, y + oedge, beltWidth,
+                x + oedge, y + oedge, beltwidth,
                 Math.PI, Math.PI * 3 / 2, false
             );
             canvas.lineTo(x + size, y + edge);
-            canvas.stroke();
             break;
         default:
             return;
     }
 }
 
-function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
+function fillCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number, beltwidth: number) {
+    const edge: number = (size - beltwidth) / 2;
+    const oedge = (size + beltwidth) / 2;
+    let type: number = 0;
+    if (direc === 1 || direc === 8) type = 0;
+    else if (direc === 5 || direc === 10) type = 1;
+    else if (direc === 11 || direc === 4) type = 2;
+    else if (direc === 2 || direc === 7) type = 3;
+    else type = 114514;
+    switch (type) {
+        case 0:
+            canvas.moveTo(x, y + edge);
+            canvas.lineTo(x + edge, y + edge);
+            canvas.lineTo(x + edge, y);
+
+            canvas.lineTo(x + oedge, y);
+            canvas.lineTo(x + oedge, y + edge);
+            canvas.arc(
+                x + edge, y + edge, beltwidth,
+                0, Math.PI / 2,
+                false
+            );
+            canvas.lineTo(x, y + oedge);
+            canvas.closePath();
+            break;
+        case 1:
+            canvas.moveTo(x + size, y + oedge);
+            canvas.lineTo(x + oedge, y + oedge);
+            canvas.arc(
+                x + oedge, y + edge, beltwidth,
+                Math.PI / 2, Math.PI,
+                false
+            );
+            canvas.lineTo(x + edge, y);
+
+            canvas.lineTo(x + oedge, y);
+            canvas.lineTo(x + oedge, y + edge);
+            canvas.lineTo(x + size, y + edge);
+            canvas.closePath();
+            break;
+        case 2:
+            canvas.moveTo(x, y + edge);
+            canvas.lineTo(x + edge, y + edge);
+            canvas.arc(
+                x + edge, y + oedge, beltwidth,
+                Math.PI * 3 / 2, 0,
+                false
+            );
+            canvas.lineTo(x + oedge, y + size);
+            canvas.lineTo(x + edge, y + size);
+            canvas.lineTo(x + edge, y + oedge);
+            canvas.lineTo(x, y + oedge);
+            canvas.closePath();
+            break;
+        case 3:
+            canvas.moveTo(x + edge, y + size);
+            canvas.lineTo(x + edge, y + oedge);
+            canvas.arc(
+                x + oedge, y + oedge, beltwidth,
+                Math.PI, Math.PI * 3 / 2, false
+            );
+            canvas.lineTo(x + size, y + edge);
+            canvas.lineTo(x + size, y + oedge);
+            canvas.lineTo(x + oedge, y + oedge);
+            canvas.lineTo(x + oedge, y + size);
+            canvas.closePath();
+
+            break;
+        default:
+            return;
+    }
+}
+
+function fillBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
     const d: Vector2 = Vector2.DIREC[direc].mul(Vector2.isDiagonal(direc) ? 0.7 : 1);
     const center: Vector2 = new Vector2(x + size / 2, y + size / 2);
     const a = center.add(d.mul(7));
@@ -130,7 +418,7 @@ function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: n
     }
     else {
         let t = 0;
-        const trans: Vector2 = new Vector2(-beltWidth * 0.12, -beltWidth * 0.12);
+        const trans: Vector2 = new Vector2(-SoildBeltWidth * 0.12, -SoildBeltWidth * 0.12);
         if (direc === 1 || direc === 8) t = 0;
         else if (direc === 5 || direc === 10) t = 1;
         else if (direc === 11 || direc === 4) t = 3;
@@ -140,13 +428,13 @@ function drawBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: n
 }
 
 function fillTriangle(canvas: CanvasRenderingContext2D, a: Vector2, b: Vector2, c: Vector2) {
-    canvas.beginPath();
     canvas.moveTo(a.x, a.y);
     canvas.lineTo(b.x, b.y);
     canvas.lineTo(c.x, c.y);
     canvas.closePath();
-    canvas.fill();
 }
+
+
 
 
 export function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
