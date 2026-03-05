@@ -52,7 +52,7 @@ export class GridMap {
     public getBeltSec(pos: Vector2, type: EnumItemType): BeltSec | null {
         if (this._isOutside(pos)) return null;
         if (type === EnumItemType.SOLID) return this.grid[pos.y][pos.x].soildBelt;
-        if (type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt;
+        if (type === EnumItemType.LIQUID) return this.grid[pos.y][pos.x].liquidBelt;
         return null;
     }
 
@@ -147,7 +147,8 @@ export class GridMap {
             if (!this._previewing.started) {
                 if (m) this._previewing.setStart(m, vec);
                 else if (b) this._previewing.setStart(b, vec);
-                else if (surrounding) this._previewing.setStart(surrounding, vec);
+                else if (surrounding) 
+                    this._previewing.setStart(surrounding, vec);
                 else this._previewing.setStart(null, vec);
             }
             else {
