@@ -1,8 +1,9 @@
+import { BeltNode } from "../proto/Graph";
 import { Belt } from "../proto/Belt";
 import { ItemStack } from "../proto/ItemStack";
 import { Config } from "../utils/Config";
 import EnumItemType from "../utils/EnumItemType";
-import Vector2 from "../utils/Vector2";
+import Array2d from "../utils/Array2d";
 import { MachineInstance, portInstance } from "./MachineInstance";
 
 export class BeltSec {
@@ -11,11 +12,11 @@ export class BeltSec {
     private _direc: number;
     private _fromDirec: number;
     private _toDirec: number;
-    position: Vector2;
-    constructor(owner: BeltInstance, index: number, fromDirec: number, toDirec: number, position: Vector2) {
+    position: Array2d;
+    constructor(owner: BeltInstance, index: number, fromDirec: number, toDirec: number, position: Array2d) {
         this.owner = owner;
         this.index = index;
-        this._direc = Vector2.ABtoIndex(fromDirec, toDirec);
+        this._direc = Array2d.ABtoIndex(fromDirec, toDirec);
         this._fromDirec = fromDirec;
         this._toDirec = toDirec;
         this.position = position;
@@ -29,41 +30,43 @@ export class BeltSec {
 
     set fromDirec(fromDirec: number) {
         this._fromDirec = fromDirec;
-        this._direc = Vector2.ABtoIndex(this._fromDirec, this._toDirec);
+        this._direc = Array2d.ABtoIndex(this._fromDirec, this._toDirec);
     }
 
     set toDirec(toDirec: number) {
         this._toDirec = toDirec;
-        this._direc = Vector2.ABtoIndex(this._fromDirec, this._toDirec);
+        this._direc = Array2d.ABtoIndex(this._fromDirec, this._toDirec);
     }
 }
 
 
 export class BeltInventory {
-    public readonly length: number;
     public readonly type: EnumItemType;
-    private _pointer: number;
-    private _pointerDelay: number;
-    private _inventory: ItemStack[];
-    private _delay: number[];
+    public length: number = 0;
+    private _pointer: number = 0;
+    private _pointerDelay: number = 0;
+    private _inventory: ItemStack[] = [];
+    private _delay: number[] = [];
 
     public _onCircle = false;
-    private _count: number;
+    private _count: number = 0;
 
     public readonly SecMaxDelay;
 
-    constructor(length: number, type: EnumItemType) {
-        this.length = length;
+    constructor(type: EnumItemType) {
         this.type = type;
+        if (type === EnumItemType.SOLID) this.SecMaxDelay = Config.PhysicsFPS * Config.SolidBeltSecond;
+        else this.SecMaxDelay = Config.PhysicsFPS * Config.LiquidBeltSecond;
+    }
+
+    build(length: number) {
+        this.length = length;
         this._pointer = 0;
         this._pointerDelay = 0;
         this._count = 0;
         this._inventory = new Array(length + 1);
         this._delay = new Array(length + 1).fill(0);
-        for (let i = 0; i <= length; i++) this._inventory[i] = new ItemStack(null, type, 0, 1);
-
-        if (type === EnumItemType.SOLID) this.SecMaxDelay = Config.PhysicsFPS * Config.SolidBeltSecond;
-        else this.SecMaxDelay = Config.PhysicsFPS * Config.LiquidBeltSecond;
+        for (let i = 0; i <= length; i++) this._inventory[i] = new ItemStack(null, this.type, 0, 1);
 
         console.log("BeltInventory.length", this.length);
     }
@@ -138,7 +141,7 @@ export class BeltInventory {
     }
 
     public update() {
-        if (this.getTail() !== null && this._onCircle === false) {     // 若尾部有物品，则传送带堵塞
+        if (this.getTail() !== null) {     // 若尾部有物品，则传送带堵塞
             if (this._count === this.length && this.get(this.blockTail(0))) { console.log('Belt full blocked'); return; }    // 若全段阻塞，暂停更新
 
             for (let i = this.length - 1; i >= 0; i--) {
@@ -201,7 +204,8 @@ export class BeltInventory {
     }
 
     public static concat(beltInv0: BeltInventory, beltInv1: BeltInventory): BeltInventory {
-        const newInv = new BeltInventory(beltInv0.length + beltInv1.length, beltInv0.type);
+        const newInv = new BeltInventory(beltInv0.type);
+        newInv.build(beltInv0.length + beltInv1.length);
         for (let i = 0; i < beltInv0.length; i++) {
             const data = beltInv0.getInventory(i);
             if (data === null) continue;
@@ -220,23 +224,24 @@ export class BeltInventory {
 
     public cut(start: number, end: number): BeltInventory {
         if (start > end) throw new Error("start > end");
-        const newInv = new BeltInventory(end - start, this.type);
-
+        const newInv = new BeltInventory(this.type);
+        newInv.build(end - start);
         for (let i = 0; i < end - start; i++) newInv.setInventory(i, this.getInventory(start + i));
         newInv.updateCount();
         return newInv;
     }
 
     public static cutCircle(beltInv: BeltInventory, start: number): BeltInventory {
-        const newInv = new BeltInventory(beltInv.length + 1, beltInv.type);
-
+        const newInv = new BeltInventory(beltInv.type);
+        newInv.build(beltInv.length + 1);
         for (let i = 0; i < beltInv.length + 1; i++) newInv.setInventory(i, beltInv.getInventory(start + i));
         newInv.updateCount();
         return newInv;
     }
 
-    public static circle(beltInv: BeltInventory): BeltInventory {
-        const newInv = new BeltInventory(beltInv.length - 1, beltInv.type);
+    public static becomeCircle(beltInv: BeltInventory): BeltInventory {
+        const newInv = new BeltInventory(beltInv.type);
+        newInv.build(beltInv.length - 1);
         newInv._onCircle = true;
         for (let i = 0; i < beltInv.length; i++) newInv.setInventory(i, beltInv.getInventory(i));
         newInv.updateCount();
@@ -256,18 +261,21 @@ export class BeltInstance {
     private _vaild: boolean = true;
     private _started: boolean = false;
     public start: MachineInstance | BeltSec | portInstance | null = null;
-    public startPos: Vector2 | null = null;
-    public endPoint: Vector2 | null = null;
+    public startPos: Array2d | null = null;
+    public endPoint: Array2d | null = null;
 
     // data elements
     public sections: BeltSec[] | null = null;
-    public inventory: BeltInventory | null = null;
+    public inventory: BeltInventory;
 
-
+    node: BeltNode;
 
     constructor(beltType: Belt) {
         this.beltType = beltType;
+        this.inventory = new BeltInventory(beltType.type);
+        this.node = new BeltNode(this);
     }
+
 
     get ItemType(): EnumItemType {
         return this.beltType.type;
@@ -277,7 +285,7 @@ export class BeltInstance {
         return this._vaild;
     }
 
-    public setStart(start: MachineInstance | BeltSec | portInstance | null, pos: Vector2) {
+    public setStart(start: MachineInstance | BeltSec | portInstance | null, pos: Array2d) {
         if (start == null) {
             this.startPos = pos.floor();
             this.start = null;
@@ -298,18 +306,18 @@ export class BeltInstance {
         return this._started;
     }
 
-    public setEnd(end: Vector2, instance?: MachineInstance) {
+    public setEnd(end: Array2d, instance?: MachineInstance) {
         if (!this._started || !this.startPos) return;
         const closestPort = instance?.closestPort(end, true, EnumItemType.SOLID);
         if (!closestPort) this.endPoint = end;
-        else this.endPoint = closestPort.position.sub(Vector2.DIREC[closestPort.direc]);
+        else this.endPoint = closestPort.position.sub(Array2d.DIREC[closestPort.direc]);
 
         let startDirec: number;
         if (this.start instanceof MachineInstance) {
             const start = this.start.closestPort(this.endPoint, false, EnumItemType.SOLID);
             if (start === null) return;
             startDirec = start.direc;
-            this.startPos = start.position.add(Vector2.DIREC[startDirec]).floor();
+            this.startPos = start.position.add(Array2d.DIREC[startDirec]).floor();
         }
         else if (this.start instanceof BeltSec) {
             if (this.start.position.equal(this.startPos)) startDirec = this.start.fromDirec;
@@ -317,38 +325,38 @@ export class BeltInstance {
         }
         else if (this.start instanceof portInstance) {
             startDirec = this.start.direc;
-            this.startPos = this.start.position.add(Vector2.DIREC[startDirec]).floor();
+            this.startPos = this.start.position.add(Array2d.DIREC[startDirec]).floor();
         }
         else throw new Error("start point is null");
 
         this.sections = [];
-        let pos: Vector2 = this.startPos;
+        let pos: Array2d = this.startPos;
         let direc: number = startDirec;
 
-        const relative: Vector2 = this.endPoint.floor().sub(this.startPos);
-        const inFaceLength: number = relative.dot(Vector2.DIREC[startDirec]);
-        const dir_a = Vector2.toCW(startDirec);
-        const dir_b = Vector2.toCCW(startDirec);
-        const dir_back = Vector2.toBACK(startDirec);
-        const l = relative.dot(Vector2.DIREC[dir_a]);
+        const relative: Array2d = this.endPoint.floor().sub(this.startPos);
+        const inFaceLength: number = relative.dot(Array2d.DIREC[startDirec]);
+        const dir_a = Array2d.toCW(startDirec);
+        const dir_b = Array2d.toCCW(startDirec);
+        const dir_back = Array2d.toBACK(startDirec);
+        const l = relative.dot(Array2d.DIREC[dir_a]);
 
         if (inFaceLength >= 0) {
             // end在面朝方向，前进至垂直
             for (let i = 0; i < inFaceLength; i++) {
                 this.sections.push(new BeltSec(this, this.sections.length, direc, startDirec, pos));
                 direc = startDirec;
-                pos = pos.add(Vector2.DIREC[direc]);
+                pos = pos.add(Array2d.DIREC[direc]);
             }
             // 转向
             if (l >= 0) for (let j = 0; j < l; j++) {
                 this.sections.push(new BeltSec(this, this.sections.length, direc, dir_a, pos));
                 direc = dir_a;
-                pos = pos.add(Vector2.DIREC[direc]);
+                pos = pos.add(Array2d.DIREC[direc]);
             }
             else for (let j = 0; j < -l; j++) {
                 this.sections.push(new BeltSec(this, this.sections.length, direc, dir_b, pos));
                 direc = dir_b;
-                pos = pos.add(Vector2.DIREC[direc]);
+                pos = pos.add(Array2d.DIREC[direc]);
             }
         }
         else {
@@ -357,31 +365,31 @@ export class BeltInstance {
                 for (let j = 0; j < l; j++) {
                     this.sections.push(new BeltSec(this, this.sections.length, direc, dir_a, pos));
                     direc = dir_a;
-                    pos = pos.add(Vector2.DIREC[direc]);
+                    pos = pos.add(Array2d.DIREC[direc]);
                 }
                 for (let j = 0; j < -inFaceLength; j++) {
                     this.sections.push(new BeltSec(this, this.sections.length, direc, dir_back, pos));
                     direc = dir_back;
-                    pos = pos.add(Vector2.DIREC[direc]);
+                    pos = pos.add(Array2d.DIREC[direc]);
                 }
             }
             if (l < 0) {
                 for (let j = 0; j < -l; j++) {
                     this.sections.push(new BeltSec(this, this.sections.length, direc, dir_b, pos));
                     direc = dir_b;
-                    pos = pos.add(Vector2.DIREC[direc]);
+                    pos = pos.add(Array2d.DIREC[direc]);
                 }
                 for (let j = 0; j < -inFaceLength; j++) {
                     this.sections.push(new BeltSec(this, this.sections.length, direc, dir_back, pos));
                     direc = dir_back;
-                    pos = pos.add(Vector2.DIREC[direc]);
+                    pos = pos.add(Array2d.DIREC[direc]);
                 }
             }
         }
 
         if (!closestPort)
             this.sections.push(new BeltSec(this, this.sections.length, direc, direc, pos));
-        else if (!Vector2.isOpposite(direc, closestPort.direc))
+        else if (!Array2d.isOpposite(direc, closestPort.direc))
             this.sections.push(new BeltSec(this, this.sections.length, direc, closestPort.direc, pos));
     }
 
@@ -395,7 +403,7 @@ export class BeltInstance {
         this.start = null;
         this.startPos = null;
         this.endPoint = null;
-        if (!this.inventory) this.inventory = new BeltInventory(this.length, this.beltType.type);
+        this.inventory.build(this.length);
         if (this.sections)
             for (let i = 0; i < this.sections.length; i++) {
                 this.sections[i].owner = this;
@@ -404,7 +412,7 @@ export class BeltInstance {
     }
 
     public static concatCircle(belt: BeltInstance) {
-        if (belt.inventory) belt.inventory = BeltInventory.circle(belt.inventory);
+        if (belt.inventory) belt.inventory = BeltInventory.becomeCircle(belt.inventory);
     }
 
     public static concat(belt0: BeltInstance, belt1: BeltInstance): BeltInstance {

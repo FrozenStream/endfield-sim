@@ -1,64 +1,63 @@
-// TODO: 取消每次运算新建一个实例
-
-class Vector2 {
+class Array2d {
 
     x: number;
     y: number;
+
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
 
-    set(v: Vector2) {
+    set(v: Array2d) {
         this.x = v.x;
         this.y = v.y;
     }
 
-    add(v: Vector2): Vector2 {
-        return new Vector2(this.x + v.x, this.y + v.y);
+    add(v: Array2d): Array2d {
+        return new Array2d(this.x + v.x, this.y + v.y);
     }
 
-    addSelf(v: Vector2): Vector2 {
+    addSelf(v: Array2d): Array2d {
         this.x = this.x + v.x;
         this.y = this.y + v.y;
         return this;
     }
 
-    sub(v: Vector2): Vector2 {
-        return new Vector2(this.x - v.x, this.y - v.y);
+    sub(v: Array2d): Array2d {
+        return new Array2d(this.x - v.x, this.y - v.y);
     }
 
-    subSelf(v: Vector2): Vector2 {
+    subSelf(v: Array2d): Array2d {
         this.x = this.x - v.x;
         this.y = this.y - v.y;
         return this;
     }
 
-    mul(scalar: number): Vector2 {
-        return new Vector2(this.x * scalar, this.y * scalar);
+    mul(scalar: number): Array2d {
+        return new Array2d(this.x * scalar, this.y * scalar);
     }
 
-    mulSelf(scalar: number): Vector2 {
+    mulSelf(scalar: number): Array2d {
         this.x = this.x * scalar;
         this.y = this.y * scalar;
         return this;
     }
 
-    div(scalar: number): Vector2 {
-        return new Vector2(this.x / scalar, this.y / scalar);
+    div(scalar: number): Array2d {
+        return new Array2d(this.x / scalar, this.y / scalar);
     }
 
-    divSelf(scalar: number): Vector2 {
+    divSelf(scalar: number): Array2d {
         this.x = this.x / scalar;
         this.y = this.y / scalar;
         return this;
     }
 
-    dot(v: Vector2): number {
+    dot(v: Array2d): number {
         return this.x * v.x + this.y * v.y;
     }
 
-    equal(end: Vector2) {
+    equal(end: Array2d) {
         return this.x === end.x && this.y === end.y;
     }
 
@@ -70,28 +69,28 @@ class Vector2 {
         return Math.abs(this.x) + Math.abs(this.y);
     }
 
-    round(): Vector2 {
-        return new Vector2(Math.round(this.x), Math.round(this.y));
+    round(): Array2d {
+        return new Array2d(Math.round(this.x), Math.round(this.y));
     }
 
-    roundSelf(): Vector2 {
+    roundSelf(): Array2d {
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
         return this;
     }
 
-    floor(): Vector2 {
-        return new Vector2(Math.floor(this.x), Math.floor(this.y));
+    floor(): Array2d {
+        return new Array2d(Math.floor(this.x), Math.floor(this.y));
     }
 
-    floorSelf(): Vector2 {
+    floorSelf(): Array2d {
         this.x = Math.floor(this.x);
         this.y = Math.floor(this.y);
         return this;
     }
 
     clamp(minX: number, minY: number, maxX: number, maxY: number) {
-        return new Vector2(Math.min(Math.max(this.x, minX), maxX), Math.min(Math.max(this.y, minY), maxY));
+        return new Array2d(Math.min(Math.max(this.x, minX), maxX), Math.min(Math.max(this.y, minY), maxY));
     }
 
     clampSelf(minX: number, minY: number, maxX: number, maxY: number) {
@@ -100,55 +99,55 @@ class Vector2 {
         return this;
     }
 
-    toT(): Vector2 {
-        return new Vector2(this.x > 0 ? 1 : (this.x < 0 ? -1 : 0), this.y > 0 ? 1 : (this.y < 0 ? -1 : 0));
+    toT(): Array2d {
+        return new Array2d(this.x > 0 ? 1 : (this.x < 0 ? -1 : 0), this.y > 0 ? 1 : (this.y < 0 ? -1 : 0));
     }
 
     // toString():string{
     //     return `${this.x}`
     // }
 
-    rotateCW(time: number): Vector2 {
+    rotateCW(time: number): Array2d {
         time = (time + 4) % 4;
         switch (time) {
             case 0:
-                return new Vector2(this.x, this.y);
+                return new Array2d(this.x, this.y);
             case 1:
-                return new Vector2(-this.y, this.x);
+                return new Array2d(-this.y, this.x);
             case 2:
-                return new Vector2(-this.x, -this.y);
+                return new Array2d(-this.x, -this.y);
             case 3:
-                return new Vector2(this.y, -this.x);
+                return new Array2d(this.y, -this.x);
         }
         throw new Error("Invalid time");
     }
 
-    rotateCCW(time: number): Vector2 {
+    rotateCCW(time: number): Array2d {
         time = (time + 4) % 4;
         switch (time) {
             case 0:
-                return new Vector2(this.x, this.y);
+                return new Array2d(this.x, this.y);
             case 1:
-                return new Vector2(this.y, -this.x);
+                return new Array2d(this.y, -this.x);
             case 2:
-                return new Vector2(-this.x, -this.y);
+                return new Array2d(-this.x, -this.y);
             case 3:
-                return new Vector2(-this.y, this.x);
+                return new Array2d(-this.y, this.x);
         }
         throw new Error("Invalid time");
     }
 
-    apply(matrix: DOMMatrix): Vector2 {
+    apply(matrix: DOMMatrix): Array2d {
         // 对于 2D 矩阵，变换公式为:
         // x' = a*x + c*y + e
         // y' = b*x + d*y + f
         const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
         const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
 
-        return new Vector2(newX, newY);
+        return new Array2d(newX, newY);
     }
 
-    applySelf(matrix: DOMMatrix): Vector2 {
+    applySelf(matrix: DOMMatrix): Array2d {
         const newX = matrix.a * this.x + matrix.c * this.y + matrix.e;
         const newY = matrix.b * this.x + matrix.d * this.y + matrix.f;
         this.x = newX;
@@ -159,25 +158,25 @@ class Vector2 {
 
 
 
-    static readonly ZERO = new Vector2(0, 0);
-    static readonly ONE = new Vector2(1, 1);
+    static readonly ZERO = new Array2d(0, 0);
+    static readonly ONE = new Array2d(1, 1);
 
-    static readonly UP = new Vector2(0, -1);
-    static readonly DOWN = new Vector2(0, 1);
-    static readonly LEFT = new Vector2(-1, 0);
-    static readonly RIGHT = new Vector2(1, 0);
+    static readonly UP = new Array2d(0, -1);
+    static readonly DOWN = new Array2d(0, 1);
+    static readonly LEFT = new Array2d(-1, 0);
+    static readonly RIGHT = new Array2d(1, 0);
 
 
-    static readonly UP_LEFT = new Vector2(-1, -1);
-    static readonly LEFT_UP = new Vector2(-1, -1);
-    static readonly UP_RIGHT = new Vector2(1, -1);
-    static readonly RIGHT_UP = new Vector2(1, -1);
-    static readonly DOWN_LEFT = new Vector2(-1, 1);
-    static readonly LEFT_DOWN = new Vector2(-1, 1);
-    static readonly DOWN_RIGHT = new Vector2(1, 1);
-    static readonly RIGHT_DOWN = new Vector2(1, 1);
+    static readonly UP_LEFT = new Array2d(-1, -1);
+    static readonly LEFT_UP = new Array2d(-1, -1);
+    static readonly UP_RIGHT = new Array2d(1, -1);
+    static readonly RIGHT_UP = new Array2d(1, -1);
+    static readonly DOWN_LEFT = new Array2d(-1, 1);
+    static readonly LEFT_DOWN = new Array2d(-1, 1);
+    static readonly DOWN_RIGHT = new Array2d(1, 1);
+    static readonly RIGHT_DOWN = new Array2d(1, 1);
 
-    static readonly DIREC: Vector2[] = [
+    static readonly DIREC: Array2d[] = [
         this.RIGHT, this.RIGHT_UP, this.UP_RIGHT,
         this.UP, this.UP_LEFT, this.LEFT_UP,
         this.LEFT, this.LEFT_DOWN, this.DOWN_LEFT,
@@ -190,7 +189,7 @@ class Vector2 {
     static readonly DOWN_n = 9;
     static readonly straightVector_digital = [this.RIGHT_n, this.UP_n, this.LEFT_n, this.DOWN_n]
 
-    static readonly INF = new Vector2(1e9, 1e9);
+    static readonly INF = new Array2d(1e9, 1e9);
 
     static ABtoIndex(v1: number, v2: number) {
         if (v1 === 0) {
@@ -216,12 +215,12 @@ class Vector2 {
         throw new Error("get bad array");
     }
 
-    static linear(v1: Vector2, s1: number, v2: Vector2, s2: number): Vector2 {
+    static linear(v1: Array2d, s1: number, v2: Array2d, s2: number): Array2d {
         return v1.mul(s1).add(v2.mul(s2));
     }
 
-    static copy(v: Vector2): Vector2 {
-        return new Vector2(v.x, v.y);
+    static copy(v: Array2d): Array2d {
+        return new Array2d(v.x, v.y);
     }
 
     static isOpposite(v1: number, v2: number) {
@@ -248,7 +247,7 @@ class Vector2 {
         return (direction + 6) % 12;
     }
 
-    static toIndex(v: Vector2) {
+    static toIndex(v: Array2d) {
         if (v.x === 1 && v.y === 0) return 0;
         else if (v.x === 0 && v.y === -1) return 3;
         else if (v.x === -1 && v.y === 0) return 6;
@@ -258,4 +257,4 @@ class Vector2 {
 }
 
 
-export default Vector2;
+export default Array2d;

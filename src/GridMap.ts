@@ -2,7 +2,7 @@ import { MachineInstance, portGroupInstance, portInstance } from "./instance/Mac
 import { Belt } from "./proto/Belt";
 import { BeltInstance, BeltSec } from "./instance/BeltInstance";
 import type Rect from "./utils/Rect";
-import Vector2 from "./utils/Vector2";
+import Array2d from "./utils/Array2d";
 import EnumItemType from "./utils/EnumItemType";
 import type { Machine } from "./proto/Machines";
 
@@ -22,6 +22,7 @@ function isBeltSec(inst: any) { return inst instanceof BeltSec; }
 
 export class GridMap {
     private grid: GridCell[][];
+    private GameTime: number = 0;
     private _width: number = 80;
     private _height: number = 80;
 
@@ -41,32 +42,33 @@ export class GridMap {
                 power: 0
             }))
         );
+        this.GameTime = 0;
         this._width = width;
         this._height = height;
     }
 
-    private _isOutside(pos: Vector2): boolean {
+    private _isOutside(pos: Array2d): boolean {
         return pos.x < 0 || pos.x >= this._width || pos.y < 0 || pos.y >= this._height;
     }
 
-    public getBeltSec(pos: Vector2, type: EnumItemType): BeltSec | null {
+    public getBeltSec(pos: Array2d, type: EnumItemType): BeltSec | null {
         if (this._isOutside(pos)) return null;
         if (type === EnumItemType.SOLID) return this.grid[pos.y][pos.x].soildBelt;
         if (type === EnumItemType.LIQUID) return this.grid[pos.y][pos.x].liquidBelt;
         return null;
     }
 
-    public getPort(pos: Vector2): portInstance | null {
+    public getPort(pos: Array2d): portInstance | null {
         if (this._isOutside(pos)) return null;
         return this.grid[pos.y][pos.x].port;
     }
 
-    public getMachine(pos: Vector2): MachineInstance | null {
+    public getMachine(pos: Array2d): MachineInstance | null {
         if (this._isOutside(pos)) return null;
         return this.grid[pos.y][pos.x].machine;
     }
 
-    private _isOccupied(pos: Vector2): boolean {
+    private _isOccupied(pos: Array2d): boolean {
         if (this._isOutside(pos)) return false;
         return this.grid[pos.y][pos.x].machine !== null ||
             this.grid[pos.y][pos.x].port !== null ||
@@ -85,22 +87,22 @@ export class GridMap {
     public get PreviewBelt(): BeltInstance | null { return isBeltInst(this._previewing) ? this._previewing : null; }
     public get onPreview(): boolean { return this._previewing !== null; }
 
-    private _howMachineOccupying(inst: MachineInstance): ReadonlyArray<Vector2> {
+    private _howMachineOccupying(inst: MachineInstance): ReadonlyArray<Array2d> {
         const rect: Rect | null = inst.rect;
         if (rect === null) return [];
-        const list: Vector2[] = [];
+        const list: Array2d[] = [];
         for (let i = 0; i < rect.h; i++) {
             for (let j = 0; j < rect.w; j++) {
-                const v: Vector2 = new Vector2(rect.min_x + j, rect.min_y + i);
+                const v: Array2d = new Array2d(rect.min_x + j, rect.min_y + i);
                 if (this._isOccupied(v)) list.push(v);
             }
         }
         return list;
     }
 
-    private _howBeltOccupying(inst: BeltInstance): ReadonlyArray<Vector2> {
+    private _howBeltOccupying(inst: BeltInstance): ReadonlyArray<Array2d> {
         if (!inst.sections) return [];
-        const list: Vector2[] = [];
+        const list: Array2d[] = [];
         const secs: ReadonlyArray<BeltSec> = inst.sections;
         for (let i = 0; i < inst.length; i++) {
             const pos = secs[i].position;
@@ -108,19 +110,19 @@ export class GridMap {
             const by = this.getBeltSec(pos, inst.ItemType);
             if (by === null) continue;
             if (by.fromDirec !== secs[i].fromDirec && by.toDirec !== secs[i].toDirec
-                && Vector2.isDiagonal(by.direc) && Vector2.isDiagonal(secs[i].direc)) list.push(pos);
+                && Array2d.isDiagonal(by.direc) && Array2d.isDiagonal(secs[i].direc)) list.push(pos);
         }
         return list;
     }
 
-    public howOccupying(): ReadonlyArray<Vector2> {
+    public howOccupying(): ReadonlyArray<Array2d> {
         if (this._previewing === null) return [];
         if (isMachineInst(this._previewing)) return this._howMachineOccupying(this._previewing);
         else return this._howBeltOccupying(this._previewing);
     }
 
 
-    private _clampMachineShape(vec: Vector2, instance: MachineInstance) {
+    private _clampMachineShape(vec: Array2d, instance: MachineInstance) {
         return vec.clampSelf(
             instance.machine.width / 2,
             instance.machine.height / 2,
@@ -134,7 +136,7 @@ export class GridMap {
      * @param mouseY 鼠标Y网格坐标(float)
      */
     public previewPositon(mouseX: number, mouseY: number) {
-        const vec: Vector2 = new Vector2(mouseX, mouseY);
+        const vec: Array2d = new Array2d(mouseX, mouseY);
         if (this._previewing instanceof MachineInstance) {
             this._clampMachineShape(vec, this._previewing);
             this._previewing.Position = vec;
@@ -147,7 +149,7 @@ export class GridMap {
             if (!this._previewing.started) {
                 if (m) this._previewing.setStart(m, vec);
                 else if (b) this._previewing.setStart(b, vec);
-                else if (surrounding) 
+                else if (surrounding)
                     this._previewing.setStart(surrounding, vec);
                 else this._previewing.setStart(null, vec);
             }
@@ -178,9 +180,9 @@ export class GridMap {
         }
         for (const group of inst.portGroupInsts!) {     //初始化端口连接
             for (const port of group.ports) {
-                const pos = port.isIn ? port.position.sub(Vector2.DIREC[port.direc]) : port.position.add(Vector2.DIREC[port.direc]);
+                const pos = port.isIn ? port.position.sub(Array2d.DIREC[port.direc]) : port.position.add(Array2d.DIREC[port.direc]);
                 const sec = this.getBeltSec(pos.floorSelf(), port.type);
-                if (sec) port.owner.insert(port);
+                if (sec) port.group.insert(port);
             }
         }
         console.log("built", this._previewing, "total:", this._machines.size, "machines");
@@ -276,10 +278,10 @@ export class GridMap {
 
     private _beltfindHeadConcatAble(inst: BeltInstance): BeltInstance | null {
         if (inst.sections === null) return null;
-        const pos: Vector2 = inst.sections[0].position;
+        const pos: Array2d = inst.sections[0].position;
         const direc: number = inst.sections[0].fromDirec;
 
-        const point = pos.sub(Vector2.DIREC[direc]);
+        const point = pos.sub(Array2d.DIREC[direc]);
         const by = this.getBeltSec(point, inst.ItemType);
         if (by && by.type === inst.ItemType && by.index === by.owner.length - 1 && by.toDirec === direc) return by.owner;
 
@@ -289,10 +291,10 @@ export class GridMap {
     private _beltfindTailConcatAble(inst: BeltInstance): BeltInstance | null {
         if (inst.sections === null) return null;
         const length = inst.length;
-        const pos: Vector2 = inst.sections[length - 1].position;
+        const pos: Array2d = inst.sections[length - 1].position;
         const direc: number = inst.sections[length - 1].toDirec;
 
-        const point = pos.add(Vector2.DIREC[direc]);
+        const point = pos.add(Array2d.DIREC[direc]);
         const by = this.getBeltSec(point, inst.ItemType);
         if (by && by.type === inst.ItemType && by.index === 0 && by.fromDirec === direc) return by.owner;
 
@@ -336,26 +338,28 @@ export class GridMap {
 
     private _markMachineArea(instance: MachineInstance): void {
         const rect: Rect = instance.rect!;
-        for (let i = 0; i < rect.h; i++) {
+        for (let i = 0; i < rect.h; i++)
             for (let j = 0; j < rect.w; j++) {
                 this.grid[rect.min_y + i][rect.min_x + j].machine = instance;
             }
-        }
         for (const group of instance.portGroupInsts!)
             for (const port of group.ports) {
                 const pos = port.position.floor();
                 this.grid[pos.y][pos.x].port = port;
-                console.log('mark', pos)
             }
     }
 
     private _clearMachineArea(instance: MachineInstance) {
         const rect: Rect = instance.rect!;
-        for (let i = 0; i < rect.h; i++) {
+        for (let i = 0; i < rect.h; i++)
             for (let j = 0; j < rect.w; j++) {
                 this.grid[rect.min_y + i][rect.min_x + j].machine = null;
             }
-        }
+        for (const group of instance.portGroupInsts!)
+            for (const port of group.ports) {
+                const pos = port.position.floor();
+                this.grid[pos.y][pos.x].port = null;
+            }
     }
 
     private _markBeltArea(instance: BeltInstance) {
@@ -369,21 +373,21 @@ export class GridMap {
     }
 
     private _markBeltSec(sec: BeltSec) {
-        const pos: Vector2 = sec.position;
-        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
-        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.owner.insert(port_out);
-        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
-        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.owner.insert(port_in);
+        const pos: Array2d = sec.position;
+        const port_out = this.getPort(sec.position.sub(Array2d.DIREC[sec.fromDirec]));
+        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.group.insert(port_out);
+        const port_in = this.getPort(sec.position.add(Array2d.DIREC[sec.toDirec]));
+        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.group.insert(port_in);
         if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = sec;
         if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = sec;
     }
 
     private _clearBeltSec(sec: BeltSec) {
         const pos = sec.position;
-        const port_out = this.getPort(sec.position.sub(Vector2.DIREC[sec.fromDirec]));
-        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.owner.remove(port_out);
-        const port_in = this.getPort(sec.position.add(Vector2.DIREC[sec.toDirec]));
-        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.owner.remove(port_in);
+        const port_out = this.getPort(sec.position.sub(Array2d.DIREC[sec.fromDirec]));
+        if (port_out && port_out.direc === sec.fromDirec && sec.type === port_out.type) port_out.group.remove(port_out);
+        const port_in = this.getPort(sec.position.add(Array2d.DIREC[sec.toDirec]));
+        if (port_in && port_in.direc === sec.toDirec && sec.type === port_in.type) port_in.group.remove(port_in);
         if (sec.type === EnumItemType.SOLID) this.grid[pos.y][pos.x].soildBelt = null;
         if (sec.type === EnumItemType.LIQUID) this.grid[pos.y][pos.x].liquidBelt = null;
     }
@@ -405,17 +409,17 @@ export class GridMap {
         else return null;
     }
 
-    private _beltStartCheckSurrounding(start: Vector2, type: EnumItemType): BeltSec | portInstance | null {
-        const directions = Vector2.straightVector_digital;
+    private _beltStartCheckSurrounding(start: Array2d, type: EnumItemType): BeltSec | portInstance | null {
+        const directions = Array2d.straightVector_digital;
         for (const direction of directions) {
-            const point = start.add(Vector2.DIREC[direction]);
+            const point = start.add(Array2d.DIREC[direction]);
             const by = this.getPort(point);
-            if (by && by.type === type && Vector2.DIREC[by.direc].add(by.position).floorSelf().equal(start.floor())) return by;
+            if (by && by.type === type && Array2d.DIREC[by.direc].add(by.position).floorSelf().equal(start.floor())) return by;
         }
         for (const direction of directions) {
-            const point = start.add(Vector2.DIREC[direction]);
+            const point = start.add(Array2d.DIREC[direction]);
             const by = this.getBeltSec(point, type);
-            if (by && by.toDirec === Vector2.toBACK(direction)) return by;
+            if (by && by.toDirec === Array2d.toBACK(direction)) return by;
         }
         return null;
     }
@@ -430,11 +434,11 @@ export class GridMap {
                 const current = (begin + j) % list.length;
                 const cur_port = list[current];
                 const belt_pos = cur_port.isIn ?
-                    cur_port.position.sub(Vector2.DIREC[cur_port.direc]).floorSelf() :
-                    cur_port.position.add(Vector2.DIREC[cur_port.direc]).floorSelf();
+                    cur_port.position.sub(Array2d.DIREC[cur_port.direc]).floorSelf() :
+                    cur_port.position.add(Array2d.DIREC[cur_port.direc]).floorSelf();
                 const connecting = this.getBeltSec(belt_pos, cur_port.type)!;
                 // 若该端口成功动作，则将轮询初始指针拨到下一个端口
-                if (connecting && cur_port.portGroupSrc.callback(connecting.owner, instance))
+                if (connecting && cur_port.portGroupSrc.callback_in(connecting.owner, instance))
                     portGroup.point = (current + 1) % list.length;
             }
         }
@@ -488,6 +492,7 @@ export class GridMap {
     }
 
     public update() {
+        this.GameTime += 1;
         for (const instance of this._machines) this.updateMachine(instance);
         for (const instance of this._belts) this.updateBelt(instance);
     }

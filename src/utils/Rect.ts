@@ -1,4 +1,4 @@
-import Vector2 from "./Vector2";
+import Array2d from "./Array2d";
 
 class Rect {
     public min_x: number;
@@ -17,8 +17,8 @@ class Rect {
         return [this.min_x, this.min_y, this.w, this.h];
     }
 
-    center(): Vector2 {
-        return new Vector2(this.min_x + this.w / 2, this.min_y + this.h / 2);
+    center(): Array2d {
+        return new Array2d(this.min_x + this.w / 2, this.min_y + this.h / 2);
     }
 
     mutiply(scalar: number): Rect {

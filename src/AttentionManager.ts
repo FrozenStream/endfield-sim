@@ -3,13 +3,13 @@ import { MachineInstance, portInstance, WorkTimer } from "./instance/MachineInst
 import type { Item } from "./proto/Item";
 import { ItemStack } from "./proto/ItemStack";
 import type { InventoryConfig } from "./proto/Machines";
-import type Vector2 from "./utils/Vector2";
+import type Array2d from "./utils/Array2d";
 
 
 
 export class AttentionManager {
     private selecting: MachineInstance | portInstance | BeltSec | null = null;
-    position: Vector2 | null = null;
+    position: Array2d | null = null;
     count: number = 0;
 
     private selectingSlot: HTMLDivElement | null = null;

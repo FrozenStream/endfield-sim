@@ -1,5 +1,5 @@
 import { drawRectLinesFill, drawMachine, drawGridLines, drawMachinesIcon, drawBeltItems, drawCellLinesFill, drawCellFill, drawAttention, drawRect as drawFillRect, drawBeltAttention, drawBelt, drawBelts } from "./utils/drawUtil";
-import Vector2 from "./utils/Vector2";
+import Array2d from "./utils/Array2d";
 import { COLORS } from './utils/colors';
 import { MachinesIconsManager } from "./MacineIconManager";
 import { AttentionManager } from "./AttentionManager";
@@ -301,7 +301,7 @@ export class GridCanvas {
         this.drawGrid();
     }
 
-    public handleClick(gridPos: Vector2): void {
+    public handleClick(gridPos: Array2d): void {
         const occupyCount = this.gridMap.howOccupying().length;
         console.log("occupyCount:", occupyCount);
 
@@ -357,7 +357,7 @@ export class GridCanvas {
         this.preview();
     }
 
-    public handleHover(gridPos: Vector2): void {
+    public handleHover(gridPos: Array2d): void {
         this.gridMap.previewPositon(gridPos.x, gridPos.y);
 
         const coordDisplay = document.getElementById('coordinates');
@@ -374,9 +374,9 @@ export class GridCanvas {
         this.clearOverlay();
     }
 
-    public canvasToGridCoords(clientX: number, clientY: number): Vector2 {
+    public canvasToGridCoords(clientX: number, clientY: number): Array2d {
         const rect = this.gridCanvas.getBoundingClientRect();
-        const mouseVec = new Vector2(clientX - rect.left, clientY - rect.top)
+        const mouseVec = new Array2d(clientX - rect.left, clientY - rect.top)
             .apply(this.transformMatrix.inverse())
             .div(this.gridSize);
         return mouseVec;
@@ -509,7 +509,7 @@ export class GridCanvas {
         }
         // 绘制重叠部分提示
         this.overlayCtx.fillStyle = COLORS.OVERLAP_WARNING;
-        this.gridMap.howOccupying().forEach((v: Vector2) => {
+        this.gridMap.howOccupying().forEach((v: Array2d) => {
             this.overlayCtx!.fillRect(
                 v.x * this.gridSize, v.y * this.gridSize,
                 this.gridSize, this.gridSize

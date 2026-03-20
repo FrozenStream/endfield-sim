@@ -1,9 +1,9 @@
-import { BeltInventory, BeltSec, type BeltInstance } from "../instance/BeltInstance";
+import { BeltSec, type BeltInstance } from "../instance/BeltInstance";
 import type { MachineInstance } from "../instance/MachineInstance";
 import { COLORS } from "./colors";
 import EnumItemType from "./EnumItemType";
 import type Rect from "./Rect";
-import Vector2 from "./Vector2";
+import Array2d from "./Array2d";
 
 const SoildBeltWidth: number = 40;
 const LiquidBeltWidth: number = 20;
@@ -51,9 +51,9 @@ function drawSoildBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltIn
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
-            if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+            if (Array2d.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
             else drawStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
         }
     }
@@ -65,9 +65,9 @@ function drawSoildBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltIn
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
-            if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+            if (Array2d.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
             else fillStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
         }
     }
@@ -79,7 +79,7 @@ function drawSoildBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltIn
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
             fillBeltDirection(ctx, direc, pos.x, pos.y, size);
         }
@@ -100,9 +100,9 @@ function drawSoildBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: 
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
-        if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        if (Array2d.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
         else drawStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
     }
     ctx.stroke();
@@ -112,9 +112,9 @@ function drawSoildBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: 
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
-        if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
+        if (Array2d.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
         else fillStraightBelt(ctx, direc, pos.x, pos.y, size, SoildBeltWidth);
     }
     ctx.fill();
@@ -124,7 +124,7 @@ function drawSoildBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size: 
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
         fillBeltDirection(ctx, direc, pos.x, pos.y, size);
     }
@@ -145,9 +145,9 @@ function drawLiquidBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltI
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
-            if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+            if (Array2d.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
             else drawStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
         }
     }
@@ -159,9 +159,9 @@ function drawLiquidBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltI
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
-            if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+            if (Array2d.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
             else fillStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
         }
     }
@@ -173,7 +173,7 @@ function drawLiquidBelts(ctx: CanvasRenderingContext2D, insts: ReadonlySet<BeltI
     for (const instance of insts) {
         if (!instance.sections) return;
         for (const sec of instance.sections) {
-            const pos: Vector2 = sec.position.mul(size);
+            const pos: Array2d = sec.position.mul(size);
             const direc = sec.direc;
             fillBeltDirection(ctx, direc, pos.x, pos.y, size);
         }
@@ -194,9 +194,9 @@ function drawLiquidBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size:
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
-        if (Vector2.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        if (Array2d.isDiagonal(direc)) drawCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
         else drawStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
     }
     ctx.stroke();
@@ -206,9 +206,9 @@ function drawLiquidBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size:
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
-        if (Vector2.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
+        if (Array2d.isDiagonal(direc)) fillCurvedBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
         else fillStraightBelt(ctx, direc, pos.x, pos.y, size, LiquidBeltWidth);
     }
     ctx.fill();
@@ -218,7 +218,7 @@ function drawLiquidBelt(ctx: CanvasRenderingContext2D, inst: BeltInstance, size:
     ctx.beginPath();
     if (!inst.sections) return;
     for (const sec of inst.sections) {
-        const pos: Vector2 = sec.position.mul(size);
+        const pos: Array2d = sec.position.mul(size);
         const direc = sec.direc;
         fillBeltDirection(ctx, direc, pos.x, pos.y, size);
     }
@@ -407,18 +407,18 @@ function fillCurvedBelt(canvas: CanvasRenderingContext2D, direc: number, x: numb
 }
 
 function fillBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: number, y: number, size: number) {
-    const d: Vector2 = Vector2.DIREC[direc].mul(Vector2.isDiagonal(direc) ? 0.7 : 1);
-    const center: Vector2 = new Vector2(x + size / 2, y + size / 2);
+    const d: Array2d = Array2d.DIREC[direc].mul(Array2d.isDiagonal(direc) ? 0.7 : 1);
+    const center: Array2d = new Array2d(x + size / 2, y + size / 2);
     const a = center.add(d.mul(7));
     const b = center.sub(d.mul(3)).add(d.rotateCW(1).mul(4));
     const c = center.sub(d.mul(3)).add(d.rotateCCW(1).mul(4));
 
-    if (!Vector2.isDiagonal(direc)) {
+    if (!Array2d.isDiagonal(direc)) {
         fillTriangle(canvas, a, b, c);
     }
     else {
         let t = 0;
-        const trans: Vector2 = new Vector2(-SoildBeltWidth * 0.12, -SoildBeltWidth * 0.12);
+        const trans: Array2d = new Array2d(-SoildBeltWidth * 0.12, -SoildBeltWidth * 0.12);
         if (direc === 1 || direc === 8) t = 0;
         else if (direc === 5 || direc === 10) t = 1;
         else if (direc === 11 || direc === 4) t = 3;
@@ -427,7 +427,7 @@ function fillBeltDirection(canvas: CanvasRenderingContext2D, direc: number, x: n
     }
 }
 
-function fillTriangle(canvas: CanvasRenderingContext2D, a: Vector2, b: Vector2, c: Vector2) {
+function fillTriangle(canvas: CanvasRenderingContext2D, a: Array2d, b: Array2d, c: Array2d) {
     canvas.moveTo(a.x, a.y);
     canvas.lineTo(b.x, b.y);
     canvas.lineTo(c.x, c.y);
@@ -450,12 +450,12 @@ export function drawMachine(canvas: CanvasRenderingContext2D, instance: MachineI
 
 function drawMachinePort(canvas: CanvasRenderingContext2D, instance: MachineInstance, gridSize: number) {
     canvas.beginPath();
-    const LT: Vector2 = instance.left_top!;
+    const LT: Array2d = instance.left_top!;
 
     for (const group of instance.currentMode.portGroups) {
         for (let i = 0; i < group.length; i++) {
-            const center = Vector2.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
-            const direc = Vector2.DIREC[group.direction[i]];
+            const center = Array2d.linear(instance.R, group.relpos[i].x + 0.5, instance.D, group.relpos[i].y + 0.5).addSelf(LT);
+            const direc = Array2d.DIREC[group.direction[i]];
             let v2 = direc.rotateCW(instance.rotation).mulSelf(0.1).addSelf(center);
             let v1 = direc.rotateCW(instance.rotation + 1).mulSelf(0.1).addSelf(center);
             let v3 = direc.rotateCW(instance.rotation - 1).mulSelf(0.1).addSelf(center);
@@ -569,7 +569,7 @@ export function drawRectLinesFill(canvas: CanvasRenderingContext2D, rect: Rect |
     }
 }
 
-export function drawCellLinesFill(canvas: CanvasRenderingContext2D, vec: Vector2, gridSize: number, color: string) {
+export function drawCellLinesFill(canvas: CanvasRenderingContext2D, vec: Array2d, gridSize: number, color: string) {
     const [x, y, w, h] = [vec.x * gridSize, vec.y * gridSize, gridSize, gridSize];
 
     // 设置填充颜色为透明黄色
@@ -612,7 +612,7 @@ export function drawCellLinesFill(canvas: CanvasRenderingContext2D, vec: Vector2
     }
 }
 
-export function drawCellFill(canvas: CanvasRenderingContext2D, vec: Vector2 | null, gridSize: number, color: string) {
+export function drawCellFill(canvas: CanvasRenderingContext2D, vec: Array2d | null, gridSize: number, color: string) {
     if (vec === null) return;
     vec = vec.floor();
     canvas.fillStyle = color;
@@ -649,8 +649,8 @@ export function drawMachinesIcon(canvas: CanvasRenderingContext2D, instance: Mac
     const rect = instance.rect;
     if (!rect) return;
     const [startX, startY, width, height] = rect.toTuple();
-    const LT = new Vector2(startX, startY).mulSelf(gridSize).applySelf(transform);
-    const RB = new Vector2(startX + width, startY + height).mulSelf(gridSize).applySelf(transform);
+    const LT = new Array2d(startX, startY).mulSelf(gridSize).applySelf(transform);
+    const RB = new Array2d(startX + width, startY + height).mulSelf(gridSize).applySelf(transform);
 
     const min_x = Math.min(LT.x, RB.x);
     const min_y = Math.min(LT.y, RB.y);
@@ -717,24 +717,24 @@ export function drawBeltItems(canvas: CanvasRenderingContext2D, instance: BeltIn
     // 遍历传送带的所有段
     for (let i = 0; i < instance.length; i++) {
         const data = inv.getInventory(i);
-        const pos = sec[i].position.add(new Vector2(0.1, 0.1));
+        const pos = sec[i].position.add(new Array2d(0.1, 0.1));
         if (!data) continue;
-        if (Vector2.isDiagonal(sec[i].direc)) {
+        if (Array2d.isDiagonal(sec[i].direc)) {
             let v1, v2;
             if (sec[i].direc % 3 === 1) {
-                v1 = Vector2.DIREC[(sec[i].direc - 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
-                v2 = Vector2.DIREC[(sec[i].direc + 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v1 = Array2d.DIREC[(sec[i].direc - 1 + Array2d.DIREC.length) % Array2d.DIREC.length];
+                v2 = Array2d.DIREC[(sec[i].direc + 2 + Array2d.DIREC.length) % Array2d.DIREC.length];
             }
             else {
-                v1 = Vector2.DIREC[(sec[i].direc + 1 + Vector2.DIREC.length) % Vector2.DIREC.length];
-                v2 = Vector2.DIREC[(sec[i].direc - 2 + Vector2.DIREC.length) % Vector2.DIREC.length];
+                v1 = Array2d.DIREC[(sec[i].direc + 1 + Array2d.DIREC.length) % Array2d.DIREC.length];
+                v2 = Array2d.DIREC[(sec[i].direc - 2 + Array2d.DIREC.length) % Array2d.DIREC.length];
             }
             const offset = data.delay / inv.SecMaxDelay - 0.5;
             if (offset > 0) pos.addSelf(v2.mul(offset));
             else pos.addSelf(v1.mul(offset));
         }
         else {
-            const offset = Vector2.DIREC[sec[i].direc].mul(data.delay / inv.SecMaxDelay - 0.5);
+            const offset = Array2d.DIREC[sec[i].direc].mul(data.delay / inv.SecMaxDelay - 0.5);
             pos.addSelf(offset);
         }
         pos.mulSelf(gridSize);

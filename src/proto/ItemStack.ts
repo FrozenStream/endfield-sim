@@ -7,6 +7,8 @@ export class ItemStack {
     public readonly MaxCount: number;
     public readonly itemType: EnumItemType;
 
+    public static readonly EMPTY = new ItemStack(null, EnumItemType.ANY, 0, 0);
+
     constructor(item: Item | null, itemType: EnumItemType, count: number = 0, maxCount: number = 50) {
         this._item = item;
         this._count = count;
@@ -41,6 +43,10 @@ export class ItemStack {
     public copy(stack_in: ItemStack) {
         this._item = stack_in._item;
         this._count = stack_in._count;
+    }
+
+    public clone(): ItemStack {
+        return new ItemStack(this._item, this.itemType, this._count, this.MaxCount);
     }
 
     public moveIn(stack_in: ItemStack) {

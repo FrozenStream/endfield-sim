@@ -4,59 +4,39 @@ import type { Machine, MachineMode, PortGroup } from "../proto/Machines";
 import { Config } from "../utils/Config";
 import type EnumItemType from "../utils/EnumItemType";
 import Rect from "../utils/Rect";
-import Vector2 from "../utils/Vector2";
+import Array2d from "../utils/Array2d";
 
 export class portGroupInstance {
     owner: MachineInstance;
     src: PortGroup;
-    ports: portInstance[];
-    pollingList: portInstance[];
-    point: number;
-
 
     constructor(owner: MachineInstance, portGroupSrc: PortGroup) {
         this.owner = owner;
         this.src = portGroupSrc;
-        this.ports = portGroupSrc.buildInstances(this, owner);
-        this.pollingList = [];
-        this.point = 0;
-    }
-
-    insert(port: portInstance) {
-        if (this.pollingList.length === 0) this.pollingList = [port];
-        else {
-            this.remove(port);
-            // 插入倒数第二个
-            this.pollingList = [...this.pollingList.slice(0, -1), port, ...this.pollingList.slice(-1)];
-        }
-    }
-
-    remove(port: portInstance) {
-        const newList = this.pollingList.filter(p => p !== port);
-        this.pollingList = newList;
     }
 }
 
 export class portInstance {
-    owner: portGroupInstance;
+    group: portGroupInstance;
     id: number;
-    position: Vector2;
+    position: Array2d;
     direc: number;
 
-    constructor(owner: portGroupInstance, id: number, postion: Vector2, direction: number) {
-        this.owner = owner;
+    constructor(group: portGroupInstance, id: number, postion: Array2d, direction: number) {
+        this.group = group;
         this.id = id;
         this.position = postion;
         this.direc = direction;
     }
 
-    get portGroupSrc(): PortGroup { return this.owner.src; }
+    get portGroupSrc(): PortGroup { return this.group.src; }
 
-    get type(): EnumItemType { return this.owner.src.itemType; }
+    get type(): EnumItemType { return this.group.src.itemType; }
 
-    get isIn(): boolean { return this.owner.src.isIn; }
+    get isIn(): boolean { return this.group.src.isIn; }
+
+    work(stack: ItemStack): boolean { return this.portGroupSrc.callback_in(stack, this.group.owner); }
 }
-
 
 export class WorkTimer {
     input: Item | string | null = null;
@@ -83,13 +63,19 @@ export class WorkTimer {
         this.curTime = 0;
     }
 
-    update(deltaTime: number): boolean {
+    update_cyclic(deltaTime: number): boolean {
         if (!this.isWorking) return false;
         this.curTime += deltaTime;
         if (this.curTime >= this.maxTime) {
-            this.curTime = 0;
             return true;
         }
+        return false;
+    }
+
+    update(deltaTime: number): boolean {
+        if (!this.isWorking) return false;
+        this.curTime += deltaTime;
+        if (this.curTime >= this.maxTime) return true;
         return false;
     }
 
@@ -102,14 +88,14 @@ export class WorkTimer {
 export class MachineInstance {
     public readonly machine: Machine;
     private _powerCount: number = 0;
-    private _position: Vector2 | null = null;
+    private _position: Array2d | null = null;
     public rotation: number = 0;
 
-    public R: Vector2 = Vector2.RIGHT;
-    public D: Vector2 = Vector2.DOWN;
+    public R: Array2d = Array2d.RIGHT;
+    public D: Array2d = Array2d.DOWN;
 
     public rect: Rect | null = null;
-    public left_top: Vector2 | null = null;
+    public left_top: Array2d | null = null;
 
     public currentMode: MachineMode;
     public inventory: ItemStack[] = [];                 // 预览状态不使用
@@ -148,22 +134,22 @@ export class MachineInstance {
         this.updateRect();
     }
 
-    public set Position(position: Vector2) {
+    public set Position(position: Array2d) {
         this._position = position;
         this.updateRect();
     }
 
-    public get Position(): Vector2 | undefined {
+    public get Position(): Array2d | undefined {
         return this.rect?.center();
     }
 
     private updateRect() {
         const R2 = this.R.mul(this.machine.width / 2);
         const D2 = this.D.mul(this.machine.height / 2);
-        const LT: Vector2 = this._position!.sub(R2).sub(D2).round();
-        const RD: Vector2 = this._position!.add(R2).add(D2).round();
-        const LD: Vector2 = this._position!.sub(R2).add(D2).round();
-        const RT: Vector2 = this._position!.add(R2).sub(D2).round();
+        const LT: Array2d = this._position!.sub(R2).sub(D2).round();
+        const RD: Array2d = this._position!.add(R2).add(D2).round();
+        const LD: Array2d = this._position!.sub(R2).add(D2).round();
+        const RT: Array2d = this._position!.add(R2).sub(D2).round();
 
         const min_x = Math.min(LT.x, RD.x, LD.x, RT.x);
         const max_x = Math.max(LT.x, RD.x, LD.x, RT.x);
@@ -180,7 +166,7 @@ export class MachineInstance {
         this.portGroupInsts = this.currentMode.portGroups.map(portGroup => new portGroupInstance(this, portGroup));
     }
 
-    public closestPort(dst: Vector2, isIn: boolean, itemType: EnumItemType): portInstance | null {
+    public closestPort(dst: Array2d, isIn: boolean, itemType: EnumItemType): portInstance | null {
         if (!this.portGroupInsts) return null;
         let closest: portInstance | null = null;
         let closest_num = 1e9;
@@ -188,8 +174,8 @@ export class MachineInstance {
         for (const group of this.portGroupInsts) {
             if (group.src.isIn !== isIn || group.src.itemType !== itemType) continue;
             for (const port of group.ports) {
-                let from = port.position.add(Vector2.DIREC[port.direc]);
-                if (isIn) from = port.position.sub(Vector2.DIREC[port.direc]);
+                let from = port.position.add(Array2d.DIREC[port.direc]);
+                if (isIn) from = port.position.sub(Array2d.DIREC[port.direc]);
                 dist = from.sub(dst).manhattanDistance();
                 if (!closest || dist < closest_num) {
                     closest = port;
